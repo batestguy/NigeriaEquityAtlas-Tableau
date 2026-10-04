@@ -35,13 +35,19 @@ updates annually, so a 24-hour refresh would be pointless.
 
 ## Steps
 
-1. Install **Tableau Public Desktop** (free) from <https://public.tableau.com/app/discover>.
+1. Install **Tableau Public Desktop** (free):
 
-   **Do not try the Tableau Desktop 2019.4 already on this machine.** It is a
-   different application from Tableau Public, it is unlicensed here, and it cannot open
-   modern workbooks at all — verified by control test in `docs/HANDOFF.md` §3a, where a
-   genuine Tableau Public workbook also fails with "created by a newer version of
-   Tableau".
+   ```powershell
+   winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
+   ```
+
+   Use winget rather than the vendor site: `tableau.com/downloads/public/pc64` and
+   `downloads.tableau.com` both return **HTTP 403** from this network.
+
+   Do **not** install Tableau Desktop (the paid product). It is a different application,
+   it cannot open modern workbooks on an older release, and it cannot save to Tableau
+   Public. Tableau Desktop 2019.4 was previously present here and has been removed —
+   see `docs/HANDOFF.md` §3b for the control test that ruled it out.
 2. Sign in to your Tableau Public account.
 3. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. Tableau will ask to locate the data;
    accept the packaged paths.

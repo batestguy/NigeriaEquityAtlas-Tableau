@@ -8,6 +8,21 @@ verified, and which traps have already been paid for.
 
 ---
 
+## 0. Start here if you are picking this up
+
+**One command is outstanding:**
+
+```powershell
+winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
+```
+
+Then open `tableau/Nigeria-MPI-Equity-Atlas.twbx` in it. Everything else in this
+repository is built, tested and committed, and the pipeline runs clean end to end. The
+install is the only blocking dependency, and the open-and-render check it unlocks is the
+only verification still missing. Detail in §3a and §6.
+
+---
+
 ## 1. Where things stand
 
 The pipeline is **built, validated and reproducible end to end**: seven stages, exit 0,
@@ -65,30 +80,59 @@ This distinction matters more than anything else in this document.
 - **That the workbook renders correctly in Tableau.** This is the main open risk, and
   it has been tested as far as this machine allows. See §3a.
 
-### 3a. Tableau 2019.4 is installed, and it is a dead end — with one caveat
+### 3a. Tableau install state, and the one command needed to finish
 
-`C:\Program Files\Tableau\Tableau 2019.4` **is** installed and will launch, which makes
-it look like a render test is available. It is not:
+**Current state: no Tableau application is installed.** Tableau Desktop 2019.4 was
+removed from this machine after it was found to be a dead end (see below), and
+Tableau Public Desktop has **not** been installed yet — that install was started and
+deliberately deferred to the next session.
 
-- Tableau **Public** Desktop is *not* installed (only Desktop). They are different apps.
-- Desktop 2019.4 is unlicensed on this machine (no activation key registered).
-- It **cannot open any modern workbook.** Control test: the genuine, Tableau-authored
-  reference workbook (`ClimatechangeprofileNigeria`, published on Tableau Public,
-  version 18.1) fails with *"This file was created by a newer version of Tableau
-  (Incompatible Document)"*. Since a real Tableau file fails identically, this is a
-  ceiling of the application, not a defect in the generated workbook.
+**The decision, for the record:** the project needs **Tableau Public Desktop**, and
+not the paid Tableau Desktop. They are separate applications; only Desktop was ever
+present, and publishing to Tableau Public is a Tableau Public Desktop capability.
 
-**The caveat, and why it mattered.** 2019.4 *did* parse our file and report genuine
-schema errors, which is how the three defects in `06_build_twb.py` were found:
-a duplicated `<panes>` block, `<semantic-values>` placed inside a `<column>` (which
-Tableau reports misleadingly as "missing required attribute 'semantic-role'"), and an
-invalid `Map` mark class. All three are fixed and Tableau now reports **no schema
-errors**. So the *schema* is parser-verified even though the *render* is not.
+**Install it with winget — the direct download URLs are blocked on this network:**
 
-If anyone wants to go further, the remaining path is to emit 10.5-era grammar so
-2019.4 can open it. That was not done: it is a rewrite of the workbook generator, and
-Tableau Desktop 2019.4 cannot save to Tableau Public anyway, so it would not remove the
-need for Tableau Public Desktop.
+```powershell
+winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
+```
+
+- Verified available as `Tableau.Public 25.1.463` in the `winget` source.
+- **Do not fetch the installer from `tableau.com` directly.** Both
+  `https://www.tableau.com/downloads/public/pc64` and
+  `https://downloads.tableau.com/tssoftware/TableauPublicDesktop-64bit-*.exe` return
+  **HTTP 403** from this network (CDN bot protection). winget resolves and installs it
+  correctly; this was verified up to the point the install was cancelled, and left no
+  partial state behind.
+- The install is interactive enough to be cancelled — it was deliberately aborted and
+  confirmed clean: no package registered, no partial download, disk unchanged at 80 GB
+  free on `C:`.
+
+**After installing, the render test becomes available and should be done immediately.**
+Launch Tableau Public Desktop with `tableau/Nigeria-MPI-Equity-Atlas.twbx`, accept the
+packaged data paths, and confirm all five sheets render and the choropleth draws
+Nigeria's states. That closes the one gap in §3.
+
+### 3b. Why Desktop 2019.4 was removed rather than used
+
+It **was** installed, and it did parse the generated workbook — which is how the three
+schema defects in `06_build_twb.py` were found (a duplicated `<panes>` block,
+`<semantic-values>` illegally nested inside a `<column>`, and an invalid `Map` mark
+class). All three are fixed, and Tableau's own parser now reports **no schema errors**.
+
+But it could never serve as the render test, and that was established by control test
+rather than assumption: the *genuine*, Tableau-authored reference workbook
+(`ClimatechangeprofileNigeria`, published on Tableau Public, version 18.1) also fails
+on this machine with *"This file was created by a newer version of Tableau
+(Incompatible Document)"*. A real Tableau file failing identically proves the ceiling
+belongs to the application, not to the generated workbook. It was also unlicensed (no
+activation key), and Tableau Desktop could not save to Tableau Public regardless.
+
+Rewriting the generator to emit 10.5-era grammar so 2019.4 could open it was considered
+and rejected: it is a substantial rewrite of the workbook generator, and it would not
+remove the Tableau Public Desktop requirement, since Desktop still could not publish.
+
+**Net position: the workbook's schema is parser-verified; its render is still unverified.**
 - Note: the Tableau MCP analyser reports `rowShelf`, `colShelf` and `worksheetsIncluded`
   as **empty even for the genuine Tableau-authored reference workbook** it was pointed
   at. Those fields are unimplemented in the analyser, so an empty shelf report is *not*
@@ -162,17 +206,24 @@ the data. Keep them in sync with any viz published from this pipeline.
 
 ## 6. Next steps, in order
 
-1. **Install Tableau Public Desktop** (free) — *not* Tableau Desktop 2019.4, which is
-   installed on this machine and too old to open the workbook.
-2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`; accept the packaged data paths.
-3. **File → Save to Tableau Public.**
-4. Confirm on the live URL that all five sheets render and the map draws Nigeria's states.
+1. **Install Tableau Public Desktop** — the only blocking dependency:
+
+   ```powershell
+   winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
+   ```
+
+   Fetching the installer from `tableau.com` directly returns HTTP 403 on this network;
+   use winget. See §3a.
+2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx` in Tableau Public Desktop; accept the
+   packaged data paths. **This is the render test** — the one verification still missing.
+3. Confirm all five sheets render and the choropleth draws Nigeria's 37 states.
+4. **File → Save to Tableau Public.**
 5. Add the radar chart per `docs/PUBLISH.md` (deliberately left to the GUI — a polygon
    mark driven by computed path fields is the most fragile part of the grammar to
    hand-write).
 6. Set the choropleth to a sequential colour scale — it encodes a rate, not a category.
 7. Paste the attribution block from `docs/PUBLISH.md` into the viz description.
-8. Verify with `tableau` MCP `get_workbook_image`.
+8. Verify the live viz with `tableau` MCP `get_workbook_image`.
 
 ## 7. Environment reminders
 

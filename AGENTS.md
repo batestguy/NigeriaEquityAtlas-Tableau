@@ -32,8 +32,11 @@ Four commits, one per stage. `git log` is the reliable history.
 | 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
 | 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx`, validated then packaged |
 
-**Remaining manual step:** publishing. There is no write API or publishing CLI for
-Tableau Public — it is a GUI action behind an account login. Follow `docs/PUBLISH.md`.
+**Remaining manual step:** publishing, and the one install it depends on. No Tableau
+application is currently installed — Tableau Desktop 2019.4 was removed and Tableau
+Public Desktop was deliberately deferred. Install with
+`winget install --id Tableau.Public -e` (the vendor download URLs 403 here), then
+follow `docs/PUBLISH.md`. There is no write API or publishing CLI for Tableau Public.
 
 ## Corrections to the original spec
 
@@ -76,7 +79,8 @@ The spec was written before the sources were checked. These are settled now:
 | Python / data work | `& C:\Users\TOSHIBA\ds-general\python.exe` | bare `python` (= C:\Python314, tooling-only) |
 | Install | `uv pip install --python C:\Users\TOSHIBA\ds-general\python.exe <pkg>` | `pip install` into the wrong interpreter |
 | Stats / geo | `Rscript` | bare `R` (PowerShell alias for `Invoke-History`) |
-| Tableau | `tableau` MCP server (Public API) | Tableau Desktop 2019.4 (too old to trust) |
+| Tableau | `winget install --id Tableau.Public -e` | Tableau Desktop (paid; different app, cannot publish to Public) |
+| Tableau (analysis) | `tableau` MCP server (Public API, read-only) | direct downloads from `tableau.com` — HTTP 403 here |
 | Shell | one call, chained with `;` or `&&` | assuming state persists between calls |
 
 - `D:\` is an **external USB SSD**. Everything here disappears if it's unplugged. Anything that must
