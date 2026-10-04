@@ -36,8 +36,12 @@ updates annually, so a 24-hour refresh would be pointless.
 ## Steps
 
 1. Install **Tableau Public Desktop** (free) from <https://public.tableau.com/app/discover>.
-   Do not use Tableau Desktop 2019.4, which is installed on this machine and is far
-   too old to open a modern workbook.
+
+   **Do not try the Tableau Desktop 2019.4 already on this machine.** It is a
+   different application from Tableau Public, it is unlicensed here, and it cannot open
+   modern workbooks at all — verified by control test in `docs/HANDOFF.md` §3a, where a
+   genuine Tableau Public workbook also fails with "created by a newer version of
+   Tableau".
 2. Sign in to your Tableau Public account.
 3. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. Tableau will ask to locate the data;
    accept the packaged paths.

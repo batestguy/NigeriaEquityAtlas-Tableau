@@ -62,9 +62,33 @@ This distinction matters more than anything else in this document.
 - The five preview PNGs were rendered and **looked at**; layout defects were fixed.
 
 **Not verified — no way to verify here:**
-- **That the workbook renders correctly in Tableau.** Tableau Desktop 2019.4 is too old
-  to open a modern workbook and needs interactive licensing; Tableau Public needs a
-  human. This is the main open risk.
+- **That the workbook renders correctly in Tableau.** This is the main open risk, and
+  it has been tested as far as this machine allows. See §3a.
+
+### 3a. Tableau 2019.4 is installed, and it is a dead end — with one caveat
+
+`C:\Program Files\Tableau\Tableau 2019.4` **is** installed and will launch, which makes
+it look like a render test is available. It is not:
+
+- Tableau **Public** Desktop is *not* installed (only Desktop). They are different apps.
+- Desktop 2019.4 is unlicensed on this machine (no activation key registered).
+- It **cannot open any modern workbook.** Control test: the genuine, Tableau-authored
+  reference workbook (`ClimatechangeprofileNigeria`, published on Tableau Public,
+  version 18.1) fails with *"This file was created by a newer version of Tableau
+  (Incompatible Document)"*. Since a real Tableau file fails identically, this is a
+  ceiling of the application, not a defect in the generated workbook.
+
+**The caveat, and why it mattered.** 2019.4 *did* parse our file and report genuine
+schema errors, which is how the three defects in `06_build_twb.py` were found:
+a duplicated `<panes>` block, `<semantic-values>` placed inside a `<column>` (which
+Tableau reports misleadingly as "missing required attribute 'semantic-role'"), and an
+invalid `Map` mark class. All three are fixed and Tableau now reports **no schema
+errors**. So the *schema* is parser-verified even though the *render* is not.
+
+If anyone wants to go further, the remaining path is to emit 10.5-era grammar so
+2019.4 can open it. That was not done: it is a rewrite of the workbook generator, and
+Tableau Desktop 2019.4 cannot save to Tableau Public anyway, so it would not remove the
+need for Tableau Public Desktop.
 - Note: the Tableau MCP analyser reports `rowShelf`, `colShelf` and `worksheetsIncluded`
   as **empty even for the genuine Tableau-authored reference workbook** it was pointed
   at. Those fields are unimplemented in the analyser, so an empty shelf report is *not*
