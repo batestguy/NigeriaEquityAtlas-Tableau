@@ -1,0 +1,5 @@
+survey_year,survey,median_state_mpi,total_events,total_fatalities,mean_temp_anomaly_c,events_per_100k_min,events_per_100k_max,fatalities_per_100k_min,fatalities_per_100k_max,lowest_cei_state,highest_cei_state,spearman_mpi_vs_conflict,p_mpi_vs_conflict,spearman_mpi_vs_temp_anomaly,p_mpi_vs_temp_anomaly
+2013,DHS,0.1126,334,3391.0,0.091,0.0,2.6042,0.0,33.4443,Abia,Borno,0.3387,0.04029,0.8085,0.0
+2016,MICS,0.1104,434,3949.0,0.425,0.0,4.5771,0.0,45.8497,Bauchi,Borno,-0.2026,0.22909,-0.0391,0.81846
+2018,DHS,0.1072,535,3243.0,-0.004,0.0,3.93,0.0,22.7749,Abia,Borno,0.0971,0.56736,-0.4692,0.0034
+2021,MICS,0.0918,515,3171.0,0.294,0.0,4.1509,0.0,31.9922,Bauchi,Borno,-0.0608,0.72067,-0.4284,0.00816

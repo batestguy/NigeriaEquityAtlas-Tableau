@@ -1,0 +1,38 @@
+pcode,state,capital,baseline_temp_c,baseline_precip_mm_per_year
+NG-AB,Abia,Umuahia,25.607,2011.6
+NG-AD,Adamawa,Yola,29.026,588.0
+NG-AK,Akwa Ibom,Uyo,25.776,2882.6
+NG-AN,Anambra,Awka,26.642,1492.0
+NG-BA,Bauchi,Bauchi,24.995,1052.3
+NG-BE,Benue,Makurdi,28.076,916.9
+NG-BO,Borno,Maiduguri,27.923,443.8
+NG-BY,Bayelsa,Yenagoa,26.066,2788.9
+NG-CR,Cross River,Calabar,25.682,3123.8
+NG-DE,Delta,Asaba,26.748,1257.3
+NG-EB,Ebonyi,Abakaliki,27.354,1521.4
+NG-ED,Edo,Benin City,25.584,2174.2
+NG-EK,Ekiti,Ado-Ekiti,24.885,1341.9
+NG-EN,Enugu,Enugu,26.635,1613.6
+NG-FC,FCT,Abuja,26.443,1377.4
+NG-GO,Gombe,Gombe,26.979,431.2
+NG-IM,Imo,Owerri,25.835,2337.4
+NG-JI,Jigawa,Dutse,26.725,604.7
+NG-KD,Kaduna,Kaduna,24.93,932.3
+NG-KE,Kebbi,Birnin Kebbi,29.026,456.6
+NG-KN,Kano,Kano,26.107,633.8
+NG-KO,Kogi,Lokoja,28.264,820.7
+NG-KT,Katsina,Katsina,26.528,421.8
+NG-KW,Kwara,Ilorin,26.571,789.4
+NG-LA,Lagos,Ikeja,26.272,1504.1
+NG-NA,Nasarawa,Lafia,27.903,993.7
+NG-NI,Niger,Minna,27.748,1083.9
+NG-OG,Ogun,Abeokuta,26.613,1134.8
+NG-ON,Ondo,Akure,25.041,1546.5
+NG-OS,Osun,Osogbo,25.407,1223.0
+NG-OY,Oyo,Ibadan,25.887,1352.2
+NG-PL,Plateau,Jos,22.207,1182.5
+NG-RI,Rivers,Port Harcourt,25.952,2588.4
+NG-SO,Sokoto,Sokoto,28.792,382.3
+NG-TA,Taraba,Jalingo,27.901,591.0
+NG-YO,Yobe,Damaturu,27.455,425.6
+NG-ZA,Zamfara,Gusau,26.579,552.7

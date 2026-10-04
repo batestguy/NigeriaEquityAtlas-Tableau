@@ -1,3 +1,7 @@
 file,url,sha256,bytes,fetched_utc,note
 geonames_cities5000.zip,https://download.geonames.org/export/dump/cities5000.zip,4e767cb4c93e61455154044113f172d9a620722e3e41e425f8d522ab3f27878a,5708626,2026-10-04,cached
 nga_adm1.geojson,https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1.geojson,64fa218ac3d453cc1e66412ff461c5dfa1a4a1ade0da93b239a9891b587d28f9,2289696,2026-10-04,cached
+ophi_nga_mpi.csv,https://data.humdata.org/dataset/042c1bf4-2942-475f-8cb2-1fb783f8da91/resource/601f51cd-c46a-4ab2-ba0f-8bef62329ddc/download/nga_mpi.csv,f97009b40f0ecde733f4e95931ce4bbb75db95563a4a9bde4d294e622a1dd710,4414,2026-10-04,cached
+ophi_nga_mpi_trends.csv,https://data.humdata.org/dataset/042c1bf4-2942-475f-8cb2-1fb783f8da91/resource/99381c98-d5de-49cf-81c1-5b54d2cddf2f/download/nga_mpi_trends.csv,b33fed58c46ebc08039ecaa6693e305e5d6778659135ff65ccb054ec347d242a,17131,2026-10-04,cached
+ucdp_ged_nga.csv,https://data.humdata.org/dataset/a2260243-108d-4df4-a7e6-a010bcbb553f/resource/9e2fcefc-24ab-4903-88fd-fa089c8edc2b/download/conflict_data_nga.csv,644c013f56f2e5f67c4a6a866026d02433415728c6dc276026562a7b62acef08,5040937,2026-10-04,downloaded
+undp_subnational_results_mpi.xlsx,https://data.humdata.org/dataset/42b16840-3a56-4a20-9314-7aa171f1136c/resource/45b18fbb-ab0d-4f54-ae23-c078f1eccf25/download/subnational-results-mpi.xlsx,80da87a9e96fb848fc256de04cebdcdf2198ca60deef329d06f300ec3abb0d4d,1935836,2026-10-04,cached
