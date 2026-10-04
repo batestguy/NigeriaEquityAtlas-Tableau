@@ -19,7 +19,9 @@ winget install --id Tableau.Public -e --accept-package-agreements --accept-sourc
 Then open `tableau/Nigeria-MPI-Equity-Atlas.twbx` in it. Everything else in this
 repository is built, tested and committed, and the pipeline runs clean end to end. The
 install is the only blocking dependency, and the open-and-render check it unlocks is the
-only verification still missing. Detail in §3a and §6.
+only verification still missing. Nothing is pre-downloaded — the ~1 GB fetch starts
+from zero, and `Temp` was swept clean (one locked 563 MB partial excepted, §3a).
+Detail in §3a and §6.
 
 ---
 
@@ -82,36 +84,50 @@ This distinction matters more than anything else in this document.
 
 ### 3a. Tableau install state, and the one command needed to finish
 
-**Current state: no Tableau application is installed.** Tableau Desktop 2019.4 was
-removed from this machine after it was found to be a dead end (see below), and
-Tableau Public Desktop has **not** been installed yet — that install was started and
-deliberately deferred to the next session.
+**Current state: no Tableau application is installed, and nothing is downloaded.**
+Tableau Desktop 2019.4 was removed from this machine. The Tableau Public Desktop
+install was started twice and cancelled both times — most recently by explicit
+instruction ("don't install, just document"), so installation is a deliberate
+deferral, not an accident.
 
 **The decision, for the record:** the project needs **Tableau Public Desktop**, and
 not the paid Tableau Desktop. They are separate applications; only Desktop was ever
 present, and publishing to Tableau Public is a Tableau Public Desktop capability.
 
-**Install it with winget — the direct download URLs are blocked on this network:**
+**Next session, run this one command:**
 
 ```powershell
 winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
 ```
 
-- Verified available as `Tableau.Public 25.1.463` in the `winget` source.
+- Verified available as `Tableau.Public 25.1.463` in the `winget` source. Expect a
+  **~1 GB download** plus install time; nothing is cached, fetching starts from zero.
 - **Do not fetch the installer from `tableau.com` directly.** Both
   `https://www.tableau.com/downloads/public/pc64` and
   `https://downloads.tableau.com/tssoftware/TableauPublicDesktop-64bit-*.exe` return
-  **HTTP 403** from this network (CDN bot protection). winget resolves and installs it
-  correctly; this was verified up to the point the install was cancelled, and left no
-  partial state behind.
-- The install is interactive enough to be cancelled — it was deliberately aborted and
-  confirmed clean: no package registered, no partial download, disk unchanged at 80 GB
-  free on `C:`.
+  **HTTP 403** from this network (CDN bot protection). winget is the working route.
 
-**After installing, the render test becomes available and should be done immediately.**
-Launch Tableau Public Desktop with `tableau/Nigeria-MPI-Equity-Atlas.twbx`, accept the
-packaged data paths, and confirm all five sheets render and the choropleth draws
-Nigeria's states. That closes the one gap in §3.
+**Cleanup already done, so the next session starts clean.** The cancelled attempts left
+~800 MB of debris in `%LOCALAPPDATA%\Temp`, all removed and verified:
+
+| Removed | Size | Note |
+|---|---|---|
+| `Temp\WinGet\Tableau.Public.25.1.463\DO70B0.tmp` | 537 MB | the partial installer itself |
+| `Temp\WinGet\Gyan.FFmpeg.9.0.2\DOBC03.tmp` | 243 MB | stale partial from an unrelated session; FFmpeg 9.0.2 is already installed and on PATH, so it was redundant |
+| `Temp\tableau-public-mcp\` | 13.5 MB | the downloaded reference workbook (re-fetchable in seconds via `tableau_download_workbook_twbx` + `unpack_twbx` — see §3b) |
+| `Temp\TableauTemp\` + 2019.4 logs + my 8 scratch files | ~4 MB | test-launch debris |
+
+**One residual remains and is documented, not hidden:**
+`Temp\WinGet\Tableau.Public.25.1.463\DO5725.tmp` (~563 MB) is a second partial copy of
+the same installer, held open by a system handle (Delivery Optimization). It could not
+be deleted — stopping `DoSvc` requires elevation this session does not have — and no
+installer process is running, so it is stale, not active (verified static over 20 s).
+It is harmless: Storage Sense ages `%TEMP%` out on its own, or delete it after a reboot
+releases the handle. Do not mistake it for a completed download.
+
+**FFmpeg, for the record** (it came up because its stale temp sat next to Tableau's):
+`Gyan.FFmpeg 9.0.2` **is** installed via winget and works on PATH. Nothing to install;
+the temp file was junk and is gone.
 
 ### 3b. Why Desktop 2019.4 was removed rather than used
 
