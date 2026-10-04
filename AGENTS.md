@@ -10,8 +10,11 @@ The authoritative spec is **`TableauNigeria MPI Equity Atlas.txt`** — read it 
 defines the five visuals, the transformation steps, the deployment workflow, and the free-tier
 constraints. Don't restate it here; follow it.
 
-**Machine map:** `ENVIRONMENTS.md` at the project root. Read §2 (TRAPS), §3 (Python), §10 (command
-cookbook) before running anything. It is verified-by-execution and takes precedence over recollection.
+**Machine map:** `ENVIRONMENTS.md` in the project root — **local only, deliberately not
+committed** (it documents the machine, not the project). Read §2 (TRAPS), §3 (Python),
+§10 (command cookbook) before running anything. It is verified-by-execution and takes
+precedence over recollection. If it is missing, the equivalent essentials are in
+`docs/WORKFLOW.md` and `docs/HANDOFF.md`.
 
 ## Current state
 

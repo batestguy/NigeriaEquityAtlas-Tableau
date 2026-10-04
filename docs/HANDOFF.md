@@ -157,7 +157,7 @@ the data. Keep them in sync with any viz published from this pipeline.
 - `D:\` is a **removable USB SSD**. Copy this repository to `C:\Users\TOSHIBA` before
   unplugging, or the work disappears.
 - Shell state does not persist between tool calls; chain commands with `;` / `&&`.
-- Full machine map: `ENVIRONMENTS.md`.
+- Full machine map: `ENVIRONMENTS.md` (local only — see §8).
 
 ---
 
@@ -165,6 +165,10 @@ the data. Keep them in sync with any viz published from this pipeline.
 
 `ENVIRONMENTS.md` is a machine-specific map (user name, drive layout, git config, and
 the *names* — not values — of API keys present in the environment, plus paths to files
-holding database credentials). It is useful locally and is currently committed. **It
-should not be published to a public repository as-is** — decide deliberately before
-making the repo public, and consider moving it to an ignored path or a private repo.
+holding database credentials). It is useful locally and is **intentionally not
+committed**: the repository is public, and that file describes the machine rather than
+the project. It stays on disk and is listed in `.gitignore`.
+
+If you clone this repository elsewhere, `docs/WORKFLOW.md` and this file carry the
+essentials, but the environment-specific detail (which interpreter, which drives exist)
+will not be there — expect to substitute your own paths in `scripts/run_all.ps1`.

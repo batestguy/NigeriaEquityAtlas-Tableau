@@ -8,3 +8,6 @@ __pycache__/
 .venv/
 # ruff cache
 .ruff_cache/
+
+# Machine-specific map (user name, drive layout, credential locations). Local only -- see docs/HANDOFF.md section 8
+ENVIRONMENTS.md
