@@ -1,0 +1,8 @@
+# Raw downloads: re-fetchable via scripts/01..03, do not commit (sources get updated in place)
+data/raw/*
+!data/raw/_provenance.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,38 @@
+pcode,name_canonical,capital,ophi_pcode,geoboundaries_name,ucdp_adm1_raw
+NG-AB,Abia,Umuahia,NG001,Abia,Abia state
+NG-AD,Adamawa,Yola,NG002,Adamawa,Adamawa state
+NG-AK,Akwa Ibom,Uyo,NG003,Akwa Ibom,Akwa Ibom state
+NG-AN,Anambra,Awka,NG004,Anambra,Anambra state
+NG-BA,Bauchi,Bauchi,NG005,Bauchi,Bauchi state
+NG-BY,Bayelsa,Yenagoa,NG006,Bayelsa,Bayelsa state
+NG-BE,Benue,Makurdi,NG007,Benue,Benue state
+NG-BO,Borno,Maiduguri,NG008,Borno,Borno state
+NG-CR,Cross River,Calabar,NG009,Cross River,Cross River state
+NG-DE,Delta,Asaba,NG010,Delta,Delta state
+NG-EB,Ebonyi,Abakaliki,NG011,Ebonyi,Ebonyi state
+NG-ED,Edo,Benin City,NG012,Edo,Edo state
+NG-EK,Ekiti,Ado-Ekiti,NG013,Ekiti,Ekiti state
+NG-EN,Enugu,Enugu,NG014,Enugu,Enugu state
+NG-FC,FCT,Abuja,NG015,Abuja Federal Capital Territory,Federal Capital territory
+NG-GO,Gombe,Gombe,NG016,Gombe,Gombe state
+NG-IM,Imo,Owerri,NG017,Imo,Imo state
+NG-JI,Jigawa,Dutse,NG018,Jigawa,Jigawa state
+NG-KD,Kaduna,Kaduna,NG019,Kaduna,Kaduna state
+NG-KN,Kano,Kano,NG020,Kano,Kano state
+NG-KT,Katsina,Katsina,NG021,Katsina,Katsina state
+NG-KE,Kebbi,Birnin Kebbi,NG022,Kebbi,Kebbi state
+NG-KO,Kogi,Lokoja,NG023,Kogi,Kogi state
+NG-KW,Kwara,Ilorin,NG024,Kwara,Kwara state
+NG-LA,Lagos,Ikeja,NG025,Lagos,Lagos state
+NG-NA,Nasarawa,Lafia,NG026,Nasarawa,Nasarawa state
+NG-NI,Niger,Minna,NG027,Niger,Niger state
+NG-OG,Ogun,Abeokuta,NG028,Ogun,Ogun state
+NG-ON,Ondo,Akure,NG029,Ondo,Ondo state
+NG-OS,Osun,Osogbo,NG030,Osun,Osun state
+NG-OY,Oyo,Ibadan,NG031,Oyo,Oyo state
+NG-PL,Plateau,Jos,NG032,Plateau,Plateau state
+NG-RI,Rivers,Port Harcourt,NG033,Rivers,Rivers state
+NG-SO,Sokoto,Sokoto,NG034,Sokoto,Sokoto state
+NG-TA,Taraba,Jalingo,NG035,Taraba,Taraba state
+NG-YO,Yobe,Damaturu,NG036,Yobe,Yobe state
+NG-ZA,Zamfara,Gusau,NG037,Zamfara,Zamfara state

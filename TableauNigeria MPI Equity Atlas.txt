@@ -1,0 +1,59 @@
+Project 1: Nigeria MPI Equity Atlas
+Platform: Tableau Public · Data refresh: Google Sheets (daily auto-refresh) · Difficulty: Intermediate
+
+1.1 Project Idea
+An interactive atlas mapping Nigeria's Multidimensional Poverty Index (MPI) at state level, disaggregated by the three MPI dimensions — health, education, and living standards — with overlay layers for conflict exposure and climate anomalies.
+
+1.2 Data Sources & Acquisition
+Source	Data	Access Method	Format
+NBS Microdata Portal	Nigeria MPI Survey 2021, state-level indicators	Free download from microdata.nigerianstat.gov.ng (requires registration)	CSV/Stata
+HDX	Nigeria MPI standardized estimates by admin-1 unit	Direct CSV download from HDX	CSV
+ACLED	Conflict events and fatalities by state	Registration required; free API key at developer.acleddata.com	CSV/JSON
+Open-Meteo	Historical temperature/precipitation for state capitals	Keyless API: archive-api.open-meteo.com/v1/archive	JSON
+Step-by-step acquisition:
+
+MPI data: Register at the NBS Microdata Portal and download the "Nigeria Multidimensional Poverty Index Survey 2021" dataset. The HDX standardized version is available as a direct CSV download and contains MPI incidence (H), intensity (A), and MPI value by state.
+
+Conflict data: Register at developer.acleddata.com, generate an API key, and query events for Nigeria (ISO code: NGA) for 2021–present. The API endpoint format is https://api.acleddata.com/acled/read?key=[KEY]&email=[EMAIL]&country=Nigeria. Export as CSV.
+
+Climate data: Use the Open-Meteo Archive API to pull monthly temperature and precipitation for each state capital. The API is keyless and supports historical data back to 1940.
+
+1.3 Transformation & Preparation
+Step	Action	Tool
+1	Clean MPI CSV: standardize state names (36 states + FCT), handle missing values	Google Sheets / Excel
+2	Merge MPI dimensions: pivot health, education, living standards into separate columns	Google Sheets
+3	Aggregate ACLED: count events and sum fatalities per state per year	Pivot table or Python script
+4	Compute Conflict Exposure Index: normalise event counts and fatalities per 100k population to 0–100 scale	Calculated column
+5	Join climate data: compute annual mean temperature and total precipitation per state	VLOOKUP or merge
+6	Upload final merged dataset to Google Sheets	—
+1.4 Visualization Design
+Visual	Type	Fields	Purpose
+State choropleth	Filled map	State → MPI incidence	Spatial inequality at a glance
+Dimension breakdown	Stacked bar	State → health/education/living standards deprivation %	Which dimension drives poverty?
+Conflict overlay	Dual-axis scatter	MPI incidence (x) vs. conflict exposure index (y)	Does conflict correlate with poverty?
+Climate anomaly	Small multiples	State → temperature anomaly vs. MPI trend	Climate-poverty nexus
+State comparison	Radar chart	Selected state vs. national average across 3 MPI dimensions	Deep dive into one state
+1.5 Tableau Public Deployment Workflow
+Connect: Open Tableau Public Desktop → Connect to Google Sheets → authenticate and select the merged MPI sheet.
+
+Build: Create the five visuals above. Use Tableau's built-in map layers for state boundaries (Tableau recognizes Nigerian state names).
+
+Publish: File → Save to Tableau Public → log in with your free account. The workbook goes live on your public profile immediately.
+
+Refresh: Data auto-syncs from Google Sheets every 24 hours. To update manually, edit the Google Sheet — Tableau will pick up changes within 24 hours.
+
+Embed: Copy the embed code from your Tableau Public profile and paste into any website.
+
+1.6 Critique & Improvements Applied
+Original Weakness	Improvement
+MPI as a single number tells no story	Disaggregated into three dimensions + overlay layers
+No temporal dimension	Added climate anomaly and conflict trends over time
+State names inconsistent across sources	Standardised via a lookup table before merging
+Tableau Public cannot connect to APIs	Used Google Sheets as the intermediary (the only live-refresh source Tableau Public supports)
+No equity lens	Added MPI intensity × incidence quadrant analysis
+1.7 Free-Tier Constraints & Mitigations
+Constraint	Mitigation
+Tableau Public data is publicly downloadable	All data is open-source (NBS, HDX, ACLED under non-commercial licence)
+Max 15M rows	MPI dataset is ~37 rows (one per state); well within limits
+Google Sheets refresh is 24h	Acceptable for survey data that updates annually
+No API connection	Manual export from ACLED API to CSV, then upload to Google Sheets
