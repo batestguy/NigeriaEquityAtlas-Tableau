@@ -786,39 +786,39 @@
         </metadata-records>
       </connection>
       <aliases enabled='yes' />
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal'></column>
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative'></column>
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative'></column>
-      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative'></column>
-      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal'></column>
-      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative'></column>
-      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
-      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative'></column>
-      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative'></column>
-      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal'></column>
-      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal' />
+      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
+      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
@@ -1191,21 +1191,21 @@
         </metadata-records>
       </connection>
       <aliases enabled='yes' />
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
@@ -1227,50 +1227,49 @@
             <datasource caption='Nigeria MPI Atlas' name='federated.0mpiatlas2021' />
           </datasources>
           <datasource-dependencies>
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal'></column>
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative'></column>
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative'></column>
-      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative'></column>
-      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal'></column>
-      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative'></column>
-      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
-      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative'></column>
-      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative'></column>
-      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal'></column>
-      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal' />
+      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
+      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
-        <panes>
       <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
             <breakdown value='auto' />
           </view>
-          <mark class='Map' />
+          <mark class='Automatic' />
           <encodings>
             <lod column='[federated.0mpiatlas2021].[none:state:nk]' />
             <color column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
@@ -1282,7 +1281,6 @@
           </style>
         </pane>
       </panes>
-        </panes>
         <rows></rows>
         <cols>[federated.0mpiatlas2021].[none:state:nk] / [federated.0mpiatlas2021].[sum:lat:qk] + [federated.0mpiatlas2021].[sum:lon:qk]</cols>
       </table>
@@ -1301,44 +1299,43 @@
             <datasource caption='Nigeria MPI Atlas' name='federated.0mpiatlas2021' />
           </datasources>
           <datasource-dependencies>
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal'></column>
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative'></column>
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative'></column>
-      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative'></column>
-      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal'></column>
-      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative'></column>
-      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
-      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative'></column>
-      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative'></column>
-      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal'></column>
-      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal' />
+      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
+      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
-        <panes>
       <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -1356,7 +1353,6 @@
           </style>
         </pane>
       </panes>
-        </panes>
         <rows>[federated.0mpiatlas2021].[sum:contrib_health_pct:qk] + [federated.0mpiatlas2021].[sum:contrib_education_pct:qk] + [federated.0mpiatlas2021].[sum:contrib_living_standards_pct:qk]</rows>
         <cols>[federated.0mpiatlas2021].[none:state:nk]</cols>
       </table>
@@ -1375,44 +1371,43 @@
             <datasource caption='Nigeria MPI Atlas' name='federated.0mpiatlas2021' />
           </datasources>
           <datasource-dependencies>
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal'></column>
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative'></column>
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative'></column>
-      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative'></column>
-      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal'></column>
-      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative'></column>
-      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
-      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative'></column>
-      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative'></column>
-      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal'></column>
-      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal' />
+      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
+      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
-        <panes>
       <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -1432,7 +1427,6 @@
           </style>
         </pane>
       </panes>
-        </panes>
         <rows>[federated.0mpiatlas2021].[sum:conflict_exposure_index:qk]</rows>
         <cols>[federated.0mpiatlas2021].[sum:mpi:qk]</cols>
       </table>
@@ -1451,26 +1445,25 @@
             <datasource caption='Nigeria MPI trends panel' name='federated.0mpipanel2021' />
           </datasources>
           <datasource-dependencies>
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
-        <panes>
       <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -1487,7 +1480,6 @@
           </style>
         </pane>
       </panes>
-        </panes>
         <rows>[federated.0mpipanel2021].[sum:mpi:qk]</rows>
         <cols>[federated.0mpipanel2021].[none:survey_year:nk] + [federated.0mpipanel2021].[none:state:nk]</cols>
       </table>
@@ -1506,44 +1498,43 @@
             <datasource caption='Nigeria MPI Atlas' name='federated.0mpiatlas2021' />
           </datasources>
           <datasource-dependencies>
-      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal'></column>
-      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal'><semantic-values><semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' /></semantic-values></column>
-      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal'></column>
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative'></column>
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative'></column>
-      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative'></column>
-      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal'></column>
-      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative'></column>
-      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative'></column>
-      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative'></column>
-      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative'></column>
-      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal'></column>
-      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative'></column>
-      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative'></column>
-      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative'></column>
-      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal'></column>
-      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal'></column>
-      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative'></column>
-      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative'></column>
-      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative'></column>
-      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative'></column>
-      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative'></column>
-      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative'></column>
-      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative'></column>
-      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative'></column>
-      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal'></column>
-      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal'></column>
-      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal'></column>
-      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal'></column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='quadrant' datatype='string' name='[quadrant]' role='dimension' type='nominal' />
+      <column caption='contrib_health_pct' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_education_pct' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='contrib_living_standards_pct' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='population_thousands' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
+      <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
+      <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
+      <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
+      <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
+      <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
-        <panes>
       <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -1563,7 +1554,6 @@
           </style>
         </pane>
       </panes>
-        </panes>
         <rows>[federated.0mpiatlas2021].[sum:intensity_pct:qk]</rows>
         <cols>[federated.0mpiatlas2021].[sum:headcount_ratio_pct:qk]</cols>
       </table>

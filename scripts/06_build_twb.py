@@ -102,6 +102,17 @@ def ref(column: str, kind: str) -> str:
 
 def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
               default_agg: str = "") -> str:
+    """One <column> declaration.
+
+    Two schema rules learned the hard way, by loading the workbook in Tableau:
+
+    * A column carrying a geographic role must declare ``semantic-role``. Without it
+      Tableau refuses to load with "missing required attribute 'semantic-role'".
+    * ``<semantic-values>`` is **not** a legal child of ``<column>``. It belongs on
+      the datasource, once. Putting it inside the column produces the same
+      "missing required attribute" error, because the schema parser trips over the
+      unexpected child before it ever reads the attributes.
+    """
     extra = f" default-aggregation-type='{default_agg}'" if default_agg else ""
     if datatype == "string":
         type_attr = "nominal"
@@ -109,18 +120,10 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
         type_attr = "ordinal"
     else:
         type_attr = "quantitative"
-    semantic = ""
-    if geographic:
-        # Assign the Nigeria admin-1 role so Tableau's built-in geocoding draws
-        # state polygons instead of treating the name as a plain string.
-        semantic = (
-            "<semantic-values>"
-            "<semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />"
-            "</semantic-values>"
-        )
+    semantic_role = " semantic-role='[State].[Name]'" if geographic else ""
     return (
         f"      <column caption='{escape(name)}' datatype='{datatype}' name='[{escape(name)}]' "
-        f"role='{role}' type='{type_attr}'{extra}>{semantic}</column>\n"
+        f"role='{role}' type='{type_attr}'{semantic_role}{extra} />\n"
     )
 
 
@@ -241,9 +244,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
 {deps}          <aggregation value='true' />
         </view>
         <style />
-        <panes>
-{pane}        </panes>
-        <rows>{rows}</rows>
+{pane}        <rows>{rows}</rows>
         <cols>{cols}</cols>
       </table>
     </worksheet>
@@ -265,7 +266,10 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         "MPI by state",
         rows="",
         cols=f"{ref('state', 'dim')} / {ref('lat', 'sum')} + {ref('lon', 'sum')}",
-        mark="Map",
+        # A filled map is not its own mark class -- it is an Automatic mark over a
+        # geographic field. 'Map' is not in Tableau's mark enumeration and is
+        # rejected on load with "value 'Map' not in enumeration".
+        mark="Automatic",
         encodings=(
             f"            <lod column='{ref('state', 'dim')}' />\n"
             f"            <color column='{ref('mpi', 'sum')}' />\n"
