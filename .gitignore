@@ -6,3 +6,5 @@ data/raw/*
 __pycache__/
 *.pyc
 .venv/
+# ruff cache
+.ruff_cache/
