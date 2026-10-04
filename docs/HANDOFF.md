@@ -149,6 +149,25 @@ and rejected: it is a substantial rewrite of the workbook generator, and it woul
 remove the Tableau Public Desktop requirement, since Desktop still could not publish.
 
 **Net position: the workbook's schema is parser-verified; its render is still unverified.**
+
+### 3c. The MCP situation is settled — no change needed
+
+The connected `tableau` MCP server (`@wjsutton/tableau-public-mcp-server`) **is already
+a Tableau Public server**, not a generic Tableau one. Verified from its own package
+metadata: "MCP server for Tableau Public APIs". It exposes 22 read tools (search,
+profiles, workbook details/contents, thumbnails and rendered images, `.twbx`
+download/unpack/analysis) and every one of them has been used successfully in this
+project.
+
+Tableau also publishes an official server (`@tableau/mcp-server`), but it is for
+**Tableau Cloud/Server only**: it requires a server URL, a site name, and a Personal
+Access Token, and points at `mcp.tableau.com` with OAuth. Tableau Public has none of
+those things, so the official server cannot touch it. Swapping would buy authenticated
+access to a product we do not use, in exchange for losing every Public read tool we
+actually need for post-publish verification.
+
+And no MCP server of any kind can publish to Tableau Public, because Tableau Public
+exposes no write API at all. That constraint is in the product, not the tooling.
 - Note: the Tableau MCP analyser reports `rowShelf`, `colShelf` and `worksheetsIncluded`
   as **empty even for the genuine Tableau-authored reference workbook** it was pointed
   at. Those fields are unimplemented in the analyser, so an empty shelf report is *not*
