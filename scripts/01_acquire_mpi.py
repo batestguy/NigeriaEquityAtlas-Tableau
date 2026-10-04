@@ -24,9 +24,7 @@ data.humdata.org serves the identical CKAN API and is used throughout.
 from __future__ import annotations
 
 import csv
-import io
 import sys
-import zipfile
 from typing import Any
 
 import openpyxl

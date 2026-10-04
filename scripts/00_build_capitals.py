@@ -18,11 +18,8 @@ loudly instead of silently attaching the wrong climate to a state.
 
 from __future__ import annotations
 
-import csv
-import io
 import sys
 import zipfile
-import urllib.request
 from pathlib import Path
 
 from shapely.geometry import Point, shape

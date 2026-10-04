@@ -25,7 +25,7 @@ import urllib.request
 from collections import defaultdict
 from typing import Any
 
-from common import INTERIM, RAW, download, read_capitals, read_lookup, write_csv
+from common import INTERIM, RAW, read_capitals, read_lookup, write_csv
 
 OPEN_METEO = "https://archive-api.open-meteo.com/v1/archive"
 START_YEAR, END_YEAR = 1990, 2024
