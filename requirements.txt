@@ -1,0 +1,17 @@
+# Nigeria Equity Atlas (Tableau) -- pipeline dependencies
+# Install into the working interpreter:
+#   uv pip install --python C:\Users\TOSHIBA\ds-general\python.exe -r requirements.txt
+#
+# Verified against Python 3.12.13 on 2026-10-04.
+#
+# Deliberately NOT pinned to exact versions: the pipeline uses no APIs that have moved
+# recently, and the surrounding environment already carries these. Add upper bounds
+# here if this ever has to run unattended.
+
+scipy>=1.11        # Spearman rho with p-values (poverty/conflict/climate correlation)
+matplotlib>=3.7    # stage 5 preview rendering
+openpyxl>=3.1      # reading the UNDP Global MPI subnational workbook
+shapely>=2.0       # point-in-polygon: event attribution, capital containment checks
+
+# Standard library only beyond the above: urllib, csv, json, zipfile, hashlib.
+# No API keys. No credentials. No network access beyond the public URLs in the scripts.
