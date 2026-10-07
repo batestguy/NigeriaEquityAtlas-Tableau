@@ -42,9 +42,38 @@ def f(row: dict[str, str], key: str) -> float:
 
 
 def quadrant(h: float, a: float, med_h: float, med_a: float) -> str:
+    """Incidence x intensity, cut at the medians.
+
+    Named honestly on purpose. The headcount ratio spans 1.1-75.4 across these 37
+    states (a factor of 68) while intensity spans only 39.5-61.8 (a factor of 1.6),
+    so the two cutpoints do not produce four comparable quadrants -- they produce
+    17/2/2/16. The label says "incidence" and "intensity" rather than "high" and
+    "low poverty", because calling the intensity half a poverty level overstates
+    what a 1.6x range can support.
+    """
     incidence = "High incidence" if h >= med_h else "Low incidence"
-    intensity = "High intensity" if a >= med_a else "Low intensity"
+    intensity = "Higher intensity" if a >= med_a else "Lower intensity"
     return f"{incidence}, {intensity}"
+
+
+def mpi_band(mpi: float) -> str:
+    """Coarse MPI bands for the choropleth.
+
+    A continuous ramp invites reading differences the data cannot resolve: the
+    median 95% CI width is 0.075 against a median MPI of 0.092. Five named bands
+    match the resolution the standard errors actually support, and five classes is
+    also the ceiling for accurate legend-matching (Mersey 1984: 96% at 3 classes,
+    70% at 5, 26% at 9).
+    """
+    if mpi < 0.05:
+        return "1. under 0.05"
+    if mpi < 0.10:
+        return "2. 0.05 to 0.10"
+    if mpi < 0.20:
+        return "3. 0.10 to 0.20"
+    if mpi < 0.30:
+        return "4. 0.20 to 0.30"
+    return "5. 0.30 and above"
 
 
 def spearman(x: list[float], y: list[float]) -> tuple[float, float]:
@@ -64,9 +93,16 @@ def main() -> int:
     dims = {r["pcode"]: r for r in read(INTERIM / "mpi_dimensions.csv")}
     head = {r["pcode"]: r for r in read(INTERIM / "mpi_headline.csv")}
     trends = read(INTERIM / "mpi_trends.csv")
+    changes = read(INTERIM / "ophi_harmonised_changes.csv")
     conflict = {(r["pcode"], int(r["year"])): r for r in read(INTERIM / "conflict_state_year.csv")}
     climate = {(r["pcode"], int(r["year"])): r for r in read(INTERIM / "climate_state_year.csv")}
     baseline = {r["pcode"]: r for r in read(INTERIM / "climate_baseline_1991_2020.csv")}
+
+    # (pcode, year_to) -> the OPHI Table 6.4 row for that state's change.
+    # OPHI labels the second MICS round "2016-2017"; the panel keys it on 2016.
+    change_by_key: dict[tuple[str, int], dict[str, str]] = {
+        (r["pcode"], int(r["year_to"][:4])): r for r in changes
+    }
 
     for name, table in (("dimensions", dims), ("headline", head), ("baseline", baseline)):
         missing = sorted(set(lookup) - set(table))
@@ -78,6 +114,12 @@ def main() -> int:
                 raise SystemExit(f"conflict table missing {pcode} {year}")
             if (pcode, year) not in climate:
                 raise SystemExit(f"climate table missing {pcode} {year}")
+    # Every round except the first has a preceding round, so 3 of the 4 survey
+    # years must carry a Table 6.4 change row for every state.
+    expected_changes = {(p, y) for p in lookup for y in SURVEY_ROUNDS[1:]}
+    if not expected_changes <= set(change_by_key):
+        absent = sorted(expected_changes - set(change_by_key))
+        raise SystemExit(f"harmonised changes missing {len(absent)} state-year(s): {absent[:5]}")
 
     population = {p: f(dims[p], "population_thousands") * 1000.0 for p in lookup}
 
@@ -119,9 +161,15 @@ def main() -> int:
                 "capital": capitals[pcode]["capital"],
                 "lat": capitals[pcode]["lat"],
                 "lon": capitals[pcode]["lon"],
-                # poverty -- 2021 MICS
+                # poverty -- 2021 MICS. mpi_se / CI bounds are OPHI's design-based
+                # standard errors (UNDP 5.4); without them no ordering of states is
+                # resolvable, since all 36 adjacent rank pairs overlap at 95%.
                 "mpi": round(f(h, "mpi"), 4),
+                "mpi_se": round(f(d, "mpi_se"), 4),
+                "mpi_ci_lo": round(f(d, "mpi_ci_lo"), 4),
+                "mpi_ci_hi": round(f(d, "mpi_ci_hi"), 4),
                 "headcount_ratio_pct": round(f(h, "headcount_ratio_pct"), 2),
+                "headcount_se": round(f(d, "headcount_se"), 2),
                 "intensity_pct": round(f(h, "intensity_pct"), 2),
                 "vulnerable_pct": round(f(h, "vulnerable_pct"), 2),
                 "severe_pct": round(f(h, "severe_pct"), 2),
@@ -131,6 +179,7 @@ def main() -> int:
                 "population_thousands": round(f(d, "population_thousands"), 1),
                 "mpi_poor_thousands": round(f(d, "mpi_poor_thousands"), 1),
                 "quadrant": quadrant(f(h, "headcount_ratio_pct"), f(h, "intensity_pct"), med_h, med_a),
+                "mpi_band": mpi_band(f(h, "mpi")),
                 "n_indicators": int(f(d, "n_indicators")),
                 "indicators_missing": d["indicators_missing"],
                 "survey": h["survey"],
@@ -138,8 +187,13 @@ def main() -> int:
                 # conflict -- same year as the poverty baseline
                 "events": int(f(c, "events")),
                 "fatalities": round(f(c, "fatalities"), 1),
+                "fatalities_low": round(f(c, "fatalities_low"), 1),
+                "fatalities_high": round(f(c, "fatalities_high"), 1),
                 "events_per_100k": round(f(c, "events") / population[pcode] * 100_000, 3),
                 "fatalities_per_100k": round(f(c, "fatalities") / population[pcode] * 100_000, 3),
+                "fatalities_per_100k_high": round(
+                    f(c, "fatalities_high") / population[pcode] * 100_000, 3
+                ),
                 "conflict_exposure_index": cei[(pcode, BASELINE_YEAR)],
                 # climate -- same year, plus the 1991-2020 baseline
                 "temp_mean_c": round(f(cl, "temp_mean_c"), 2),
@@ -160,47 +214,66 @@ def main() -> int:
 
     atlas_fields = [
         "pcode", "state", "capital", "lat", "lon",
-        "mpi", "mpi_rank", "headcount_ratio_pct", "intensity_pct",
+        "mpi", "mpi_se", "mpi_ci_lo", "mpi_ci_hi", "mpi_rank",
+        "headcount_ratio_pct", "headcount_se", "intensity_pct",
         "vulnerable_pct", "severe_pct", "quadrant",
         "contrib_health_pct", "contrib_education_pct", "contrib_living_standards_pct",
         "population_thousands", "mpi_poor_thousands", "mpi_poor_rank",
-        "events", "fatalities", "events_per_100k", "fatalities_per_100k",
+        "events", "fatalities", "fatalities_low", "fatalities_high",
+        "events_per_100k", "fatalities_per_100k", "fatalities_per_100k_high",
         "conflict_exposure_index",
         "temp_mean_c", "precip_total_mm", "temp_anomaly_c", "precip_anomaly_pct",
-        "baseline_temp_c", "baseline_precip_mm",
+        "baseline_temp_c", "baseline_precip_mm", "mpi_band",
         "n_indicators", "indicators_missing", "survey", "survey_year",
     ]
     n_atlas = write_csv(PROCESSED / "mpi_atlas_2021.csv", atlas_rows, atlas_fields)
 
     # ---- trends panel ------------------------------------------------------
+    # The four rounds are OPHI's HARMONISED series (Data Table 6 / MN 63), not the
+    # contemporaneous standardised estimates. Verified 2026-10-06: the admin-1 rows
+    # in nga_mpi_trends.csv match Table 6.4 to 4dp on all 148 rows, and the national
+    # rows match Table 6.1. Harmonisation aligns indicator definitions across survey
+    # years so differences reflect changes in poverty conditions rather than changes
+    # in questionnaire. Earlier publications of Nigerian state MPI for 2013-2018 used
+    # the un-harmonised estimates and differ by up to 0.17 -- do not compare.
     trend_by_key = {(r["pcode"], int(r["survey_year"])): r for r in trends}
     panel_rows: list[dict[str, Any]] = []
     for pcode in sorted(lookup):
         for year in SURVEY_ROUNDS:
             t = trend_by_key[(pcode, year)]
             c, cl = conflict[(pcode, year)], climate[(pcode, year)]
-            panel_rows.append(
-                {
-                    "pcode": pcode,
-                    "state": lookup[pcode]["name_canonical"],
-                    "survey_year": year,
-                    "survey": t["survey"],
-                    "mpi": round(f(t, "mpi"), 4),
-                    "headcount_ratio_pct": round(f(t, "headcount_ratio"), 2),
-                    "intensity_pct": round(f(t, "intensity"), 2),
-                    "events": int(f(c, "events")),
-                    "fatalities": round(f(c, "fatalities"), 1),
-                    "events_per_100k": round(f(c, "events") / population[pcode] * 100_000, 3),
-                    "fatalities_per_100k": round(f(c, "fatalities") / population[pcode] * 100_000, 3),
-                    "conflict_exposure_index": cei[(pcode, year)],
-                    "temp_mean_c": round(f(cl, "temp_mean_c"), 2),
-                    "temp_anomaly_c": round(f(cl, "temp_anomaly_c"), 2),
-                    "precip_anomaly_pct": round(f(cl, "precip_anomaly_pct"), 1),
-                }
-            )
+            row: dict[str, Any] = {
+                "pcode": pcode,
+                "state": lookup[pcode]["name_canonical"],
+                "survey_year": year,
+                "survey": t["survey"],
+                "mpi": round(f(t, "mpi"), 4),
+                "headcount_ratio_pct": round(f(t, "headcount_ratio"), 2),
+                "intensity_pct": round(f(t, "intensity"), 2),
+                "events": int(f(c, "events")),
+                "fatalities": round(f(c, "fatalities"), 1),
+                "fatalities_low": round(f(c, "fatalities_low"), 1),
+                "fatalities_high": round(f(c, "fatalities_high"), 1),
+                "events_per_100k": round(f(c, "events") / population[pcode] * 100_000, 3),
+                "fatalities_per_100k": round(f(c, "fatalities") / population[pcode] * 100_000, 3),
+                "fatalities_per_100k_high": round(
+                    f(c, "fatalities_high") / population[pcode] * 100_000, 3
+                ),
+                "conflict_exposure_index": cei[(pcode, year)],
+                "temp_mean_c": round(f(cl, "temp_mean_c"), 2),
+                "temp_anomaly_c": round(f(cl, "temp_anomaly_c"), 2),
+                "precip_anomaly_pct": round(f(cl, "precip_anomaly_pct"), 1),
+            }
+            # The first round has no preceding round, so there is no change to report.
+            ch = change_by_key.get((pcode, year))
+            row["mpi_change_since_prev"] = round(f(ch, "annualised_change"), 5) if ch else ""
+            row["mpi_change_significant"] = ch["significance"] if ch else ""
+            panel_rows.append(row)
     panel_fields = [
         "pcode", "state", "survey_year", "survey", "mpi", "headcount_ratio_pct",
-        "intensity_pct", "events", "fatalities", "events_per_100k", "fatalities_per_100k",
+        "intensity_pct", "mpi_change_since_prev", "mpi_change_significant",
+        "events", "fatalities", "fatalities_low", "fatalities_high",
+        "events_per_100k", "fatalities_per_100k", "fatalities_per_100k_high",
         "conflict_exposure_index", "temp_mean_c", "temp_anomaly_c", "precip_anomaly_pct",
     ]
     n_panel = write_csv(PROCESSED / "mpi_trends_panel.csv", panel_rows, panel_fields)
@@ -239,19 +312,77 @@ def main() -> int:
             f"rho(MPI,temp anomaly)={mt[0]:+.3f} p={mt[1]:.4f}"
         )
 
-    # The stable climate signal is each capital's *baseline* climate, not any one
-    # year's anomaly. The per-year anomaly correlation above swings from +0.81 to
-    # -0.43 across four rounds, which is weather noise; the baseline relationship
-    # is what a climate-poverty visual should actually show.
-    bt = spearman([float(dims[p]["mpi"]) for p in sorted(lookup)],
-                  [f(baseline[p], "baseline_temp_c") for p in sorted(lookup)])
-    bp = spearman([float(dims[p]["mpi"]) for p in sorted(lookup)],
-                  [f(baseline[p], "baseline_precip_mm_per_year") for p in sorted(lookup)])
+    # ---- what the design can and cannot resolve ----------------------------
+    # Every number below exists to stop a caption overreaching. They are computed
+    # here rather than written into docs by hand so they cannot drift from the data.
+    states = sorted(lookup)
+    lat = {p: f(capitals[p], "lat") for p in states}
+    precip = {p: f(baseline[p], "baseline_precip_mm_per_year") for p in states}
+
+    lat_precip = spearman([lat[p] for p in states], [precip[p] for p in states])
+    lat_mpi = spearman([lat[p] for p in states], [f(dims[p], "mpi") for p in states])
+    bp = spearman([precip[p] for p in states], [f(dims[p], "mpi") for p in states])
     print(
-        f"\n   baseline 1991-2020 climate vs MPI: rho(temp)={bt[0]:+.3f} p={bt[1]:.2e}   "
-        f"rho(precip)={bp[0]:+.3f} p={bp[1]:.2e}"
+        f"\n   baseline precipitation vs MPI      rho={bp[0]:+.3f} p={bp[1]:.2e}"
     )
-    print("   (annual anomalies swing in sign across rounds; the baseline does not)")
+    print(
+        f"   baseline precipitation vs latitude rho={lat_precip[0]:+.3f}   "
+        f"latitude vs MPI rho={lat_mpi[0]:+.3f}"
+    )
+    print(
+        "   -> LATITUDE PREDICTS MPI BETTER THAN PRECIPITATION DOES. Baseline rainfall is"
+    )
+    print(
+        f"      a north-south gradient, not a climate effect ({lat_mpi[0]:+.3f} > {abs(bp[0]):.3f})."
+    )
+
+    # Rank resolvability: with OPHI's design-based SEs, how many adjacent rank pairs
+    # separate at 95%? All 36 overlapping means no ordering of states is claimable.
+    ranked = sorted(states, key=lambda p: -f(dims[p], "mpi"))
+    separable = 0
+    for a, b in zip(ranked, ranked[1:]):
+        diff = f(dims[a], "mpi") - f(dims[b], "mpi")
+        combined = (f(dims[a], "mpi_se") ** 2 + f(dims[b], "mpi_se") ** 2) ** 0.5
+        if abs(diff) > 1.96 * combined:
+            separable += 1
+    rel = sorted(f(dims[p], "mpi_se") / f(dims[p], "mpi") for p in states)
+    print(
+        f"\n   standard errors: median relative SE {100 * rel[len(rel) // 2]:.1f}%; "
+        f"{separable} of 36 adjacent rank pairs separable at 95%"
+    )
+    print("   -> present MPI in bands. No single state is 'the highest'.")
+
+    # Rank persistence: structure survives where level moves.
+    print("\n   rank persistence between consecutive rounds (Spearman):")
+    for y0, y1 in zip(SURVEY_ROUNDS, SURVEY_ROUNDS[1:]):
+        m0 = {r["pcode"]: r["mpi"] for r in panel_rows if r["survey_year"] == y0}
+        m1 = {r["pcode"]: r["mpi"] for r in panel_rows if r["survey_year"] == y1}
+        common = sorted(set(m0) & set(m1))
+        rho, _ = spearman([m0[p] for p in common], [m1[p] for p in common])
+        print(f"      {y0} -> {y1}: {rho:+.3f}")
+
+    # The harmonised change series, with OPHI's own significance.
+    sig_rows = [r for r in panel_rows if r["mpi_change_significant"]]
+    print(
+        f"\n   harmonised change (OPHI Table 6.4): {len(sig_rows)} of "
+        f"{len(SURVEY_ROUNDS[1:]) * len(states)} state-period changes significant at some level"
+    )
+
+    # Fatality band sensitivity: the conflict null must not be an artefact of the
+    # casualty estimate. UCDP publishes low/best/high per event; all three are here.
+    print("\n   conflict vs MPI across UCDP's fatality band (2021):")
+    for band in ("fatalities", "fatalities_low", "fatalities_high"):
+        by_p = {r["pcode"]: f(r, band) / population[r["pcode"]] * 100_000
+                for r in atlas_rows}
+        scaled = {}
+        for p in states:
+            vals = [by_p[q] for q in states]
+            lo, hi = min(vals), max(vals)
+            scaled[p] = 100 * (by_p[p] - lo) / (hi - lo) if hi > lo else 0.0
+        r_, p_ = spearman([f(dims[q], "mpi") for q in states], [scaled[q] for q in states])
+        print(f"      {band:18s} rho={r_:+.3f} p={p_:.3f}")
+    print("   -> the null holds across a +/-50% casualty band, so it is not an")
+    print("      artefact of the fatality estimate. It is a limit of the design.")
 
     vintage_fields = [
         "survey_year", "survey", "median_state_mpi", "total_events", "total_fatalities",

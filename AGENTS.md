@@ -30,13 +30,38 @@ Four commits, one per stage. `git log` is the reliable history.
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
 | 4 | `04_merge.py` | the three processed tables + `docs/normalisation.md`, `docs/data_quality.md` |
 | 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx`, validated then packaged |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — Hyper extracts; opens and renders in Tableau Public 2025.1 |
 
-**Remaining manual step:** publishing, and the one install it depends on. No Tableau
-application is currently installed — Tableau Desktop 2019.4 was removed and Tableau
-Public Desktop was deliberately deferred. Install with
-`winget install --id Tableau.Public -e` (the vendor download URLs 403 here), then
-follow `docs/PUBLISH.md`. There is no write API or publishing CLI for Tableau Public.
+**Remaining manual step:** publishing, and it needs your account login. Tableau Public
+Desktop 2025.1 **is installed** at `C:\TableauPublic` — nothing to install. The
+open-and-render check it unblocked has been done: the workbook loads with no error
+dialog and draws. There is no write API or publishing CLI for Tableau Public. Follow
+`docs/PUBLISH.md`, then verify the live URL with the MCP server's
+`get_workbook_image`.
+
+**The route is decided and written up: \docs/FINAL_PATH.md\** -- read that first.
+It records the five decisions (D1 harmonised series, D2 climate layer, D3 conflict
+layer, D4 no causal claim, D5 orderings withdrawn), what the Tableau render test
+found, and what is deliberately left to the GUI.
+
+**Session docs.** \docs/SESSION_HANDOFF.md\ (current state, next steps),
+\docs/CAUSAL_DECISION.md\, \docs/CLAIMS.md\, \docs/FIX_LEDGER.md\.
+
+**Before publishing, read `docs/CLAIMS.md`, `docs/FIX_LEDGER.md` and
+`docs/CAUSAL_DECISION.md`.** They supersede the earlier assumption that the open
+items were cosmetic. They are not: the atlas currently makes three claims it cannot
+support, and OPHI's standard errors — published in a file the pipeline already
+downloads — show that **all 36 adjacent state rank pairs overlap at 95%**. So
+"Bauchi has the highest MPI" is not available, and neither is a causal claim.
+
+Top of the defect list, all resolved this session except the last two: the map was
+never a map (it drew 74 bar charts) and is now a georeferenced scatter called
+`Where poverty sits`; the SEs are wired through and the map is banded;
+`Poverty over time` is a real trend with `state` on Colour. Still open, both
+documented step by step in `docs/PUBLISH.md`: turning the scatter into a filled
+choropleth, and `Dimension breakdown` into a stacked bar — both need the GUI.
+Note the `contrib_*_pct` percent-formatting item is **not** a bug — those columns
+already sum to 100.
 
 ## Corrections to the original spec
 
@@ -51,26 +76,40 @@ The spec was written before the sources were checked. These are settled now:
    per-state index. **UCDP GED replaces it** (open, per-event geocoding, 1990-2024).
    Conflict magnitudes are therefore not comparable to an ACLED-based figure.
 4. **The Google Sheets intermediary is unnecessary.** The workbook ships a packaged
-   CSV extract; there is no live connection to break, and the survey updates
+   Hyper extract; there is no live connection to break, and the survey updates
    annually, so a 24-hour refresh would buy nothing.
 5. **The radar chart is not generated.** A polygon mark driven by computed path
    fields is too fragile to hand-author blind; it is a documented GUI step.
+6. **The packaged data must be a Hyper extract, not a CSV.** Tableau Public refuses
+   any workbook whose datasource is not an extract (`3C242D89`) and does *not* convert
+   one on save — this project assumed it did, for its whole life. Stage 6 writes the
+   `.hyper` files itself with `tableauhyperapi`.
 
 ## Findings that constrain what may be claimed
 
-- **Conflict and poverty are not associated in these data.** Spearman rho is +0.34
-  (2013), -0.20 (2016), +0.10 (2018), -0.06 (2021). Report it as a negative result;
-  never quote a single round as the finding.
-- **Climate must be shown as baseline, not anomaly.** A single year's anomaly
-  correlates with MPI at +0.81 in 2013 and -0.43 in 2021 — it flips sign, so it is
-  weather. Baseline 1991-2020 precipitation holds at rho = -0.80 (p < 0.001).
+- **No conflict-poverty association is *detectable*, and the design cannot detect one.**
+  Spearman rho is +0.34 (2013), -0.20 (2016), +0.10 (2018), -0.06 (2021). Power at
+  n=37 is 0.75 at rho=0.4 and nothing survives Bonferroni. Worse, the conflict variable
+  *undercounts where poverty is highest*: in 2021 the five poorest states all record
+  zero UCDP events. Never report this as a negative result about the world.
+- **Climate is a north-south gradient, not a driver.** Baseline 1991-2020
+  precipitation correlates with MPI at rho = -0.80, but precipitation <-> latitude is
+  -0.903 and latitude <-> MPI is **+0.821 — better than precipitation <-> MPI at
+  -0.801.** The predictor is the outcome's twin. Use OPHI's word: *overlap*.
 - **The Conflict Exposure Index is cross-sectionally relative**, scaled within each
   survey year. Borno takes 100 in 2021 and the other 36 states cluster near zero.
   Anchors are in `data/processed/atlas_vintages.csv`.
-- **Health rests on child mortality alone.** The UNDP "missing indicator" flag reads
-  `Nutrition` for all 37 states — a country-wide exclusion, *not* a per-state gap.
-  (This corrects an earlier reading of it as a comparability break.)
-- **MPI rank persistence is 0.87-0.92** between consecutive survey rounds.
+- **Health rests on child mortality alone**, and is re-weighted to a full one-third.
+  The UNDP "missing indicator" flag reads `Nutrition` for all 37 states — a
+  country-wide exclusion, *not* a per-state gap, so within-Nigeria comparison holds.
+  But Nigeria's Health dimension is structurally heavier than a country's with all
+  ten indicators, so cross-country comparison is forbidden.
+- **MPI rank persistence is 0.87-0.92** between consecutive survey rounds. Level fell;
+  structure held.
+- **The north-west/south-east dimension split is a poverty-level contrast, not a
+  geographic one.** All 12 states with MPI > 0.20 sit in the two northern latitude
+  bands, and among poor states latitude does *not* predict the dimension mix
+  (r = -0.25). Say "poorest states vs the rest".
 
 ## Environment rules that matter here
 
@@ -79,8 +118,7 @@ The spec was written before the sources were checked. These are settled now:
 | Python / data work | `& C:\Users\TOSHIBA\ds-general\python.exe` | bare `python` (= C:\Python314, tooling-only) |
 | Install | `uv pip install --python C:\Users\TOSHIBA\ds-general\python.exe <pkg>` | `pip install` into the wrong interpreter |
 | Stats / geo | `Rscript` | bare `R` (PowerShell alias for `Invoke-History`) |
-| Tableau | `winget install --id Tableau.Public -e` | Tableau Desktop (paid; different app, cannot publish to Public) |
-| Tableau (analysis) | `tableau` MCP server (Public API, read-only) | direct downloads from `tableau.com` — HTTP 403 here |
+| Tableau | `C:\TableauPublic\bin\tabpublic.exe` (installed; `winget install --id Tableau.Public -e` to reinstall) | Tableau Desktop (paid; different app, cannot publish to Public) || Tableau (analysis) | `tableau` MCP server (Public API, read-only) | direct downloads from `tableau.com` — HTTP 403 here |
 | Shell | one call, chained with `;` or `&&` | assuming state persists between calls |
 
 - `D:\` is an **external USB SSD**. Everything here disappears if it's unplugged. Anything that must
@@ -121,7 +159,21 @@ docs/         short notes; the spec lives at the root, not here
 - **No secrets, no absolute machine paths** in committed scripts — resolve paths relative to the repo
   root.
 - **Cite the vintage.** Every output table carries the survey year and the download date; the MPI
-  survey is 2021 and will silently disagree with newer figures.
+  survey is 2021 and will silently disagree with newer figures. The four rounds we download are the
+  *harmonised* series (OPHI Data Table 6, MN 63) — verified numerically against Table 6.4 to 4dp on
+  all 148 admin-1 rows, despite the HDX resource description saying "standardised". Comparability
+  across rounds therefore holds. The flip side: **earlier publications of Nigerian state MPI for
+  2013–2018 used un-harmonised estimates and differ by up to 0.17**, so never compare our figures
+  with an older OPHI release.
+- **No causal language.** The atlas makes a **decomposition** claim, not a causal one. Every causal
+  path is closed at n=37; read `docs/CAUSAL_DECISION.md` before writing a caption. Two specifics:
+  say "poorest states vs the rest", never "north vs south" (all 12 states with MPI > 0.20 are in the
+  two northern bands, so the two are the same observations), and never "not associated" as a claim
+  about the world (the design's power floor is |rho| ~ 0.4, and the conflict variable undercounts
+  where poverty is highest).
+- **Orderings are not resolvable.** OPHI publishes standard errors (`subnational-results-mpi.xlsx`,
+  sheet `5.4 SE & CI Region`, extracted to `data/interim/mpi_se_ci.csv`); median relative SE is 15%
+  and **all 36 adjacent rank pairs overlap at 95%**. Present bands, never a single "highest" state.
 
 ## Build order
 
@@ -140,6 +192,12 @@ everything. The Open-Meteo cache is keyed by pcode and resumes after a rate limi
 ## Verify before claiming done
 
 - Row count is 37 and every state name resolves.
+- `scripts/06_build_twb.py` exits 0 **and** the package contains `.hyper` files, not
+  CSV. Its extract gate reads the schema back out of the files Tableau will open.
+- The workbook opens in Tableau Public with no error dialog. Check the window title
+  reads `Nigeria-MPI-Equity-Atlas`; a failed load shows `Book1`. When in doubt read
+  `%USERPROFILE%\Documents\My Tableau Repository\Logs\log.txt` — it names the exact
+  failing field. Schema-valid XML is **not** sufficient; six defects got past it.
 - The published Tableau Public viz loads — fetch its image via the `tableau` MCP
   server rather than trusting the upload dialog.
 - Conflict and climate layers are not silently empty (a join that matches 0 rows looks

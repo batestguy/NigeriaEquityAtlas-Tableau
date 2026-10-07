@@ -18,7 +18,7 @@ the data does not need, since the MPI survey updates annually.
 
 Sheet inventory
 ---------------
-  1  MPI by state            filled map on the geographic role
+  1  Where poverty sits            filled map on the geographic role
   2  Dimension breakdown     stacked bar, three dimension contributions
   3  Poverty vs conflict     scatter
   4  Poverty over time       line across the four survey rounds
@@ -34,8 +34,10 @@ docs/PUBLISH.md, with the matplotlib preview as the design reference.
 from __future__ import annotations
 
 import csv
+import re
 import sys
 import zipfile
+from pathlib import Path
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
@@ -43,7 +45,7 @@ from common import PROCESSED, REPO_ROOT
 
 DS_NAME = "federated.0mpiatlas2021"
 DS_CAPTION = "Nigeria MPI Atlas"
-CONN_NAME = "textscan.0mpiatlas2021"
+CONN_NAME = "hyper.0mpiatlas2021"
 OUT_DIR = REPO_ROOT / "tableau"
 VERSION = "18.1"
 
@@ -61,8 +63,11 @@ MEASURES = [
     ("mpi_poor_thousands", "real"),
     ("events", "integer"),
     ("fatalities", "real"),
+    ("fatalities_low", "real"),
+    ("fatalities_high", "real"),
     ("events_per_100k", "real"),
     ("fatalities_per_100k", "real"),
+    ("fatalities_per_100k_high", "real"),
     ("conflict_exposure_index", "real"),
     ("temp_mean_c", "real"),
     ("precip_total_mm", "real"),
@@ -70,6 +75,13 @@ MEASURES = [
     ("precip_anomaly_pct", "real"),
     ("baseline_temp_c", "real"),
     ("baseline_precip_mm", "real"),
+    # OPHI's design-based standard error and 95% bounds (UNDP 5.4). Carried so
+    # the map can show an uncertainty interval instead of implying that 37 point
+    # estimates are 37 distinguishable values.
+    ("mpi_se", "real"),
+    ("mpi_ci_lo", "real"),
+    ("mpi_ci_hi", "real"),
+    ("headcount_se", "real"),
     ("mpi_rank", "integer"),
     ("mpi_poor_rank", "integer"),
     ("lat", "real"),
@@ -80,6 +92,7 @@ DIMENSIONS = [
     "state",
     "capital",
     "quadrant",
+    "mpi_band",
     "indicators_missing",
     "survey",
     "n_indicators",
@@ -87,9 +100,11 @@ DIMENSIONS = [
 ]
 
 PANEL_MEASURES = ["mpi", "headcount_ratio_pct", "intensity_pct", "events", "fatalities",
-                  "events_per_100k", "conflict_exposure_index", "temp_mean_c",
-                  "temp_anomaly_c", "precip_anomaly_pct"]
-PANEL_DIMS = ["pcode", "state", "survey_year", "survey"]
+                  "fatalities_low", "fatalities_high", "events_per_100k",
+                  "fatalities_per_100k", "fatalities_per_100k_high",
+                  "conflict_exposure_index", "temp_mean_c",
+                  "temp_anomaly_c", "precip_anomaly_pct", "mpi_change_since_prev"]
+PANEL_DIMS = ["pcode", "state", "survey_year", "survey", "mpi_change_significant"]
 
 
 def ref(column: str, kind: str) -> str:
@@ -98,6 +113,9 @@ def ref(column: str, kind: str) -> str:
         return f"[{DS_NAME}].[none:{column}:nk]"
     agg = "sum" if kind == "sum" else "avg"
     return f"[{DS_NAME}].[{agg}:{column}:qk]"
+
+
+
 
 
 def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
@@ -120,71 +138,126 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
         type_attr = "ordinal"
     else:
         type_attr = "quantitative"
-    semantic_role = " semantic-role='[State].[Name]'" if geographic else ""
+    # The coordinate columns need their own semantic roles. Verified in the
+    # application 2026-10-06: with [Geographical].[Latitude] and
+    # [Geographical].[Longitude] absent, Tableau treats lat and lon as two
+    # unrelated measures and draws a text table or a bar chart, never a map.
+    if name == "lat":
+        semantic_role = " semantic-role='[Geographical].[Latitude]'"
+    elif name == "lon":
+        semantic_role = " semantic-role='[Geographical].[Longitude]'"
+    elif geographic:
+        semantic_role = " semantic-role='[State].[Name]'"
+    else:
+        semantic_role = ""
     return (
         f"      <column caption='{escape(name)}' datatype='{datatype}' name='[{escape(name)}]' "
         f"role='{role}' type='{type_attr}'{semantic_role}{extra} />\n"
     )
 
 
-def datasource_xml(columns: list[tuple[str, str, str]], csv_filename: str, row_count: int) -> str:
-    """One datasource over a packaged CSV, with every column declared explicitly."""
-    ordinals = []
+# Hyper spells 64-bit floats "DOUBLE PRECISION"; bare DOUBLE collides with a
+# domain of that name. The catalog reports the type back as DOUBLE, which is why
+# the DDL spelling and the read-back spelling are kept apart.
+HYPER_DDL_TYPE = {"string": "TEXT", "integer": "BIGINT", "real": "DOUBLE PRECISION"}
+HYPER_CATALOG_TYPE = {"string": "TEXT", "integer": "BIG_INT", "real": "DOUBLE"}
+
+ATLAS_HYPER = "mpi_atlas_2021.hyper"
+PANEL_HYPER = "mpi_trends_panel.hyper"
+
+
+def build_hyper(csv_path: Path, out_path: Path,
+                columns: list[tuple[str, str, str]]) -> int:
+    """Write a CSV to a Hyper extract at Extract.Extract, returning the row count.
+
+    Tableau Public will only publish workbooks backed by extracts, and it expects
+    the packaged file to hold a single table named Extract in a schema named
+    Extract -- the same layout Tableau itself writes.
+
+    This build of the Hyper API has no parameter binding, so values go into the
+    INSERT as literals. That is fine at 37 and 148 rows; it is not the shape to
+    use if this ever runs over a table large enough for statement limits to bite.
+    """
+    from tableauhyperapi import (
+        Connection,
+        CreateMode,
+        HyperProcess,
+        Telemetry,
+    )
+
+    with csv_path.open(newline="", encoding="utf-8-sig") as fh:
+        rows = list(csv.DictReader(fh))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def literal(value: str, datatype: str) -> str:
+        if value == "":
+            return "NULL"
+        if datatype == "integer":
+            return str(int(value))
+        if datatype == "real":
+            return repr(float(value))
+        return "'" + value.replace("'", "''") + "'"
+
+    definition = ", ".join(
+        f'"{name}" {HYPER_DDL_TYPE[datatype]}' for name, datatype, _role in columns
+    )
+
+    with HyperProcess(Telemetry.DO_NOT_SEND_USAGE_DATA_TO_TABLEAU) as process:
+        with Connection(
+            endpoint=process.endpoint,
+            database=out_path,
+            create_mode=CreateMode.CREATE_AND_REPLACE,
+        ) as conn:
+            conn.execute_command('CREATE SCHEMA IF NOT EXISTS "Extract"')
+            conn.execute_command(f'CREATE TABLE "Extract"."Extract" ({definition})')
+            for row in rows:
+                values = ", ".join(literal(row[name], datatype) for name, datatype, _ in columns)
+                conn.execute_command(f'INSERT INTO "Extract"."Extract" VALUES ({values})')
+    return len(rows)
+
+
+def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row_count: int,
+                   instances: str = "", extra_columns: str = "") -> str:
+    """One datasource over a packaged Hyper extract, with every column declared.
+
+    Tableau Public refuses any workbook whose datasource is not an extract
+    ("Workbooks saved to Tableau Public must use extracts", error 3C242D89), so
+    the packaged data is a Hyper file rather than the source CSV. Tableau reads
+    the column types from that file, which is why no <metadata-records> are
+    written here: they are a cache Tableau maintains, and hand-writing them
+    against the old textscan type codes would only contradict the real schema.
+
+    ``instances`` are the <column-instance> elements for the fields the worksheets
+    place on shelves. They belong on the datasource, not only in the worksheets:
+    Tableau builds a datasource's field list from its <column> and
+    <column-instance> children, and a shelf reference with no instance behind it
+    loads as "the field does not exist in your database" (error 9CA7205B).
+    """
     cols = []
-    for i, (name, datatype, role) in enumerate(columns):
-        ordinals.append(
-            f"                  <column datatype='{datatype}' name='{escape(name)}' ordinal='{i}' />"
-        )
+    for name, datatype, role in columns:
         cols.append(col_block(name, datatype, role, geographic=(name == "state")))
 
-    last_col = chr(ord("A") + (len(columns) - 1) % 26) if len(columns) <= 26 else "A"
-    grid = f"A1:{last_col}{row_count + 1}"
-    remote_types = {"string": "129", "integer": "20", "real": "5"}
-    metadata = []
-    for name, datatype, _role in columns:
-        metadata.append(
-            "            <metadata-record class='column'>\n"
-            f"              <remote-name>{escape(name)}</remote-name>\n"
-            f"              <remote-type>{remote_types[datatype]}</remote-type>\n"
-            f"              <local-name>[{escape(name)}]</local-name>\n"
-            f"              <parent-name>[{escape(csv_filename)}]</parent-name>\n"
-            f"              <remote-alias>{escape(name)}</remote-alias>\n"
-            f"              <ordinal>{columns.index((name, datatype, _role))}</ordinal>\n"
-            f"              <family>{'quantitative' if datatype != 'string' else 'nominal'}</family>\n"
-            f"              <local-type>{datatype}</local-type>\n"
-            "              <aggregation>Sum</aggregation>\n"
-            "            </metadata-record>"
-        )
-
-    col_tags = "\n".join(ordinals)
-    meta_tags = "\n".join(metadata)
     col_blocks = "".join(cols)
+    dbname = f"Data/{hyper_filename}"
     return f"""    <datasource caption='{DS_CAPTION}' inline='true' name='{DS_NAME}' version='{VERSION}'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='{csv_filename}' name='{CONN_NAME}'>
-            <connection class='textscan' directory='Data' filename='{csv_filename}'>
-              <relation name='{csv_filename}' table='[{csv_filename}#csv]' type='table'>
-                <columns gridOrigin='{grid}' header='yes' outcome='2'>
-{col_tags}
-                </columns>
-              </relation>
-              <metadata-records>
-{meta_tags}
-              </metadata-records>
+          <named-connection caption='Extract' name='{CONN_NAME}'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='{dbname}' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
             </connection>
           </named-connection>
         </named-connections>
-        <relation connection='{CONN_NAME}' name='{csv_filename}' table='[{csv_filename}#csv]' type='table' />
-        <cols>
-          <map key='[state]' value='[Data].[state]' />
-        </cols>
-        <metadata-records>
-{meta_tags}
-        </metadata-records>
+        <relation connection='{CONN_NAME}' name='Extract' table='[Extract].[Extract]' type='table' />
       </connection>
       <aliases enabled='yes' />
-{col_blocks}      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+{extra_columns}{col_blocks}{instances}      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='{dbname}' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
@@ -192,13 +265,50 @@ def datasource_xml(columns: list[tuple[str, str, str]], csv_filename: str, row_c
 """
 
 
+FIELD_REF = re.compile(
+    r"\[[A-Za-z0-9_.]+\]\.\[(?P<agg>[a-z]+):(?P<field>[^\]:]+):(?P<kind>[a-z]+)\]"
+)
+
+DERIVATION = {"none": "None", "sum": "Sum", "avg": "Avg", "min": "Min", "max": "Max",
+              "cnt": "Count", "attr": "Attribute", "usr": "User"}
+KIND_TYPE = {"nk": "nominal", "ok": "ordinal", "qk": "quantitative"}
+
+
+def column_instances(*texts: str) -> str:
+    """A <column-instance> for every field the worksheet actually places.
+
+    Tableau will not resolve a shelf reference such as [ds].[sum:lat:qk] unless
+    the worksheet also declares that instance. Declaring the <column> is not
+    enough: the reference alone loads as "the field does not exist in your
+    database" (error 9CA7205B), one field at a time.
+
+    Deriving these from the finished shelves keeps the two in step, so a field
+    cannot be added to a shelf without its instance following automatically.
+    """
+    ordered: list[tuple[str, str, str]] = []
+    for text in texts:
+        for match in FIELD_REF.finditer(text or ""):
+            item = (match.group("field"), match.group("agg"), match.group("kind"))
+            if item not in ordered:
+                ordered.append(item)
+
+    out = []
+    for field, agg, kind in ordered:
+        derivation = DERIVATION.get(agg, agg.capitalize())
+        field_type = KIND_TYPE.get(kind, "quantitative")
+        out.append(
+            f"      <column-instance column='[{escape(field)}]' derivation='{derivation}' "
+            f"name='[{agg}:{escape(field)}:{kind}]' pivot='key' type='{field_type}' />\n"
+        )
+    return "".join(out)
+
+
 def deps_xml(columns: list[tuple[str, str, str]]) -> str:
     """The per-worksheet column block real Tableau writes.
 
     Tableau repeats the datasource's columns inside every worksheet that uses it
-    (<datasource-dependencies>). Omitting it still opens in Tableau, but shelf
-    fields then cannot be resolved by workbook analysers -- and this project's
-    only structural check is an analyser.
+    (<datasource-dependencies>). The matching <column-instance> elements are added
+    by worksheet_xml, which can see which fields the shelves actually reference.
     """
     body = "".join(
         col_block(name, datatype, role, geographic=(name == "state")) for name, datatype, role in columns
@@ -228,6 +338,16 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
         </pane>
       </panes>
 """
+    instances = column_instances(rows, cols, encodings)
+    if instances:
+        closing = "          </datasource-dependencies>"
+        if closing in deps:
+            deps = deps.replace(closing, f"{instances}{closing}")
+        else:
+            deps = (
+                "          <datasource-dependencies>\n"
+                f"{instances}{closing}\n{deps}"
+            )
     return f"""    <worksheet name='{escape(name)}'>
       <layout-options>
         <title>
@@ -253,7 +373,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
 
 PANEL_DS_NAME = "federated.0mpipanel2021"
 PANEL_DS_CAPTION = "Nigeria MPI trends panel"
-PANEL_CONN = "textscan.0mpipanel2021"
+PANEL_CONN = "hyper.0mpipanel2021"
 
 
 def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
@@ -261,37 +381,81 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     atlas_deps = deps_xml(atlas_columns)
     panel_deps = deps_xml(panel_columns)
 
-    # ---- sheet 1: filled map ------------------------------------------------
+    # ---- sheet 1: geographic view -------------------------------------------
+    # Verified 2026-10-06 by opening the workbook in Tableau Public and LOOKING at
+    # it -- the first time this has been done. Four attempts, recorded because the
+    # next person will otherwise repeat them:
+    #
+    #   1. cols = state / SUM(lat) + SUM(lon)  ->  74 small lat/lon BAR CHARTS.
+    #      The old handoff called this "opens and renders"; the workbook loaded,
+    #      the map did not exist. This is the defect nobody checked.
+    #   2. Hand-written [Latitude (generated)] / [Longitude (generated)] on the
+    #      shelves, WITH matching <column> declarations -> red unresolved pill on
+    #      Columns, blank canvas. Those fields are synthesised by Tableau; declaring
+    #      them by hand conflicts with the real definition.
+    #   3. No coordinates on the shelves at all, geographic role on `state` alone
+    #      -> renders 37 coloured numbers as a text table. The role is not enough
+    #      on its own; Tableau needs the coordinate fields present too.
+    #   4. This: raw lat/lon as AVG on Rows/Columns. state on Detail carries the
+    #      [State].[Name] role and the raw lat/lon carry [Geographical] roles, so
+    #      Tableau treats the two measures as a coordinate pair and draws the map.
+    #
+    # Colour is the *band*, not the continuous MPI: with a median 95% CI width of
+    # 0.075 against a median MPI of 0.092, a ramp invites the reader to resolve
+    # differences the data cannot support. All 36 adjacent rank pairs overlap at
+    # 95%, so there is no ordering to show.
     sheet_map = worksheet_xml(
-        "MPI by state",
-        rows="",
-        cols=f"{ref('state', 'dim')} / {ref('lat', 'sum')} + {ref('lon', 'sum')}",
+        "Where poverty sits",
+        rows=ref("lat", "avg"),
+        cols=ref("lon", "avg"),
         # A filled map is not its own mark class -- it is an Automatic mark over a
         # geographic field. 'Map' is not in Tableau's mark enumeration and is
         # rejected on load with "value 'Map' not in enumeration".
         mark="Automatic",
         encodings=(
             f"            <lod column='{ref('state', 'dim')}' />\n"
-            f"            <color column='{ref('mpi', 'sum')}' />\n"
-        ),
-        deps=atlas_deps,
-    )
-
-    # ---- sheet 2: stacked bar ----------------------------------------------
-    sheet_bar = worksheet_xml(
-        "Dimension breakdown",
-        rows=f"{ref('contrib_health_pct', 'sum')} + {ref('contrib_education_pct', 'sum')} "
-             f"+ {ref('contrib_living_standards_pct', 'sum')}",
-        cols=ref("state", "dim"),
-        mark="Bar",
-        encodings=(
-            f"            <color column='{ref('contrib_health_pct', 'sum')}' />\n"
+            f"            <color column='{ref('mpi_band', 'dim')}' />\n"
             f"            <text column='{ref('mpi', 'sum')}' />\n"
         ),
         deps=atlas_deps,
     )
 
+    # ---- sheet 2: dimension breakdown ---------------------------------------
+    # Verified 2026-10-06 in the application. The Measure Names / Measure Values
+    # pair was tried first, because that is what a stacked bar needs, and it did
+    # NOT work from hand-written XML: without a Measure Values filter Tableau sums
+    # every measure on the shelf, so the sheet drew one 18,000-tall bar per state
+    # with all three dimension shares stacked into it. Reproducing that pair
+    # correctly needs the <measure-values> filter element as well.
+    #
+    # So this is reverted to three separate measures on Rows, which renders as three
+    # aligned panes. That is a real change from the old single-measure layout but
+    # it is NOT a stacked bar, and the sheet title says so. Finishing this properly
+    # is a five-click GUI step (Analysis > Measure Names/Values), documented in
+    # docs/PUBLISH.md alongside the radar chart.
+    #
+    # What IS fixed here: each measure is on the shelf separately so all three are
+    # visible and comparable, and the colour binding no longer carries a different
+    # measure than bar length.
+    sheet_bar = worksheet_xml(
+        "Dimension breakdown (three panels, not stacked)",
+        rows=f"{ref('contrib_health_pct', 'sum')} + {ref('contrib_education_pct', 'sum')} "
+             f"+ {ref('contrib_living_standards_pct', 'sum')}",
+        cols=ref("state", "dim"),
+        mark="Bar",
+        # No text encoding. The MPI label was inherited from the old layout and it
+        # reads as a data label on a bar whose length is a dimension SHARE, which
+        # is exactly the confusion this sheet should not have. The value is on the
+        # map and in the tooltip instead.
+        encodings="",
+        deps=atlas_deps,
+    )
+
     # ---- sheet 3: poverty vs conflict --------------------------------------
+    # No size encoding: fatalities is a raw count on a plot whose axes are an index
+    # and a per-100k relative scale, and Borno's 2,027 deaths dominate the size
+    # scale so every other state collapses to a dot. quadrant goes on Shape as well
+    # as Colour, because colour alone fails WCAG 1.4.1.
     sheet_scatter = worksheet_xml(
         "Poverty vs conflict",
         rows=ref("conflict_exposure_index", "sum"),
@@ -300,20 +464,24 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         encodings=(
             f"            <lod column='{ref('state', 'dim')}' />\n"
             f"            <color column='{ref('quadrant', 'dim')}' />\n"
+            f"            <shape column='{ref('quadrant', 'dim')}' />\n"
             f"            <text column='{ref('state', 'dim')}' />\n"
-            f"            <size column='{ref('fatalities', 'sum')}' />\n"
         ),
         deps=atlas_deps,
     )
 
     # ---- sheet 4: poverty over time ----------------------------------------
+    # state must come off Columns. As a second discrete field on Columns it
+    # produces 37 side-by-side single-point panes and the trend is invisible; on
+    # Colour it produces 37 lines on one shared axis, which is the actual finding.
     sheet_trend = worksheet_xml(
         "Poverty over time",
         rows=f"[{PANEL_DS_NAME}].[sum:mpi:qk]",
-        cols=f"[{PANEL_DS_NAME}].[none:survey_year:nk] + [{PANEL_DS_NAME}].[none:state:nk]",
+        cols=f"[{PANEL_DS_NAME}].[none:survey_year:nk]",
         mark="Line",
         encodings=(
             f"            <lod column='[{PANEL_DS_NAME}].[none:state:nk]' />\n"
+            f"            <color column='[{PANEL_DS_NAME}].[none:state:nk]' />\n"
         ),
         deps=panel_deps,
         ds_name=PANEL_DS_NAME,
@@ -321,6 +489,8 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     )
 
     # ---- sheet 5: incidence x intensity ------------------------------------
+    # Size dropped: corr(headcount_ratio, mpi_poor_thousands) is +0.942, so the size
+    # channel was encoding the x-axis a second time and telling the reader nothing.
     sheet_quadrant = worksheet_xml(
         "Incidence vs intensity",
         rows=ref("intensity_pct", "sum"),
@@ -329,39 +499,85 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         encodings=(
             f"            <lod column='{ref('state', 'dim')}' />\n"
             f"            <color column='{ref('quadrant', 'dim')}' />\n"
+            f"            <shape column='{ref('quadrant', 'dim')}' />\n"
             f"            <text column='{ref('state', 'dim')}' />\n"
-            f"            <size column='{ref('mpi_poor_thousands', 'sum')}' />\n"
         ),
         deps=atlas_deps,
     )
 
-    dashboards = """  <dashboards>
+    # The methodology text lives on the dashboard canvas, not in the viz
+    # description. Every caveat the atlas depends on -- the Nutrition exclusion,
+    # the cross-sectionally relative conflict index, zero-reported-event states,
+    # the unresolvable rank ordering -- is otherwise invisible to a reader, and a
+    # reviewer looking at the published viz would have to find it in the repo.
+    method_text = (
+        "Poverty: OPHI / UNDP Global MPI, harmonised series (Data Table 6, MN 63). "
+        "Nutrition was not collected in any Nigerian round, so Health rests on child "
+        "mortality alone and takes the full one-third dimension weight; within-Nigeria "
+        "comparison holds, cross-country does not. "
+        "Standard errors are OPHI's design-based ones: the median relative SE is 15%, "
+        "and all 36 adjacent state rank pairs overlap at 95%, so no single state is "
+        "statistically 'the highest'. Map colours are bands, not a continuous ramp. "
+        "Conflict: UCDP GED 24.1, CC BY-IGO. The exposure index is scaled within each "
+        "survey year, so 100 means most of these 37 states that year, not an absolute "
+        "level. Ten states recorded no UCDP event in 2021, which reflects reporting "
+        "coverage as much as absence of violence; the conflict variable undercounts "
+        "most in the poorest states, so the absence of a detected association is a "
+        "limit of the design (n=37, power 0.75 at rho=0.4) and not evidence of none. "
+        "Climate: Open-Meteo Archive API at state capitals, CC BY. Baseline rainfall is "
+        "a north-south gradient rather than a driver -- latitude predicts MPI better "
+        "than precipitation does -- so it is shown for context only. "
+        "Boundaries: geoBoundaries ADM1, CC BY 4.0. Capitals: GeoNames, CC BY 4.0. "
+        "Pipeline: reproducible, 37/37 states at every stage."
+    )
+
+    kpi_text = (
+        "National MPI 0.175 (2021)   |   Median relative SE 15%   |   "
+        "All 36 adjacent rank pairs overlap at 95%   |   "
+        "Rank persistence 0.87-0.92   |   "
+        "Poorest 12 states 40% education-driven vs 22% elsewhere"
+    )
+
+    text_zone = (
+        "          <zone h='9000' id='20' type-v2='text' w='160000' x='0' y='0'>\n"
+        f"            <formatted-text><run fontcolor='#3b3b3b' fontsize='10'>{escape(method_text)}"
+        "</run></formatted-text>\n"
+        "          </zone>\n"
+    )
+    kpi_zone = (
+        "          <zone h='7000' id='21' type-v2='text' w='160000' x='0' y='9000'>\n"
+        f"            <formatted-text><run bold='true' fontcolor='#1a1a1a' fontsize='12'>"
+        f"{escape(kpi_text)}</run></formatted-text>\n"
+        "          </zone>\n"
+    )
+
+    dashboards = f"""  <dashboards>
     <dashboard name='Equity Atlas'>
       <layout-options>
         <title>
           <formatted-text>
             <run bold='true' fontsize='16'>Nigeria Multidimensional Poverty Equity Atlas</run>
-            <run fontsize='10'>  MICS 2021 &#183; 36 states + FCT</run>
+            <run fontsize='10'>  MICS 2021 &#183; 36 states + FCT &#183; OPHI harmonised series</run>
           </formatted-text>
         </title>
       </layout-options>
       <style />
-      <size maxheight='1400' maxwidth='1600' minheight='1400' minwidth='1600' />
+      <size maxheight='1500' maxwidth='1600' minheight='1500' minwidth='1600' />
       <zones>
-        <zone h='140000' id='3' type-v2='layout-basic' w='160000' x='0' y='0'>
-          <zone h='52000' id='4' name='MPI by state' w='160000' x='0' y='62000' />
-          <zone h='62000' id='5' name='Dimension breakdown' w='58000' x='0' y='0' />
-          <zone h='62000' id='6' name='Poverty vs conflict' w='52000' x='58000' y='0' />
-          <zone h='62000' id='7' name='Incidence vs intensity' w='50000' x='110000' y='0' />
-          <zone h='78000' id='8' name='Poverty over time' w='160000' x='0' y='62000' />
+        <zone h='150000' id='3' type-v2='layout-basic' w='160000' x='0' y='0'>
+{text_zone}{kpi_zone}          <zone h='51000' id='4' name='Where poverty sits' w='160000' x='0' y='57000' />
+          <zone h='51000' id='5' name='Dimension breakdown (three panels, not stacked)' w='58000' x='0' y='16000' />
+          <zone h='51000' id='6' name='Poverty vs conflict' w='52000' x='58000' y='16000' />
+          <zone h='51000' id='7' name='Incidence vs intensity' w='50000' x='110000' y='16000' />
+          <zone h='77000' id='8' name='Poverty over time' w='160000' x='0' y='73000' />
         </zone>
       </zones>
     </dashboard>
   </dashboards>
 """
 
-    windows = """  <windows source-height='1400'>
-    <window class='worksheet' name='MPI by state'>
+    windows = """  <windows source-height='1500'>
+    <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
           <strip size='160'>
@@ -377,7 +593,7 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         </edge>
       </cards>
     </window>
-    <window class='worksheet' name='Dimension breakdown'>
+    <window class='worksheet' name='Dimension breakdown (three panels, not stacked)'>
       <cards>
         <edge name='left'>
           <strip size='160'>
@@ -423,8 +639,8 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     </window>
     <window class='dashboard' name='Equity Atlas'>
       <viewpoints>
-        <viewpoint name='MPI by state' />
-        <viewpoint name='Dimension breakdown' />
+        <viewpoint name='Where poverty sits' />
+        <viewpoint name='Dimension breakdown (three panels, not stacked)' />
         <viewpoint name='Poverty vs conflict' />
         <viewpoint name='Poverty over time' />
         <viewpoint name='Incidence vs intensity' />
@@ -434,9 +650,22 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
   </windows>
 """
 
-    atlas_ds = datasource_xml(atlas_columns, "mpi_atlas_2021.csv", atlas_rows)
-    panel_ds = datasource_xml(panel_columns, "mpi_trends_panel.csv", panel_rows)
-    panel_ds = panel_ds.replace(DS_NAME, PANEL_DS_NAME).replace(CONN_NAME, PANEL_CONN)
+    atlas_sheets = " ".join([sheet_map, sheet_bar, sheet_scatter, sheet_quadrant])
+    panel_sheets = " ".join([sheet_trend])
+    atlas_instances = column_instances(atlas_sheets)
+    atlas_ds = datasource_xml(
+        atlas_columns, ATLAS_HYPER, atlas_rows, atlas_instances,
+    )
+    panel_ds = datasource_xml(
+        panel_columns, PANEL_HYPER, panel_rows, column_instances(panel_sheets)
+    )
+    # The caption must change too: Tableau keys datasource identity on it, and two
+    # datasources sharing one caption trips UniqueDataSource on open.
+    panel_ds = (
+        panel_ds.replace(DS_NAME, PANEL_DS_NAME)
+        .replace(CONN_NAME, PANEL_CONN)
+        .replace(f"caption='{DS_CAPTION}'", f"caption='{PANEL_DS_CAPTION}'", 1)
+    )
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -469,6 +698,18 @@ def validate(xml: str, declared: set[str]) -> list[str]:
             problems.append(f"unparseable field reference {token}")
             continue
         parts = tail.group(1).split(":")
+        # Tableau's generated geographic fields are synthesised, not columns in
+        # the extract, so they cannot resolve against `declared` either.
+        if parts[0] in {"Multiple Fields", "Multiple Values"} or "generated" in parts[1]:
+            continue
+        if len(parts) < 2:
+            problems.append(f"unparseable field reference {token}")
+            continue
+        # Measure Names and Measure Values are Tableau's own generated fields, not
+        # columns in the extract. They carry no aggregation prefix and are declared
+        # by Tableau itself, so they cannot resolve against `declared`.
+        if parts[0] in {"Multiple Fields", "Multiple Values"}:
+            continue
         if len(parts) < 2:
             problems.append(f"unparseable field reference {token}")
             continue
@@ -483,46 +724,56 @@ def validate(xml: str, declared: set[str]) -> list[str]:
     return problems
 
 
-def check_csv_alignment(xml: str) -> list[str]:
-    """Confirm declared column ordinals match the packaged CSV header order.
+def check_hyper_schema(
+    pairs: list[tuple[str, Path, list[tuple[str, str, str]]]],
+    row_counts: dict[str, int],
+) -> list[str]:
+    """Confirm each packaged Hyper's real column order matches the declared columns.
 
-    This is the failure that would actually hurt: a mismatch between
-    <column ordinal='N'> and the real header position would silently attach the
-    wrong field to every visual, and nothing else in the pipeline would notice,
-    because Tableau reports no error for a mis-declared column order.
+    This is the failure that would actually hurt: a declared <column> list that
+    disagrees with the extract silently attaches the wrong field to every visual,
+    and nothing upstream would notice. Reading the schema back out of the .hyper
+    checks the file Tableau will actually open, which is stronger than the CSV
+    header check this replaced.
     """
-    import re
+    from tableauhyperapi import Connection, HyperProcess, TableName, Telemetry
 
     problems: list[str] = []
-    for filename in ("mpi_atlas_2021.csv", "mpi_trends_panel.csv"):
-        csv_path = PROCESSED / filename
-        with csv_path.open(newline="", encoding="utf-8-sig") as fh:
-            header = next(csv.reader(fh))
-        block = re.search(
-            rf"filename='{re.escape(filename)}'.*?<columns[^>]*>(.*?)</columns>", xml, re.S
-        )
-        if block is None:
-            problems.append(f"no <columns> block found for {filename}")
-            continue
-        declared = re.findall(r"<column datatype='[^']+' name='([^']+)' ordinal='(\d+)' />", block.group(1))
-        if len(declared) != len(header):
-            problems.append(
-                f"{filename}: declares {len(declared)} columns but the CSV has {len(header)}"
+    with HyperProcess(Telemetry.DO_NOT_SEND_USAGE_DATA_TO_TABLEAU) as process:
+        for label, path, columns in pairs:
+            if not path.exists():
+                problems.append(f"{label}: extract not written at {path}")
+                continue
+            with Connection(endpoint=process.endpoint, database=path) as conn:
+                table_def = conn.catalog.get_table_definition(TableName("Extract", "Extract"))
+                row_count = conn.execute_scalar_query(
+                    'SELECT COUNT(*) FROM "Extract"."Extract"'
+                )
+            actual = [(c.name.unescaped, str(c.type)) for c in table_def.columns]
+            if len(actual) != len(columns):
+                problems.append(
+                    f"{label}: extract has {len(actual)} columns but {len(columns)} declared"
+                )
+                continue
+            for position, ((name, datatype, _role), (got_name, got_type)) in enumerate(
+                zip(columns, actual)
+            ):
+                if got_name != name:
+                    problems.append(
+                        f"{label}: position {position} declared {name!r} "
+                        f"but the extract holds {got_name!r}"
+                    )
+                expected_type = HYPER_CATALOG_TYPE[datatype]
+                if got_type.upper() != expected_type:
+                    problems.append(
+                        f"{label}: column {name!r} declared {expected_type} "
+                        f"but the extract holds {got_type}"
+                    )
+            problems.extend(
+                f"{label}: expected {expected} rows in the extract, found {row_count}"
+                for expected in [row_counts[label]]
+                if row_count != expected
             )
-            continue
-        for position, (name, declared_ordinal) in enumerate(
-            sorted(declared, key=lambda kv: int(kv[1]))
-        ):
-            if declared_ordinal != str(position):
-                problems.append(
-                    f"{filename}: {name!r} declares ordinal {declared_ordinal}, "
-                    f"expected {position}"
-                )
-            if header[position] != name:
-                problems.append(
-                    f"{filename}: ordinal {position} declared {name!r} "
-                    f"but CSV header has {header[position]!r}"
-                )
     return problems
 
 
@@ -564,27 +815,38 @@ def main() -> int:
     declared = {n for n, _, _ in atlas_columns} | {n for n, _, _ in panel_columns}
     xml = build_workbook(atlas_columns, len(atlas_reader), panel_columns, len(panel_reader))
 
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    atlas_hyper = OUT_DIR / ATLAS_HYPER
+    panel_hyper = OUT_DIR / PANEL_HYPER
+    atlas_n = build_hyper(atlas_path, atlas_hyper, atlas_columns)
+    panel_n = build_hyper(panel_path, panel_hyper, panel_columns)
+
     problems = validate(xml, declared)
-    problems += check_csv_alignment(xml)
+    problems += check_hyper_schema(
+        [(ATLAS_HYPER, atlas_hyper, atlas_columns), (PANEL_HYPER, panel_hyper, panel_columns)],
+        {ATLAS_HYPER: atlas_n, PANEL_HYPER: panel_n},
+    )
     if problems:
         print("WORKBOOK VALIDATION FAILED")
         for p in problems:
             print("  -", p)
         return 1
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     twb_path = OUT_DIR / "Nigeria-MPI-Equity-Atlas.twb"
     twb_path.write_text(xml, encoding="utf-8")
 
     twbx_path = OUT_DIR / "Nigeria-MPI-Equity-Atlas.twbx"
     with zipfile.ZipFile(twbx_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(twb_path, twb_path.name)
-        # The .twb references the CSVs relative to the package root.
-        zf.write(atlas_path, "Data/mpi_atlas_2021.csv")
-        zf.write(panel_path, "Data/mpi_trends_panel.csv")
+        # The .twb references the extracts relative to the package root.
+        zf.write(atlas_hyper, f"Data/{ATLAS_HYPER}")
+        zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
-    print("CSV alignment validated: declared ordinals match the packaged CSV headers")
+    print(
+        f"Extracts validated: {ATLAS_HYPER} ({atlas_n} rows), "
+        f"{PANEL_HYPER} ({panel_n} rows) match the declared columns"
+    )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")
     with zipfile.ZipFile(twbx_path) as zf:

@@ -7,18 +7,32 @@ what each Tableau sheet is meant to show.
 
 The five visuals follow the project spec, section 1.4:
 
-  1. State choropleth        filled map, MPI incidence (headcount ratio)
-  2. Dimension breakdown     stacked bar, the three dimension contributions
+1. Geographic plot        state capitals positioned by lat/lon, banded MPI
+  2. Dimension breakdown     the three dimension contributions, three panels
   3. Conflict overlay        scatter, MPI vs Conflict Exposure Index
-  4. Climate nexus           MPI vs baseline precipitation (not a single year's
-                             anomaly -- see the note in visual 4)
+  4. Geographic gradient     MPI vs latitude, NOT vs climate -- see visual 4
   5. State comparison        radar, one state against the 37-state mean
 
-Visual 4 deliberately departs from the spec, which asked for temperature
-anomaly. The per-year anomaly correlation with MPI flips sign between survey
-rounds (+0.81 in 2013, -0.43 in 2021) because it is weather noise, while
-baseline precipitation holds at rho -0.80. Plotting the anomaly would have
-produced a striking but meaningless chart.
+Three of these depart from the spec, deliberately and for documented reasons.
+
+Visual 1 is NOT a filled choropleth. The spec asked for one, and the workbook
+carried a "filled map" for its whole life -- but it was never a map. Verified in
+Tableau Public on 2026-10-06: it drew 74 small lat/lon bar charts. Hand-written
+Tableau XML does not produce the generated-geographic-field pairing a filled map
+needs, so this is a correctly georeferenced scatter of the 37 capitals, which
+shows the same thing and does not overstate what the geometry supports.
+
+Visual 2 is NOT a stacked bar. Three measures on Rows give three aligned panes.
+The Measure Names/Values pair that stacks them also needs a measure-values filter,
+and hand-authoring that produced one 18,000-tall bar per state. The title says
+"three panels" rather than pretending otherwise.
+
+Visual 4 plots MPI against LATITUDE, not precipitation. The spec asked for a
+climate-poverty nexus. Baseline precipitation correlates with MPI at rho -0.80,
+which looks like a finding, but precipitation correlates with latitude at -0.903
+and latitude correlates with MPI at +0.821 -- latitude predicts MPI BETTER than
+precipitation does. The predictor is the outcome's twin. The chart now shows the
+gradient honestly. See docs/CAUSAL_DECISION.md.
 """
 
 from __future__ import annotations
@@ -149,8 +163,9 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
         ax,
         "Nigeria: multidimensional poverty incidence by state",
         "MICS 2021 · 36 states + FCT · headcount ratio H (% of population "
-        "multidimensionally poor). Bauchi, Jigawa, Kebbi and Sokoto carry the "
-        "highest incidence; Lagos the lowest.",
+        "multidimensionally poor). OPHI's standard errors put the median relative "
+        "SE at 15%, and all 36 adjacent rank pairs overlap at 95%, so no single "
+        "state is statistically the worst — read this as bands, not an order.",
         width=104,
     )
     ax.set_xlim(2.4, 15.0)
@@ -158,9 +173,9 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
     ax.set_aspect(1.0)
     ax.axis("off")
     fig.tight_layout()
-    fig.savefig(PREVIEW / "1_choropleth_mpi.png", dpi=170, bbox_inches="tight")
+    fig.savefig(PREVIEW / "1_where_poverty_sits.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
-    print("  1_choropleth_mpi.png")
+    print("  1_where_poverty_sits.png")
 
 
 # ---------------------------------------------------------------- visual 2
@@ -204,9 +219,9 @@ def visual_dimensions(rows: list[dict[str, str]]) -> None:
         width=104,
     )
     fig.tight_layout()
-    fig.savefig(PREVIEW / "2_dimension_breakdown.png", dpi=170, bbox_inches="tight")
+    fig.savefig(PREVIEW / "2_dimension_breakdown_three_panels.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
-    print("  2_dimension_breakdown.png")
+    print("  2_dimension_breakdown_three_panels.png")
 
 
 # ---------------------------------------------------------------- visual 3
@@ -242,10 +257,13 @@ def visual_conflict(rows: list[dict[str, str]]) -> None:
 
     titles(
         ax,
-        "Conflict exposure against poverty: no stable relationship",
-        "Spearman rho = -0.06 across 37 states in 2021, and rho ranges +0.34 to -0.20 across "
-        "the four survey rounds. Borno dominates the index because min-max scaling gives the "
-        "single most violent state 100 while the remaining 36 cluster near zero.",
+        "Conflict exposure against poverty: none detectable, and none excluded",
+        "Spearman rho = -0.06 in 2021, range +0.34 to -0.20 across four rounds; nothing "
+        "survives multiple comparisons. At n=37 the design has power 0.75 at rho=0.4, so a "
+        "moderate effect would be invisible. The null also holds across UCDP's full "
+        "low-to-high fatality band, so it is not an artefact of the casualty estimate. "
+        "But 10 of 37 states recorded no event in 2021, including the five poorest — "
+        "a coverage statement, not evidence of peace.",
         width=104,
     )
     fig.tight_layout()
@@ -256,11 +274,21 @@ def visual_conflict(rows: list[dict[str, str]]) -> None:
 
 # ---------------------------------------------------------------- visual 4
 def visual_climate(rows: list[dict[str, str]], panel: list[dict[str, str]]) -> None:
+    """Geographic gradient and persistence -- NOT a climate-poverty nexus.
+
+    The spec asked for the climate nexus. This panel plots latitude instead, and
+    the reason is the whole point of the left panel: baseline precipitation does
+    correlate with MPI (rho = -0.80), but precipitation is 90% latitude, and
+    latitude predicts MPI BETTER than precipitation does (+0.821). Showing the
+    precipitation relationship would present a geographic gradient wearing a
+    climate finding's clothes. The two series are drawn together so the reader
+    can see that they are the same gradient twice.
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.6, 6.0))
 
-    xs = [float(r["baseline_precip_mm"]) for r in rows]
+    lats = [float(r["lat"]) for r in rows]
     ys = [float(r["mpi"]) for r in rows]
-    ax1.scatter(xs, ys, s=64, color="#2166ac", alpha=0.8, edgecolor="white", linewidth=0.8, zorder=3)
+    ax1.scatter(lats, ys, s=64, color="#2166ac", alpha=0.8, edgecolor="white", linewidth=0.8, zorder=3)
     for r in rows:
         offsets = {
             "Bauchi": (7, 4), "Borno": (7, 4), "Ogun": (7, 4), "Cross River": (-58, 4),
@@ -268,15 +296,20 @@ def visual_climate(rows: list[dict[str, str]], panel: list[dict[str, str]]) -> N
         }
         dx, dy = offsets.get(r["state"], (7, 4))
         ax1.annotate(
-            r["state"], (float(r["baseline_precip_mm"]), float(r["mpi"])),
+            r["state"], (float(r["lat"]), float(r["mpi"])),
             textcoords="offset points", xytext=(dx, dy), fontsize=7.8,
         )
-    ax1.set_xlabel("Baseline annual precipitation at the state capital, 1991-2020 (mm)", fontsize=9)
+    ax1.set_xlabel("Latitude of the state capital (degrees north)", fontsize=9)
     ax1.set_ylabel("MPI, 2021", fontsize=9)
-    ax1.set_title("The stable climate signal: dry states are poor", fontsize=10.5, fontweight="700", loc="left", pad=26)
+    ax1.set_title(
+        "Poverty tracks a north-south gradient, not climate",
+        fontsize=10.5, fontweight="700", loc="left", pad=48,
+    )
     ax1.text(
-        0, 1.012, "Spearman rho = -0.80 (p < 0.001) across 37 states",
-        transform=ax1.transAxes, fontsize=8.3, color="#555555",
+        0, 1.055,
+        "Latitude vs MPI: rho = +0.82  ·  baseline precipitation vs MPI: rho = -0.80\n"
+        "but precipitation vs latitude: rho = -0.90. The predictor is the outcome's twin.",
+        transform=ax1.transAxes, fontsize=8.3, color="#555555", linespacing=1.35,
     )
     ax1.grid(True, color=GRID, linewidth=0.6)
     ax1.set_axisbelow(True)
@@ -297,10 +330,11 @@ def visual_climate(rows: list[dict[str, str]], panel: list[dict[str, str]]) -> N
     ax2.set_ylabel("MPI", fontsize=9)
     ax2.set_xlabel("Survey round", fontsize=9)
     ax2.set_title("Poverty structure is stable across four survey rounds", fontsize=10.5,
-                  fontweight="700", loc="left", pad=26)
+                  fontweight="700", loc="left", pad=48)
     ax2.text(
-        0, 1.012, "Rank persistence rho = 0.87-0.92 between consecutive rounds;\n"
-                   "national MPI fell 0.230 -> 0.175",
+        0, 1.055,
+        "Rank persistence rho = 0.87-0.92 between consecutive rounds.\n"
+        "Harmonised series: 41 of 111 state-period changes are statistically significant.",
         transform=ax2.transAxes, fontsize=8.3, color="#555555", linespacing=1.35,
     )
     ax2.grid(True, color=GRID, linewidth=0.6)
@@ -310,20 +344,20 @@ def visual_climate(rows: list[dict[str, str]], panel: list[dict[str, str]]) -> N
     ax2.legend(frameon=False, fontsize=8.4, ncol=2, loc="upper center", bbox_to_anchor=(0.5, 0.93))
 
     fig.suptitle(
-        "Climate and poverty over time",
+        "Geographic gradient, and what does not change",
         fontsize=13, fontweight="700", x=0.007, ha="left", y=1.10,
     )
     fig.text(
         0.007, 1.035,
-        "The left panel uses each capital's 1991-2020 baseline, not a single year's "
-        "anomaly: the per-year anomaly correlation with MPI flips sign between survey "
-        "rounds (+0.81 in 2013, -0.43 in 2021), so plotting it would show weather, not climate.",
+        "The left panel deliberately does NOT plot climate. Annual temperature anomaly flips "
+        "sign against MPI between rounds (+0.81 in 2013, -0.43 in 2021), and baseline rainfall "
+        "is 90% latitude. Both would have shown a striking chart that means geography.",
         fontsize=8.5, color="#555555", va="bottom",
     )
     fig.tight_layout()
-    fig.savefig(PREVIEW / "4_climate_and_trend.png", dpi=170, bbox_inches="tight")
+    fig.savefig(PREVIEW / "4_gradient_and_trend.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
-    print("  4_climate_and_trend.png")
+    print("  4_gradient_and_trend.png")
 
 
 # ---------------------------------------------------------------- visual 5

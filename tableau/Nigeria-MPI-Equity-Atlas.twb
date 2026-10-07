@@ -8,792 +8,27 @@
     <datasource caption='Nigeria MPI Atlas' inline='true' name='federated.0mpiatlas2021' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='mpi_atlas_2021.csv' name='textscan.0mpiatlas2021'>
-            <connection class='textscan' directory='Data' filename='mpi_atlas_2021.csv'>
-              <relation name='mpi_atlas_2021.csv' table='[mpi_atlas_2021.csv#csv]' type='table'>
-                <columns gridOrigin='A1:A38' header='yes' outcome='2'>
-                  <column datatype='string' name='pcode' ordinal='0' />
-                  <column datatype='string' name='state' ordinal='1' />
-                  <column datatype='string' name='capital' ordinal='2' />
-                  <column datatype='real' name='lat' ordinal='3' />
-                  <column datatype='real' name='lon' ordinal='4' />
-                  <column datatype='real' name='mpi' ordinal='5' />
-                  <column datatype='integer' name='mpi_rank' ordinal='6' />
-                  <column datatype='real' name='headcount_ratio_pct' ordinal='7' />
-                  <column datatype='real' name='intensity_pct' ordinal='8' />
-                  <column datatype='real' name='vulnerable_pct' ordinal='9' />
-                  <column datatype='real' name='severe_pct' ordinal='10' />
-                  <column datatype='string' name='quadrant' ordinal='11' />
-                  <column datatype='real' name='contrib_health_pct' ordinal='12' />
-                  <column datatype='real' name='contrib_education_pct' ordinal='13' />
-                  <column datatype='real' name='contrib_living_standards_pct' ordinal='14' />
-                  <column datatype='real' name='population_thousands' ordinal='15' />
-                  <column datatype='real' name='mpi_poor_thousands' ordinal='16' />
-                  <column datatype='integer' name='mpi_poor_rank' ordinal='17' />
-                  <column datatype='integer' name='events' ordinal='18' />
-                  <column datatype='real' name='fatalities' ordinal='19' />
-                  <column datatype='real' name='events_per_100k' ordinal='20' />
-                  <column datatype='real' name='fatalities_per_100k' ordinal='21' />
-                  <column datatype='real' name='conflict_exposure_index' ordinal='22' />
-                  <column datatype='real' name='temp_mean_c' ordinal='23' />
-                  <column datatype='real' name='precip_total_mm' ordinal='24' />
-                  <column datatype='real' name='temp_anomaly_c' ordinal='25' />
-                  <column datatype='real' name='precip_anomaly_pct' ordinal='26' />
-                  <column datatype='real' name='baseline_temp_c' ordinal='27' />
-                  <column datatype='real' name='baseline_precip_mm' ordinal='28' />
-                  <column datatype='string' name='n_indicators' ordinal='29' />
-                  <column datatype='string' name='indicators_missing' ordinal='30' />
-                  <column datatype='string' name='survey' ordinal='31' />
-                  <column datatype='string' name='survey_year' ordinal='32' />
-                </columns>
-              </relation>
-              <metadata-records>
-            <metadata-record class='column'>
-              <remote-name>pcode</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[pcode]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>pcode</remote-alias>
-              <ordinal>0</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>state</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[state]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>state</remote-alias>
-              <ordinal>1</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>capital</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[capital]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>capital</remote-alias>
-              <ordinal>2</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>lat</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[lat]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>lat</remote-alias>
-              <ordinal>3</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>lon</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[lon]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>lon</remote-alias>
-              <ordinal>4</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi</remote-alias>
-              <ordinal>5</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_rank</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[mpi_rank]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_rank</remote-alias>
-              <ordinal>6</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>headcount_ratio_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[headcount_ratio_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>headcount_ratio_pct</remote-alias>
-              <ordinal>7</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>intensity_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[intensity_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>intensity_pct</remote-alias>
-              <ordinal>8</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>vulnerable_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[vulnerable_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>vulnerable_pct</remote-alias>
-              <ordinal>9</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>severe_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[severe_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>severe_pct</remote-alias>
-              <ordinal>10</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>quadrant</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[quadrant]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>quadrant</remote-alias>
-              <ordinal>11</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_health_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_health_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_health_pct</remote-alias>
-              <ordinal>12</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_education_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_education_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_education_pct</remote-alias>
-              <ordinal>13</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_living_standards_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_living_standards_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_living_standards_pct</remote-alias>
-              <ordinal>14</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>population_thousands</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[population_thousands]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>population_thousands</remote-alias>
-              <ordinal>15</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_poor_thousands</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi_poor_thousands]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_poor_thousands</remote-alias>
-              <ordinal>16</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_poor_rank</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[mpi_poor_rank]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_poor_rank</remote-alias>
-              <ordinal>17</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[events]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>events</remote-alias>
-              <ordinal>18</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>fatalities</remote-alias>
-              <ordinal>19</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[events_per_100k]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>events_per_100k</remote-alias>
-              <ordinal>20</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities_per_100k]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>fatalities_per_100k</remote-alias>
-              <ordinal>21</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>conflict_exposure_index</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[conflict_exposure_index]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>conflict_exposure_index</remote-alias>
-              <ordinal>22</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_mean_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_mean_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>temp_mean_c</remote-alias>
-              <ordinal>23</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_total_mm</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_total_mm]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>precip_total_mm</remote-alias>
-              <ordinal>24</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_anomaly_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_anomaly_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>temp_anomaly_c</remote-alias>
-              <ordinal>25</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_anomaly_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_anomaly_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>precip_anomaly_pct</remote-alias>
-              <ordinal>26</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>baseline_temp_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[baseline_temp_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>baseline_temp_c</remote-alias>
-              <ordinal>27</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>baseline_precip_mm</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[baseline_precip_mm]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>baseline_precip_mm</remote-alias>
-              <ordinal>28</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>n_indicators</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[n_indicators]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>n_indicators</remote-alias>
-              <ordinal>29</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>indicators_missing</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[indicators_missing]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>indicators_missing</remote-alias>
-              <ordinal>30</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>survey</remote-alias>
-              <ordinal>31</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey_year</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey_year]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>survey_year</remote-alias>
-              <ordinal>32</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-              </metadata-records>
+          <named-connection caption='Extract' name='hyper.0mpiatlas2021'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_atlas_2021.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
             </connection>
           </named-connection>
         </named-connections>
-        <relation connection='textscan.0mpiatlas2021' name='mpi_atlas_2021.csv' table='[mpi_atlas_2021.csv#csv]' type='table' />
-        <cols>
-          <map key='[state]' value='[Data].[state]' />
-        </cols>
-        <metadata-records>
-            <metadata-record class='column'>
-              <remote-name>pcode</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[pcode]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>pcode</remote-alias>
-              <ordinal>0</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>state</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[state]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>state</remote-alias>
-              <ordinal>1</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>capital</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[capital]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>capital</remote-alias>
-              <ordinal>2</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>lat</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[lat]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>lat</remote-alias>
-              <ordinal>3</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>lon</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[lon]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>lon</remote-alias>
-              <ordinal>4</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi</remote-alias>
-              <ordinal>5</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_rank</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[mpi_rank]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_rank</remote-alias>
-              <ordinal>6</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>headcount_ratio_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[headcount_ratio_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>headcount_ratio_pct</remote-alias>
-              <ordinal>7</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>intensity_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[intensity_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>intensity_pct</remote-alias>
-              <ordinal>8</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>vulnerable_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[vulnerable_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>vulnerable_pct</remote-alias>
-              <ordinal>9</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>severe_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[severe_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>severe_pct</remote-alias>
-              <ordinal>10</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>quadrant</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[quadrant]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>quadrant</remote-alias>
-              <ordinal>11</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_health_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_health_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_health_pct</remote-alias>
-              <ordinal>12</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_education_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_education_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_education_pct</remote-alias>
-              <ordinal>13</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>contrib_living_standards_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[contrib_living_standards_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>contrib_living_standards_pct</remote-alias>
-              <ordinal>14</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>population_thousands</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[population_thousands]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>population_thousands</remote-alias>
-              <ordinal>15</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_poor_thousands</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi_poor_thousands]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_poor_thousands</remote-alias>
-              <ordinal>16</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi_poor_rank</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[mpi_poor_rank]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>mpi_poor_rank</remote-alias>
-              <ordinal>17</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[events]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>events</remote-alias>
-              <ordinal>18</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>fatalities</remote-alias>
-              <ordinal>19</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[events_per_100k]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>events_per_100k</remote-alias>
-              <ordinal>20</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities_per_100k]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>fatalities_per_100k</remote-alias>
-              <ordinal>21</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>conflict_exposure_index</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[conflict_exposure_index]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>conflict_exposure_index</remote-alias>
-              <ordinal>22</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_mean_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_mean_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>temp_mean_c</remote-alias>
-              <ordinal>23</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_total_mm</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_total_mm]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>precip_total_mm</remote-alias>
-              <ordinal>24</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_anomaly_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_anomaly_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>temp_anomaly_c</remote-alias>
-              <ordinal>25</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_anomaly_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_anomaly_pct]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>precip_anomaly_pct</remote-alias>
-              <ordinal>26</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>baseline_temp_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[baseline_temp_c]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>baseline_temp_c</remote-alias>
-              <ordinal>27</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>baseline_precip_mm</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[baseline_precip_mm]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>baseline_precip_mm</remote-alias>
-              <ordinal>28</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>n_indicators</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[n_indicators]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>n_indicators</remote-alias>
-              <ordinal>29</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>indicators_missing</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[indicators_missing]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>indicators_missing</remote-alias>
-              <ordinal>30</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>survey</remote-alias>
-              <ordinal>31</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey_year</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey_year]</local-name>
-              <parent-name>[mpi_atlas_2021.csv]</parent-name>
-              <remote-alias>survey_year</remote-alias>
-              <ordinal>32</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-        </metadata-records>
+        <relation connection='hyper.0mpiatlas2021' name='Extract' table='[Extract].[Extract]' type='table' />
       </connection>
       <aliases enabled='yes' />
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
       <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
       <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='headcount_se' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
       <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
       <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
@@ -806,8 +41,11 @@
       <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
       <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
@@ -815,380 +53,43 @@
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_health_pct]' derivation='Sum' name='[sum:contrib_health_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_education_pct]' derivation='Sum' name='[sum:contrib_education_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_living_standards_pct]' derivation='Sum' name='[sum:contrib_living_standards_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[quadrant]' derivation='None' name='[none:quadrant:nk]' pivot='key' type='nominal' />
+      <column-instance column='[conflict_exposure_index]' derivation='Sum' name='[sum:conflict_exposure_index:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_atlas_2021.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
     </datasource>
-    <datasource caption='Nigeria MPI Atlas' inline='true' name='federated.0mpipanel2021' version='18.1'>
+    <datasource caption='Nigeria MPI trends panel' inline='true' name='federated.0mpipanel2021' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='mpi_trends_panel.csv' name='textscan.0mpipanel2021'>
-            <connection class='textscan' directory='Data' filename='mpi_trends_panel.csv'>
-              <relation name='mpi_trends_panel.csv' table='[mpi_trends_panel.csv#csv]' type='table'>
-                <columns gridOrigin='A1:O149' header='yes' outcome='2'>
-                  <column datatype='string' name='pcode' ordinal='0' />
-                  <column datatype='string' name='state' ordinal='1' />
-                  <column datatype='integer' name='survey_year' ordinal='2' />
-                  <column datatype='string' name='survey' ordinal='3' />
-                  <column datatype='real' name='mpi' ordinal='4' />
-                  <column datatype='real' name='headcount_ratio_pct' ordinal='5' />
-                  <column datatype='real' name='intensity_pct' ordinal='6' />
-                  <column datatype='integer' name='events' ordinal='7' />
-                  <column datatype='real' name='fatalities' ordinal='8' />
-                  <column datatype='real' name='events_per_100k' ordinal='9' />
-                  <column datatype='string' name='fatalities_per_100k' ordinal='10' />
-                  <column datatype='real' name='conflict_exposure_index' ordinal='11' />
-                  <column datatype='real' name='temp_mean_c' ordinal='12' />
-                  <column datatype='real' name='temp_anomaly_c' ordinal='13' />
-                  <column datatype='real' name='precip_anomaly_pct' ordinal='14' />
-                </columns>
-              </relation>
-              <metadata-records>
-            <metadata-record class='column'>
-              <remote-name>pcode</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[pcode]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>pcode</remote-alias>
-              <ordinal>0</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>state</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[state]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>state</remote-alias>
-              <ordinal>1</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey_year</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[survey_year]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>survey_year</remote-alias>
-              <ordinal>2</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>survey</remote-alias>
-              <ordinal>3</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>mpi</remote-alias>
-              <ordinal>4</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>headcount_ratio_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[headcount_ratio_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>headcount_ratio_pct</remote-alias>
-              <ordinal>5</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>intensity_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[intensity_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>intensity_pct</remote-alias>
-              <ordinal>6</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[events]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>events</remote-alias>
-              <ordinal>7</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>fatalities</remote-alias>
-              <ordinal>8</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[events_per_100k]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>events_per_100k</remote-alias>
-              <ordinal>9</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities_per_100k</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[fatalities_per_100k]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>fatalities_per_100k</remote-alias>
-              <ordinal>10</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>conflict_exposure_index</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[conflict_exposure_index]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>conflict_exposure_index</remote-alias>
-              <ordinal>11</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_mean_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_mean_c]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>temp_mean_c</remote-alias>
-              <ordinal>12</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_anomaly_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_anomaly_c]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>temp_anomaly_c</remote-alias>
-              <ordinal>13</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_anomaly_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_anomaly_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>precip_anomaly_pct</remote-alias>
-              <ordinal>14</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-              </metadata-records>
+          <named-connection caption='Extract' name='hyper.0mpipanel2021'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_trends_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
             </connection>
           </named-connection>
         </named-connections>
-        <relation connection='textscan.0mpipanel2021' name='mpi_trends_panel.csv' table='[mpi_trends_panel.csv#csv]' type='table' />
-        <cols>
-          <map key='[state]' value='[Data].[state]' />
-        </cols>
-        <metadata-records>
-            <metadata-record class='column'>
-              <remote-name>pcode</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[pcode]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>pcode</remote-alias>
-              <ordinal>0</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>state</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[state]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>state</remote-alias>
-              <ordinal>1</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey_year</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[survey_year]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>survey_year</remote-alias>
-              <ordinal>2</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>survey</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[survey]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>survey</remote-alias>
-              <ordinal>3</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>mpi</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[mpi]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>mpi</remote-alias>
-              <ordinal>4</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>headcount_ratio_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[headcount_ratio_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>headcount_ratio_pct</remote-alias>
-              <ordinal>5</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>intensity_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[intensity_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>intensity_pct</remote-alias>
-              <ordinal>6</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events</remote-name>
-              <remote-type>20</remote-type>
-              <local-name>[events]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>events</remote-alias>
-              <ordinal>7</ordinal>
-              <family>quantitative</family>
-              <local-type>integer</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[fatalities]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>fatalities</remote-alias>
-              <ordinal>8</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>events_per_100k</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[events_per_100k]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>events_per_100k</remote-alias>
-              <ordinal>9</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>fatalities_per_100k</remote-name>
-              <remote-type>129</remote-type>
-              <local-name>[fatalities_per_100k]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>fatalities_per_100k</remote-alias>
-              <ordinal>10</ordinal>
-              <family>nominal</family>
-              <local-type>string</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>conflict_exposure_index</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[conflict_exposure_index]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>conflict_exposure_index</remote-alias>
-              <ordinal>11</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_mean_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_mean_c]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>temp_mean_c</remote-alias>
-              <ordinal>12</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>temp_anomaly_c</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[temp_anomaly_c]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>temp_anomaly_c</remote-alias>
-              <ordinal>13</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-            <metadata-record class='column'>
-              <remote-name>precip_anomaly_pct</remote-name>
-              <remote-type>5</remote-type>
-              <local-name>[precip_anomaly_pct]</local-name>
-              <parent-name>[mpi_trends_panel.csv]</parent-name>
-              <remote-alias>precip_anomaly_pct</remote-alias>
-              <ordinal>14</ordinal>
-              <family>quantitative</family>
-              <local-type>real</local-type>
-              <aggregation>Sum</aggregation>
-            </metadata-record>
-        </metadata-records>
+        <relation connection='hyper.0mpipanel2021' name='Extract' table='[Extract].[Extract]' type='table' />
       </connection>
       <aliases enabled='yes' />
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
@@ -1198,14 +99,27 @@
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_change_since_prev' datatype='real' name='[mpi_change_since_prev]' role='measure' type='quantitative' />
+      <column caption='mpi_change_significant' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
-      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_trends_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
@@ -1213,11 +127,11 @@
     </datasource>
   </datasources>
   <worksheets>
-    <worksheet name='MPI by state'>
+    <worksheet name='Where poverty sits'>
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>MPI by state</run>
+            <run bold='true' fontsize='13'>Where poverty sits</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -1230,11 +144,15 @@
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
       <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
       <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='headcount_se' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
       <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
       <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
@@ -1247,8 +165,11 @@
       <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
       <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
@@ -1256,10 +177,16 @@
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -1272,7 +199,8 @@
           <mark class='Automatic' />
           <encodings>
             <lod column='[federated.0mpiatlas2021].[none:state:nk]' />
-            <color column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
+            <color column='[federated.0mpiatlas2021].[none:mpi_band:nk]' />
+            <text column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -1281,15 +209,15 @@
           </style>
         </pane>
       </panes>
-        <rows></rows>
-        <cols>[federated.0mpiatlas2021].[none:state:nk] / [federated.0mpiatlas2021].[sum:lat:qk] + [federated.0mpiatlas2021].[sum:lon:qk]</cols>
+        <rows>[federated.0mpiatlas2021].[avg:lat:qk]</rows>
+        <cols>[federated.0mpiatlas2021].[avg:lon:qk]</cols>
       </table>
     </worksheet>
-    <worksheet name='Dimension breakdown'>
+    <worksheet name='Dimension breakdown (three panels, not stacked)'>
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>Dimension breakdown</run>
+            <run bold='true' fontsize='13'>Dimension breakdown (three panels, not stacked)</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -1302,11 +230,15 @@
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
       <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
       <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='headcount_se' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
       <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
       <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
@@ -1319,8 +251,11 @@
       <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
       <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
@@ -1328,10 +263,15 @@
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
+      <column-instance column='[contrib_health_pct]' derivation='Sum' name='[sum:contrib_health_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_education_pct]' derivation='Sum' name='[sum:contrib_education_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_living_standards_pct]' derivation='Sum' name='[sum:contrib_living_standards_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -1343,8 +283,6 @@
           </view>
           <mark class='Bar' />
           <encodings>
-            <color column='[federated.0mpiatlas2021].[sum:contrib_health_pct:qk]' />
-            <text column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -1374,11 +312,15 @@
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
       <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
       <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='headcount_se' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
       <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
       <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
@@ -1391,8 +333,11 @@
       <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
       <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
@@ -1400,10 +345,15 @@
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
+      <column-instance column='[conflict_exposure_index]' derivation='Sum' name='[sum:conflict_exposure_index:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[quadrant]' derivation='None' name='[none:quadrant:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -1417,8 +367,8 @@
           <encodings>
             <lod column='[federated.0mpiatlas2021].[none:state:nk]' />
             <color column='[federated.0mpiatlas2021].[none:quadrant:nk]' />
+            <shape column='[federated.0mpiatlas2021].[none:quadrant:nk]' />
             <text column='[federated.0mpiatlas2021].[none:state:nk]' />
-            <size column='[federated.0mpiatlas2021].[sum:fatalities:qk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -1452,14 +402,22 @@
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_change_since_prev' datatype='real' name='[mpi_change_since_prev]' role='measure' type='quantitative' />
+      <column caption='mpi_change_significant' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
-      <column caption='fatalities_per_100k' datatype='string' name='[fatalities_per_100k]' role='dimension' type='nominal' />
+      <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='temp_anomaly_c' datatype='real' name='[temp_anomaly_c]' role='measure' type='quantitative' />
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
+      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -1472,6 +430,7 @@
           <mark class='Line' />
           <encodings>
             <lod column='[federated.0mpipanel2021].[none:state:nk]' />
+            <color column='[federated.0mpipanel2021].[none:state:nk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -1481,7 +440,7 @@
         </pane>
       </panes>
         <rows>[federated.0mpipanel2021].[sum:mpi:qk]</rows>
-        <cols>[federated.0mpipanel2021].[none:survey_year:nk] + [federated.0mpipanel2021].[none:state:nk]</cols>
+        <cols>[federated.0mpipanel2021].[none:survey_year:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='Incidence vs intensity'>
@@ -1501,11 +460,15 @@
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
       <column caption='capital' datatype='string' name='[capital]' role='dimension' type='nominal' />
-      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' />
-      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
       <column caption='mpi_rank' datatype='integer' name='[mpi_rank]' role='measure' type='ordinal' />
       <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='headcount_se' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
       <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
       <column caption='vulnerable_pct' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
       <column caption='severe_pct' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
@@ -1518,8 +481,11 @@
       <column caption='mpi_poor_rank' datatype='integer' name='[mpi_poor_rank]' role='measure' type='ordinal' />
       <column caption='events' datatype='integer' name='[events]' role='measure' type='ordinal' />
       <column caption='fatalities' datatype='real' name='[fatalities]' role='measure' type='quantitative' />
+      <column caption='fatalities_low' datatype='real' name='[fatalities_low]' role='measure' type='quantitative' />
+      <column caption='fatalities_high' datatype='real' name='[fatalities_high]' role='measure' type='quantitative' />
       <column caption='events_per_100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
       <column caption='fatalities_per_100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='fatalities_per_100k_high' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
       <column caption='conflict_exposure_index' datatype='real' name='[conflict_exposure_index]' role='measure' type='quantitative' />
       <column caption='temp_mean_c' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
       <column caption='precip_total_mm' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
@@ -1527,10 +493,15 @@
       <column caption='precip_anomaly_pct' datatype='real' name='[precip_anomaly_pct]' role='measure' type='quantitative' />
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='survey_year' datatype='string' name='[survey_year]' role='dimension' type='nominal' />
+      <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[quadrant]' derivation='None' name='[none:quadrant:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -1544,8 +515,8 @@
           <encodings>
             <lod column='[federated.0mpiatlas2021].[none:state:nk]' />
             <color column='[federated.0mpiatlas2021].[none:quadrant:nk]' />
+            <shape column='[federated.0mpiatlas2021].[none:quadrant:nk]' />
             <text column='[federated.0mpiatlas2021].[none:state:nk]' />
-            <size column='[federated.0mpiatlas2021].[sum:mpi_poor_thousands:qk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -1565,25 +536,31 @@
         <title>
           <formatted-text>
             <run bold='true' fontsize='16'>Nigeria Multidimensional Poverty Equity Atlas</run>
-            <run fontsize='10'>  MICS 2021 &#183; 36 states + FCT</run>
+            <run fontsize='10'>  MICS 2021 &#183; 36 states + FCT &#183; OPHI harmonised series</run>
           </formatted-text>
         </title>
       </layout-options>
       <style />
-      <size maxheight='1400' maxwidth='1600' minheight='1400' minwidth='1600' />
+      <size maxheight='1500' maxwidth='1600' minheight='1500' minwidth='1600' />
       <zones>
-        <zone h='140000' id='3' type-v2='layout-basic' w='160000' x='0' y='0'>
-          <zone h='52000' id='4' name='MPI by state' w='160000' x='0' y='62000' />
-          <zone h='62000' id='5' name='Dimension breakdown' w='58000' x='0' y='0' />
-          <zone h='62000' id='6' name='Poverty vs conflict' w='52000' x='58000' y='0' />
-          <zone h='62000' id='7' name='Incidence vs intensity' w='50000' x='110000' y='0' />
-          <zone h='78000' id='8' name='Poverty over time' w='160000' x='0' y='62000' />
+        <zone h='150000' id='3' type-v2='layout-basic' w='160000' x='0' y='0'>
+          <zone h='9000' id='20' type-v2='text' w='160000' x='0' y='0'>
+            <formatted-text><run fontcolor='#3b3b3b' fontsize='10'>Poverty: OPHI / UNDP Global MPI, harmonised series (Data Table 6, MN 63). Nutrition was not collected in any Nigerian round, so Health rests on child mortality alone and takes the full one-third dimension weight; within-Nigeria comparison holds, cross-country does not. Standard errors are OPHI's design-based ones: the median relative SE is 15%, and all 36 adjacent state rank pairs overlap at 95%, so no single state is statistically 'the highest'. Map colours are bands, not a continuous ramp. Conflict: UCDP GED 24.1, CC BY-IGO. The exposure index is scaled within each survey year, so 100 means most of these 37 states that year, not an absolute level. Ten states recorded no UCDP event in 2021, which reflects reporting coverage as much as absence of violence; the conflict variable undercounts most in the poorest states, so the absence of a detected association is a limit of the design (n=37, power 0.75 at rho=0.4) and not evidence of none. Climate: Open-Meteo Archive API at state capitals, CC BY. Baseline rainfall is a north-south gradient rather than a driver -- latitude predicts MPI better than precipitation does -- so it is shown for context only. Boundaries: geoBoundaries ADM1, CC BY 4.0. Capitals: GeoNames, CC BY 4.0. Pipeline: reproducible, 37/37 states at every stage.</run></formatted-text>
+          </zone>
+          <zone h='7000' id='21' type-v2='text' w='160000' x='0' y='9000'>
+            <formatted-text><run bold='true' fontcolor='#1a1a1a' fontsize='12'>National MPI 0.175 (2021)   |   Median relative SE 15%   |   All 36 adjacent rank pairs overlap at 95%   |   Rank persistence 0.87-0.92   |   Poorest 12 states 40% education-driven vs 22% elsewhere</run></formatted-text>
+          </zone>
+          <zone h='51000' id='4' name='Where poverty sits' w='160000' x='0' y='57000' />
+          <zone h='51000' id='5' name='Dimension breakdown (three panels, not stacked)' w='58000' x='0' y='16000' />
+          <zone h='51000' id='6' name='Poverty vs conflict' w='52000' x='58000' y='16000' />
+          <zone h='51000' id='7' name='Incidence vs intensity' w='50000' x='110000' y='16000' />
+          <zone h='77000' id='8' name='Poverty over time' w='160000' x='0' y='73000' />
         </zone>
       </zones>
     </dashboard>
   </dashboards>
-  <windows source-height='1400'>
-    <window class='worksheet' name='MPI by state'>
+  <windows source-height='1500'>
+    <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
           <strip size='160'>
@@ -1599,7 +576,7 @@
         </edge>
       </cards>
     </window>
-    <window class='worksheet' name='Dimension breakdown'>
+    <window class='worksheet' name='Dimension breakdown (three panels, not stacked)'>
       <cards>
         <edge name='left'>
           <strip size='160'>
@@ -1645,8 +622,8 @@
     </window>
     <window class='dashboard' name='Equity Atlas'>
       <viewpoints>
-        <viewpoint name='MPI by state' />
-        <viewpoint name='Dimension breakdown' />
+        <viewpoint name='Where poverty sits' />
+        <viewpoint name='Dimension breakdown (three panels, not stacked)' />
         <viewpoint name='Poverty vs conflict' />
         <viewpoint name='Poverty over time' />
         <viewpoint name='Incidence vs intensity' />

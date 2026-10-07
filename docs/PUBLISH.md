@@ -10,64 +10,118 @@ produces a validated `.twbx` with the data packaged inside it.
 
 ## What is already built
 
-`tableau/Nigeria-MPI-Equity-Atlas.twbx` (13 KB) contains:
+`tableau/Nigeria-MPI-Equity-Atlas.twbx` (25 KB) contains:
 
 ```
 Nigeria-MPI-Equity-Atlas.twb     the workbook
-Data/mpi_atlas_2021.csv          37 rows, one per state
-Data/mpi_trends_panel.csv        148 rows, 37 states x 4 survey rounds
+Data/mpi_atlas_2021.hyper       37 rows, one per state
+Data/mpi_trends_panel.hyper     148 rows, 37 states x 4 survey rounds
 ```
 
-Five sheets and one dashboard, `Equity Atlas`:
+The data ships as **Hyper extracts**, not CSV. This is not a preference: Tableau
+Public refuses any workbook whose datasource is not an extract — *"Workbooks saved
+to Tableau Public must use extracts"*, error `3C242D89` — and it does **not**
+convert a live file on save. Stage 6 writes the extracts itself with
+`tableauhyperapi`, and validates the schema it wrote back against the declared
+columns before packaging.
+
+Five sheets and one dashboard, `Equity Atlas`. **Verified by opening the workbook
+in Tableau Public and looking at every sheet on 2026-10-06.**
 
 | Sheet | Type | Marks |
 |---|---|---|
-| MPI by state | filled map | `state` on Detail (geographic role Nigeria), `mpi` on Colour |
-| Dimension breakdown | stacked bar | three dimension contributions on Rows, `state` on Columns |
-| Poverty vs conflict | scatter | `mpi` x, `conflict_exposure_index` y, `state` labelled, sized by `fatalities` |
-| Poverty over time | line | `mpi` by `survey_year`, one line per state (from the panel datasource) |
-| Incidence vs intensity | scatter | headcount ratio x intensity, coloured by quadrant, sized by poor count |
+| Where poverty sits | georeferenced scatter | `AVG(lon)` x, `AVG(lat)` y, `state` on Detail (geographic role), `mpi_band` on Colour, `mpi` labelled |
+| Dimension breakdown (three panels, not stacked) | bar | three dimension contributions on Rows, `state` on Columns |
+| Poverty vs conflict | scatter | `mpi` x, `conflict_exposure_index` y, `state` labelled, `quadrant` on Colour **and Shape** |
+| Poverty over time | line | `mpi` by `survey_year` on Columns, `state` on Colour — one line per state on one axis |
+| Incidence vs intensity | scatter | headcount ratio x intensity, `quadrant` on Colour and Shape, `state` labelled |
 
-The data is packaged as CSV with a `textscan` connection, so there is no live
-connection to break. The original spec's Google Sheets intermediary is not needed:
-Tableau converts the local file to an extract on save, and the MPI survey only
-updates annually, so a 24-hour refresh would be pointless.
+Two sheets carry their limitation in the **title**, deliberately:
+
+- **`Where poverty sits` is not a filled map.** It is a correctly georeferenced
+  scatter of the 37 state capitals. See "The map problem" below.
+- **`Dimension breakdown (three panels, not stacked)` is not a stacked bar.**
 
 ## Steps
 
-1. Install **Tableau Public Desktop** (free):
+**Tableau Public Desktop 2025.1 is already installed** at `C:\TableauPublic`
+(`winget install --id Tableau.Public -e`). Nothing to do here. To reinstall on
+another machine use the same command — not the vendor site, where
+`tableau.com/downloads/public/pc64` and `downloads.tableau.com` both return
+**HTTP 403** on this network.
 
-   ```powershell
-   winget install --id Tableau.Public -e --accept-package-agreements --accept-source-agreements
-   ```
+Do **not** install Tableau Desktop (the paid product): a different application,
+cannot open modern workbooks on an older release, and cannot save to Tableau
+Public. See `docs/HANDOFF.md` §3b.
 
-   Use winget rather than the vendor site: `tableau.com/downloads/public/pc64` and
-   `downloads.tableau.com` both return **HTTP 403** from this network.
+1. Sign in to your Tableau Public account.
+2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. **It has been opened successfully on
+   this machine** — it loads with no error dialog and renders (see `HANDOFF.md` §3).
+3. **File > Save to Tableau Public.**
+4. Wait for the upload and the render, then open the live URL and confirm all five
+   sheets are present and that `Where poverty sits` shows 37 points.
 
-   Do **not** install Tableau Desktop (the paid product). It is a different application,
-   it cannot open modern workbooks on an older release, and it cannot save to Tableau
-   Public. Tableau Desktop 2019.4 was previously present here and has been removed —
-   see `docs/HANDOFF.md` §3b for the control test that ruled it out.
-2. Sign in to your Tableau Public account.
-3. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. Tableau will ask to locate the data;
-   accept the packaged paths.
-4. **File > Save to Tableau Public.**
-5. Wait for the upload and the render, then open the live URL and confirm all five
-   sheets are present and the map draws Nigeria's states.
+## The map problem — what was tried, and why it is not a filled map
+
+**This was verified in the application on 2026-10-06 and four approaches failed.**
+Recording them so nobody repeats the cycle:
+
+| Attempt | Result |
+|---|---|
+| `cols = state / SUM(lat) + SUM(lon)` | 74 small lat/lon **bar charts**. This is what shipped for the workbook's whole life; the handoff called it "renders". |
+| Hand-written `[Latitude (generated)]` / `[Longitude (generated)]` | Red unresolved pill on Columns, blank canvas. Tableau synthesises these; declaring them conflicts with the real definition. |
+| No coordinates at all, geographic role on `state` alone | 37 coloured numbers as a **text table**. The role alone is not sufficient. |
+| **`AVG(lat)` / `AVG(lon)` with `[Geographical]` semantic roles on both** | **Works.** Correctly georeferenced, latitude axis 7–13 as Nigeria actually is, 37 labelled points coloured by band. |
+
+So the shipped sheet is a **georeferenced scatter**, not filled polygons. A filled
+map needs the generated-geographic-field pairing, which Tableau only writes when a
+sheet is built through the GUI.
+
+**To upgrade it to a real filled choropleth — one minute, by hand:**
+
+1. Open `Where poverty sits`.
+2. On the Data pane, right-click `lat` → **Geographic Role** → **Latitude**. Same
+   for `lon` → **Longitude**.
+3. Double-click `state` in the Data pane. Tableau rebuilds the sheet as a filled map
+   using its built-in Nigeria ADM1 geography.
+
+`scripts/05_preview.py` renders what that will look like:
+`docs/preview/1_where_poverty_sits.png` is a true filled choropleth drawn in
+matplotlib from the same 37 rows, so the target is documented.
+
+## Open issues, all safe to fix in the GUI
+
+- **`Dimension breakdown` is not a stacked bar.** Three measures on Rows give three
+  aligned panes. The Measure Names/Values pair was tried from XML and drew one
+  18,000-tall bar per state, because a hand-written pair also needs the
+  measure-values filter. **To fix by hand:** Analysis → Measure Names → Columns;
+  Measure Values → Rows; `state` → Columns (below Measure Names); `state` → Detail;
+  Colour → the *Measure Names* field so each dimension gets its own colour.
+- **The radar chart is still not generated** — see below.
+- **Alt text is not set.** Tableau auto-generates a description; edit it on each
+  sheet. Keep it descriptive and objective, not interpretive.
+- **No legend zones were verified on the published dashboard.** The workbook declares
+  the text and KPI zones; colour legends render from the Marks card on each sheet,
+  but check them on the live viz.
 
 ## If something looks wrong
 
 Most likely, in order:
 
-- **The map is blank or states are unrecognised.** Tableau's geocoder needs the
-  geographic role; the workbook assigns `[Country].[Name] = "Nigeria"` to `state`.
-  Confirm via right-click `state` > Geographic Role > State/Province. If any state
-  is unresolved, check `docs/data_quality.md` for the FCT naming trap.
+- **`Where poverty sits` shows text or numbers instead of points.** The lat/lon
+  semantic roles are missing. Confirm via right-click `lat` → Geographic Role →
+  Latitude, and `lon` → Longitude.
+- **"must use extracts" (3C242D89).** A `.twbx` built by an older revision of stage 6
+  still packages CSV. Re-run `scripts/06_build_twb.py` and confirm the package
+  contents list `.hyper` files.
+- **"The field '[sum:x:qk]' does not exist" (9CA7205B).** A shelf reference with no
+  matching `<column-instance>`. The generator now derives these from the shelves; if
+  you hand-edit the XML, add one per shelf field.
 - **Marks look wrong on a sheet.** The mark classes and shelves are declared in the
   XML; re-check the sheet against the table above.
-- **Tableau reports a data error.** The declared column ordinals are validated
-  against the packaged CSV headers at build time, so this would indicate a genuine
-  mismatch — re-run `scripts/04_merge.py` then `scripts/06_build_twb.py`.
+- **Tableau reports a data error.** The extract schema is validated against the
+  declared columns at build time, so this would indicate a genuine mismatch — re-run
+  `scripts/04_merge.py` then `scripts/06_build_twb.py`.
 
 ## Two things left deliberately to the GUI
 
@@ -82,14 +136,23 @@ grammar to hand-write. To add it:
 3. Set the mark type to **Polygon**, put `state` on Detail and Colour.
 4. Add `AVG(contrib_health_pct)` etc. as Reference Lines to draw the 37-state mean.
 
-**Colour scales and captions.** The workbook ships with default colour encodings.
-Before publishing, set the choropleth to a sequential scale (it is a rate, not a
-category) and add the source attribution below the dashboard title.
+**Colour scales and captions.** The methodology text and the KPI strip are already
+on the dashboard canvas, generated in `06_build_twb.py` — so the attribution, the
+Nutrition exclusion, the standard errors and the conflict caveats are visible to a
+reader without them reading the description. Switch both scatters to Tableau's
+**Color Blind** palette, which pairs with the Shape encoding already on `quadrant`.
 
-## Attribution to put in the workbook description
+## Attribution — already on the dashboard canvas
 
-> Poverty: OPHI / UNDP Global MPI (MICS 2021), CC0 / CC BY.
-> Conflict: UCDP Georeferenced Event Dataset, CC BY-IGO.
+The dashboard carries this as a text zone, so it does not depend on the description
+field being filled in. Paste into the workbook description as well:
+
+> Poverty: OPHI / UNDP Global MPI, harmonised series (Data Table 6, MN 63),
+> MICS 2021, CC0 / CC BY. Standard errors from Table 5.4; harmonised state-level
+> changes from Table 6.4.
+> Conflict: UCDP Georeferenced Event Dataset 24.1, CC BY-IGO. The exposure index is
+> relative within each survey year, and its 2021 correlation with MPI is +0.01 to
+> +0.08 across UCDP's full low-to-high fatality band.
 > Climate: Open-Meteo Archive API. Boundaries: geoBoundaries ADM1, CC BY 4.0.
 > Capitals: GeoNames, CC BY 4.0. Conflict Exposure Index is relative within each
 > survey year — see `docs/normalisation.md`.
