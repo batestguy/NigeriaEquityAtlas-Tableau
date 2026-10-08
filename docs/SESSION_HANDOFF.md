@@ -1,3 +1,72 @@
+# Handoff — session 2026-10-08 (interactive map: Sheet 1 CLI alternative)
+
+Sheet-by-sheet rebuild started at Sheet 1. The Tableau map sheet cannot become a
+filled choropleth from CLI (four blind XML attempts failed, documented in
+`docs/PUBLISH.md`), so Sheet 1 now ALSO ships as a CLI-built interactive HTML map.
+Tableau workbook untouched in structure; its Sheet-1 subtitle + tooltip fields improved.
+
+## Built this session (all CLI, all in git after this commit)
+
+- `scripts/07_build_interactive_map.py` → `docs/preview/interactive_map.html`
+  (self-contained Plotly, ~8.5 MB, works offline): true filled ADM1 polygons,
+  5 MPI bands, rich hover (MPI + 95% CI, annotated H/A, poor count, dominant
+  party + winning years), All-37 / Poorest-12 / Other-25 buttons each with its
+  own viewport fit, cover hero (title, flag bar, flag watermark, unity emblem,
+  `cover.jpg` photo slot), honesty footnote.
+- `data/reference/state_dominant_party.csv` + `docs/dominant_party.md`: mode
+  governorship party 1999–2021 per state, 6 ties listed, full event matrix with
+  counts, lineage notes, sources. Rule: one entry per seating event, as-won
+  labels, later defections don't rewrite. FCT = no elected governor.
+- `poverty_group` (Poorest 12 vs Other 25) added in `04_merge.py` →
+  `data/processed/mpi_atlas_2021.csv`; Sheet-1 TWB subtitle + Detail/hover
+  fields in `06_build_twb.py`; `.twbx` rebuilt, XML + Hyper validation passed.
+- `docs/preview/nigeria_flag.png`: generated asset, embedded base64.
+
+## Decisions (each challengeable, all recorded)
+
+- **D6 cover framing:** rejected "tale of two zones" + northerner-vs-southerner
+  imagery. Same rule as ever (AGENTS.md/CLAIMS.md): the 12 poorest ARE the
+  northern states at n=37, so zone framing is the same observations wearing a
+  geographic label. Cover reads "One country, two realities — poorest states
+  vs the rest", no zone labels on imagery.
+- **Party is hover-only, never colour** (causal paths closed at n=37).
+- **Lagos AD/APC "tie"** is one camp under four labels (AD→AC→ACN→APC),
+  counted as-won and noted in `docs/dominant_party.md`. Same for AC/ACN/APC
+  fragments in Ogun/Osun/Oyo. **Kwara 1999 recorded APP** (governor list prints
+  ANPP; APP is the contemporary platform, same rename as sibling states).
+- **2021 endpoint, Fourth Republic only** (1999–2021 governorships; 1991–93
+  Third Republic excluded as incomparable).
+
+## Root causes found (do not re-debug)
+
+- `go.Choropleth` on the geo subplot draws a **full-frame rectangle inside
+  every path** (proven via live DOM: 37 unique `d` strings, each prefixed with
+  the frame rect; viewport colour = last state's band). Fix used: render
+  through `Choroplethmapbox` with top-level feature `id`s.
+- **carto-positron tiles now need an API key** (watermarked background) →
+  `style="white-bg"`, fully offline.
+- Plotly hover honours `<b>/<i>/<br>` only; span colours don't survive →
+  hierarchy via weight + slant, chrome via `hoverlabel`.
+- **Preview serving: NEVER `python -m http.server`** for the 8.5 MB file —
+  single-threaded head-of-line blocking hangs the terminal and times out the
+  tool call (this session, twice). Pattern that works: temp
+  `threaded_server.py` (ThreadingHTTPServer) + `-RedirectStandardOutput`, kill
+  afterwards. Launching even that hung at session end — see unverified note.
+
+## ⚠ Verification status — what is PROVEN vs NOT
+
+- PROVEN (screenshotted in headless browser): filled polygons all 37, band
+  colours, buttons + per-view viewports with no edge clipping, toggle filter,
+  styled hover incl. Lagos tie, Kaduna/Bauchi/Oyo/Abia hovers, party-years lines.
+- NOT verified: the final cover build (new 🇳🇬 title, button explainer line,
+  flag watermark, cover hero, photo slot, removed on-map labels, annotated
+  hover metrics). It completed the build script exit-0 but was never rendered
+  before the preview server stopped cooperating. **Next session: serve
+  `docs/preview/interactive_map.html` and screenshot top (cover) + map +
+  one hover before touching Sheet 2.** Rebuild: `& C:\Users\TOSHIBA\ds-general\python.exe scripts\07_build_interactive_map.py`.
+
+---
+
 # Handoff — session 2026-10-06
 
 State of the project at the end of this session, written for whoever picks it up

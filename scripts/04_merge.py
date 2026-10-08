@@ -208,6 +208,11 @@ def main() -> int:
     ordered = sorted(atlas_rows, key=lambda r: -r["mpi"])
     for i, r in enumerate(ordered, start=1):
         r["mpi_rank"] = i
+        # Explorer toggle for Sheet 1: poorest 12 vs rest. The 12-state cut is
+        # the poverty-level contrast that survives the SEs (17.6-pt education
+        # gap, p=1e-5); "north vs south" is the same 12 observations wearing a
+        # geographic label, so the toggle says poorest vs rest, never north/south.
+        r["poverty_group"] = "Poorest 12" if i <= 12 else "Other 25"
     poor_order = sorted(atlas_rows, key=lambda r: -r["mpi_poor_thousands"])
     for i, r in enumerate(poor_order, start=1):
         r["mpi_poor_rank"] = i
@@ -223,7 +228,7 @@ def main() -> int:
         "events_per_100k", "fatalities_per_100k", "fatalities_per_100k_high",
         "conflict_exposure_index",
         "temp_mean_c", "precip_total_mm", "temp_anomaly_c", "precip_anomaly_pct",
-        "baseline_temp_c", "baseline_precip_mm", "mpi_band",
+        "baseline_temp_c", "baseline_precip_mm", "mpi_band", "poverty_group",
         "n_indicators", "indicators_missing", "survey", "survey_year",
     ]
     n_atlas = write_csv(PROCESSED / "mpi_atlas_2021.csv", atlas_rows, atlas_fields)

@@ -54,6 +54,7 @@
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
@@ -61,6 +62,13 @@
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
       <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_se]' derivation='Sum' name='[sum:mpi_se:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_ci_lo]' derivation='Sum' name='[sum:mpi_ci_lo:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_ci_hi]' derivation='Sum' name='[sum:mpi_ci_hi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_poor_thousands]' derivation='Sum' name='[sum:mpi_poor_thousands:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
       <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
       <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <column-instance column='[contrib_health_pct]' derivation='Sum' name='[sum:contrib_health_pct:qk]' pivot='key' type='quantitative' />
@@ -68,8 +76,6 @@
       <column-instance column='[contrib_living_standards_pct]' derivation='Sum' name='[sum:contrib_living_standards_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[quadrant]' derivation='None' name='[none:quadrant:nk]' pivot='key' type='nominal' />
       <column-instance column='[conflict_exposure_index]' derivation='Sum' name='[sum:conflict_exposure_index:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
       <extract count='-1' enabled='true' units='records'>
         <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_atlas_2021.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
           <relation name='Extract' table='[Extract].[Extract]' type='table' />
@@ -131,7 +137,7 @@
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>Where poverty sits</run>
+            <run bold='true' fontsize='13'>Where poverty sits</run><run fontsize='9'>  MICS 2021 · 5 bands, not 37 ranks · hover for MPI + 95% CI</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -178,6 +184,7 @@
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
@@ -187,6 +194,13 @@
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
       <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_se]' derivation='Sum' name='[sum:mpi_se:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_ci_lo]' derivation='Sum' name='[sum:mpi_ci_lo:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_ci_hi]' derivation='Sum' name='[sum:mpi_ci_hi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_poor_thousands]' derivation='Sum' name='[sum:mpi_poor_thousands:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -200,7 +214,15 @@
           <encodings>
             <lod column='[federated.0mpiatlas2021].[none:state:nk]' />
             <color column='[federated.0mpiatlas2021].[none:mpi_band:nk]' />
-            <text column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
+            <text column='[federated.0mpiatlas2021].[none:state:nk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:mpi:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:mpi_se:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:mpi_ci_lo:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:mpi_ci_hi:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:headcount_ratio_pct:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:intensity_pct:qk]' />
+            <lod column='[federated.0mpiatlas2021].[sum:mpi_poor_thousands:qk]' />
+            <lod column='[federated.0mpiatlas2021].[none:poverty_group:nk]' />
           </encodings>
           <style>
             <style-rule element='mark'>
@@ -264,6 +286,7 @@
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
@@ -346,6 +369,7 @@
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
@@ -494,6 +518,7 @@
       <column caption='baseline_temp_c' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
       <column caption='baseline_precip_mm' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='n_indicators' datatype='string' name='[n_indicators]' role='dimension' type='nominal' />
       <column caption='indicators_missing' datatype='string' name='[indicators_missing]' role='dimension' type='nominal' />
       <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />

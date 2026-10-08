@@ -93,6 +93,7 @@ DIMENSIONS = [
     "capital",
     "quadrant",
     "mpi_band",
+    "poverty_group",
     "indicators_missing",
     "survey",
     "n_indicators",
@@ -321,7 +322,7 @@ def deps_xml(columns: list[tuple[str, str, str]]) -> str:
 def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
                   encodings: str = "", ds_name: str = DS_NAME,
                   ds_caption: str = DS_CAPTION,
-                  deps: str = "") -> str:
+                  deps: str = "", subtitle: str = "") -> str:
     pane = f"""      <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -352,7 +353,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>{escape(name)}</run>
+            <run bold='true' fontsize='13'>{escape(name)}</run>{f"<run fontsize='9'>  {escape(subtitle)}</run>" if subtitle else ""}
           </formatted-text>
         </title>
       </layout-options>
@@ -404,8 +405,15 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     # 0.075 against a median MPI of 0.092, a ramp invites the reader to resolve
     # differences the data cannot support. All 36 adjacent rank pairs overlap at
     # 95%, so there is no ordering to show.
+    #
+    # Explorer upgrade: label with the state NAME (fun to read), and carry the
+    # numbers on Detail so hover shows MPI + 95% CI + H + intensity + poor
+    # thousands + group. Detail fields surface in the tooltip by default, so no
+    # fragile <tooltip> tag is needed -- <lod> is the proven-safe encoding here.
+    # poverty_group drives the Poorest-12-vs-rest toggle (filter in GUI).
     sheet_map = worksheet_xml(
         "Where poverty sits",
+        subtitle="MICS 2021 · 5 bands, not 37 ranks · hover for MPI + 95% CI",
         rows=ref("lat", "avg"),
         cols=ref("lon", "avg"),
         # A filled map is not its own mark class -- it is an Automatic mark over a
@@ -415,7 +423,15 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         encodings=(
             f"            <lod column='{ref('state', 'dim')}' />\n"
             f"            <color column='{ref('mpi_band', 'dim')}' />\n"
-            f"            <text column='{ref('mpi', 'sum')}' />\n"
+            f"            <text column='{ref('state', 'dim')}' />\n"
+            f"            <lod column='{ref('mpi', 'sum')}' />\n"
+            f"            <lod column='{ref('mpi_se', 'sum')}' />\n"
+            f"            <lod column='{ref('mpi_ci_lo', 'sum')}' />\n"
+            f"            <lod column='{ref('mpi_ci_hi', 'sum')}' />\n"
+            f"            <lod column='{ref('headcount_ratio_pct', 'sum')}' />\n"
+            f"            <lod column='{ref('intensity_pct', 'sum')}' />\n"
+            f"            <lod column='{ref('mpi_poor_thousands', 'sum')}' />\n"
+            f"            <lod column='{ref('poverty_group', 'dim')}' />\n"
         ),
         deps=atlas_deps,
     )

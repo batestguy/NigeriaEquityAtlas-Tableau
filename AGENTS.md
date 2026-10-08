@@ -31,6 +31,14 @@ Four commits, one per stage. `git log` is the reliable history.
 | 4 | `04_merge.py` | the three processed tables + `docs/normalisation.md`, `docs/data_quality.md` |
 | 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
 | 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — Hyper extracts; opens and renders in Tableau Public 2025.1 |
+| 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party + winning years), All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
+
+Stage 4 also writes `poverty_group` (Poorest 12 vs Other 25) into
+`mpi_atlas_2021.csv`; `data/reference/state_dominant_party.csv` +
+`docs/dominant_party.md` carry the mode governorship party 1999–2021 per state
+(6 ties, FCT none, full event matrix + sources). Party is hover-only, never
+colour. Cover framing decision (D6: "one country, two realities", never "two
+zones") is recorded in `docs/SESSION_HANDOFF.md` 2026-10-08.
 
 **Remaining manual step:** publishing, and it needs your account login. Tableau Public
 Desktop 2025.1 **is installed** at `C:\TableauPublic` — nothing to install. The
