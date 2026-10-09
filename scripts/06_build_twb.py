@@ -23,6 +23,9 @@ Sheet inventory
   3  Poverty vs conflict     scatter
   4  Poverty over time       line across the four survey rounds
   5  Incidence x intensity   scatter with quadrant labels
+  6  Party alignment and MPI change   scatter, aligned_share vs dmpi_annual,
+                                      interval on Colour (stage 8 panel, its
+                                      own extract; never coloured by party)
 
 The spec's fifth visual, a radar chart, is *not* generated. A radar needs a
 polygon mark driven by computed path fields, which is the most fragile part of
@@ -165,6 +168,7 @@ HYPER_CATALOG_TYPE = {"string": "TEXT", "integer": "BIG_INT", "real": "DOUBLE"}
 
 ATLAS_HYPER = "mpi_atlas_2021.hyper"
 PANEL_HYPER = "mpi_trends_panel.hyper"
+ALIGN_HYPER = "party_alignment_panel.hyper"
 
 
 def build_hyper(csv_path: Path, out_path: Path,
@@ -376,11 +380,20 @@ PANEL_DS_NAME = "federated.0mpipanel2021"
 PANEL_DS_CAPTION = "Nigeria MPI trends panel"
 PANEL_CONN = "hyper.0mpipanel2021"
 
+ALIGN_DS_NAME = "federated.0partyalignment"
+ALIGN_DS_CAPTION = "Party alignment panel"
+ALIGN_CONN = "hyper.0partyalignment"
+ALIGN_MEASURES = ["aligned_share", "aligned_binary", "mpi_t0", "mpi_t1", "dmpi_annual",
+                  "dlogmpi_annual"]
+ALIGN_SHEET = "Party alignment and MPI change"
+
 
 def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
-                   panel_columns: list[tuple[str, str, str]], panel_rows: int) -> str:
+                   panel_columns: list[tuple[str, str, str]], panel_rows: int,
+                   align_columns: list[tuple[str, str, str]], align_rows: int) -> str:
     atlas_deps = deps_xml(atlas_columns)
     panel_deps = deps_xml(panel_columns)
+    align_deps = deps_xml(align_columns)
 
     # ---- sheet 1: geographic view -------------------------------------------
     # Verified 2026-10-06 by opening the workbook in Tableau Public and LOOKING at
@@ -521,6 +534,26 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         deps=atlas_deps,
     )
 
+    # ---- sheet 6: party alignment and MPI change ----------------------------
+    # The stage 8 panel: 36 states x 3 intervals, FCT excluded. state on Detail
+    # keeps one mark per state-interval; interval is the only colour. Party is
+    # never a colour anywhere in this atlas. The result sentence is not repeated
+    # here -- it lives in docs/party_alignment.md section 4.
+    sheet_align = worksheet_xml(
+        ALIGN_SHEET,
+        subtitle="36 states x 3 intervals, FCT excluded · pre-registered test, see docs",
+        rows=f"[{ALIGN_DS_NAME}].[sum:dmpi_annual:qk]",
+        cols=f"[{ALIGN_DS_NAME}].[sum:aligned_share:qk]",
+        mark="Circle",
+        encodings=(
+            f"            <lod column='[{ALIGN_DS_NAME}].[none:state:nk]' />\n"
+            f"            <color column='[{ALIGN_DS_NAME}].[none:interval:nk]' />\n"
+        ),
+        deps=align_deps,
+        ds_name=ALIGN_DS_NAME,
+        ds_caption=ALIGN_DS_CAPTION,
+    )
+
     # The methodology text lives on the dashboard canvas, not in the viz
     # description. Every caveat the atlas depends on -- the Nutrition exclusion,
     # the cross-sectionally relative conflict index, zero-reported-event states,
@@ -653,6 +686,17 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         </edge>
       </cards>
     </window>
+    <window class='worksheet' name='Party alignment and MPI change'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
     <window class='dashboard' name='Equity Atlas'>
       <viewpoints>
         <viewpoint name='Where poverty sits' />
@@ -682,6 +726,12 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         .replace(CONN_NAME, PANEL_CONN)
         .replace(f"caption='{DS_CAPTION}'", f"caption='{PANEL_DS_CAPTION}'", 1)
     )
+    align_ds = (
+        datasource_xml(align_columns, ALIGN_HYPER, align_rows, column_instances(sheet_align))
+        .replace(DS_NAME, ALIGN_DS_NAME)
+        .replace(CONN_NAME, ALIGN_CONN)
+        .replace(f"caption='{DS_CAPTION}'", f"caption='{ALIGN_DS_CAPTION}'", 1)
+    )
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -690,9 +740,9 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{atlas_ds}{panel_ds}  </datasources>
+{atlas_ds}{panel_ds}{align_ds}  </datasources>
   <worksheets>
-{sheet_map}{sheet_bar}{sheet_scatter}{sheet_trend}{sheet_quadrant}  </worksheets>
+{sheet_map}{sheet_bar}{sheet_scatter}{sheet_trend}{sheet_quadrant}{sheet_align}  </worksheets>
 {dashboards}{windows}</workbook>
 """
 
@@ -734,7 +784,8 @@ def validate(xml: str, declared: set[str]) -> list[str]:
             problems.append(f"unknown aggregation {agg!r} in {token}")
         if name not in declared:
             problems.append(f"field reference to undeclared column {name!r} in {token}")
-    for ds in ("[federated.0mpiatlas2021]", "[federated.0mpipanel2021]"):
+    for ds in ("[federated.0mpiatlas2021]", "[federated.0mpipanel2021]",
+               "[federated.0partyalignment]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
     return problems
@@ -796,14 +847,18 @@ def check_hyper_schema(
 def main() -> int:
     atlas_path = PROCESSED / "mpi_atlas_2021.csv"
     panel_path = PROCESSED / "mpi_trends_panel.csv"
-    for p in (atlas_path, panel_path):
+    align_path = PROCESSED / "party_alignment_panel.csv"
+    for p in (atlas_path, panel_path, align_path):
         if not p.exists():
-            raise SystemExit(f"missing {p}; run scripts/04_merge.py first")
+            raise SystemExit(f"missing {p}; run scripts/04_merge.py and 08_party_alignment.py first")
 
     with atlas_path.open(newline="", encoding="utf-8-sig") as fh:
         atlas_reader = list(csv.DictReader(fh))
     with panel_path.open(newline="", encoding="utf-8-sig") as fh:
         panel_reader = list(csv.DictReader(fh))
+    with align_path.open(newline="", encoding="utf-8-sig") as fh:
+        align_reader = list(csv.DictReader(fh))
+    assert len(align_reader) == 108, f"party alignment panel has {len(align_reader)} rows, expected 108"
 
     def infer(rows: list[dict[str, str]], numeric: list[str], dims: list[str]):
         cols: list[tuple[str, str, str]] = []
@@ -828,19 +883,34 @@ def main() -> int:
         for n, dt, _r in panel_columns
     ]
 
-    declared = {n for n, _, _ in atlas_columns} | {n for n, _, _ in panel_columns}
-    xml = build_workbook(atlas_columns, len(atlas_reader), panel_columns, len(panel_reader))
+    align_columns = infer(align_reader, ALIGN_MEASURES, [])
+
+    declared = (
+        {n for n, _, _ in atlas_columns}
+        | {n for n, _, _ in panel_columns}
+        | {n for n, _, _ in align_columns}
+    )
+    xml = build_workbook(
+        atlas_columns, len(atlas_reader), panel_columns, len(panel_reader),
+        align_columns, len(align_reader),
+    )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     atlas_hyper = OUT_DIR / ATLAS_HYPER
     panel_hyper = OUT_DIR / PANEL_HYPER
     atlas_n = build_hyper(atlas_path, atlas_hyper, atlas_columns)
     panel_n = build_hyper(panel_path, panel_hyper, panel_columns)
+    align_hyper = OUT_DIR / ALIGN_HYPER
+    align_n = build_hyper(align_path, align_hyper, align_columns)
 
     problems = validate(xml, declared)
     problems += check_hyper_schema(
-        [(ATLAS_HYPER, atlas_hyper, atlas_columns), (PANEL_HYPER, panel_hyper, panel_columns)],
-        {ATLAS_HYPER: atlas_n, PANEL_HYPER: panel_n},
+        [
+            (ATLAS_HYPER, atlas_hyper, atlas_columns),
+            (PANEL_HYPER, panel_hyper, panel_columns),
+            (ALIGN_HYPER, align_hyper, align_columns),
+        ],
+        {ATLAS_HYPER: atlas_n, PANEL_HYPER: panel_n, ALIGN_HYPER: align_n},
     )
     if problems:
         print("WORKBOOK VALIDATION FAILED")
@@ -857,11 +927,13 @@ def main() -> int:
         # The .twb references the extracts relative to the package root.
         zf.write(atlas_hyper, f"Data/{ATLAS_HYPER}")
         zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
+        zf.write(align_hyper, f"Data/{ALIGN_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(
         f"Extracts validated: {ATLAS_HYPER} ({atlas_n} rows), "
-        f"{PANEL_HYPER} ({panel_n} rows) match the declared columns"
+        f"{PANEL_HYPER} ({panel_n} rows), {ALIGN_HYPER} ({align_n} rows) "
+        "match the declared columns"
     )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")

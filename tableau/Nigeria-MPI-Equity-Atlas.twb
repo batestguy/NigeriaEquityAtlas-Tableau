@@ -131,6 +131,48 @@
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
     </datasource>
+    <datasource caption='Party alignment panel' inline='true' name='federated.0partyalignment' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0partyalignment'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/party_alignment_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0partyalignment' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='interval' datatype='string' name='[interval]' role='dimension' type='nominal' />
+      <column caption='t0' datatype='string' name='[t0]' role='dimension' type='nominal' />
+      <column caption='t1' datatype='string' name='[t1]' role='dimension' type='nominal' />
+      <column caption='aligned_share' datatype='real' name='[aligned_share]' role='measure' type='quantitative' />
+      <column caption='aligned_binary' datatype='real' name='[aligned_binary]' role='measure' type='quantitative' />
+      <column caption='mpi_t0' datatype='real' name='[mpi_t0]' role='measure' type='quantitative' />
+      <column caption='mpi_t1' datatype='real' name='[mpi_t1]' role='measure' type='quantitative' />
+      <column caption='dmpi_annual' datatype='real' name='[dmpi_annual]' role='measure' type='quantitative' />
+      <column caption='dlogmpi_annual' datatype='real' name='[dlogmpi_annual]' role='measure' type='quantitative' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='survey_t0' datatype='string' name='[survey_t0]' role='dimension' type='nominal' />
+      <column caption='survey_t1' datatype='string' name='[survey_t1]' role='dimension' type='nominal' />
+      <column caption='mpi_series' datatype='string' name='[mpi_series]' role='dimension' type='nominal' />
+      <column caption='run_date' datatype='string' name='[run_date]' role='dimension' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[interval]' derivation='None' name='[none:interval:nk]' pivot='key' type='nominal' />
+      <column-instance column='[dmpi_annual]' derivation='Sum' name='[sum:dmpi_annual:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[aligned_share]' derivation='Sum' name='[sum:aligned_share:qk]' pivot='key' type='quantitative' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/party_alignment_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
   </datasources>
   <worksheets>
     <worksheet name='Where poverty sits'>
@@ -554,6 +596,65 @@
         <cols>[federated.0mpiatlas2021].[sum:headcount_ratio_pct:qk]</cols>
       </table>
     </worksheet>
+    <worksheet name='Party alignment and MPI change'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>Party alignment and MPI change</run><run fontsize='9'>  36 states x 3 intervals, FCT excluded · pre-registered test, see docs</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='Party alignment panel' name='federated.0partyalignment' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='interval' datatype='string' name='[interval]' role='dimension' type='nominal' />
+      <column caption='t0' datatype='string' name='[t0]' role='dimension' type='nominal' />
+      <column caption='t1' datatype='string' name='[t1]' role='dimension' type='nominal' />
+      <column caption='aligned_share' datatype='real' name='[aligned_share]' role='measure' type='quantitative' />
+      <column caption='aligned_binary' datatype='real' name='[aligned_binary]' role='measure' type='quantitative' />
+      <column caption='mpi_t0' datatype='real' name='[mpi_t0]' role='measure' type='quantitative' />
+      <column caption='mpi_t1' datatype='real' name='[mpi_t1]' role='measure' type='quantitative' />
+      <column caption='dmpi_annual' datatype='real' name='[dmpi_annual]' role='measure' type='quantitative' />
+      <column caption='dlogmpi_annual' datatype='real' name='[dlogmpi_annual]' role='measure' type='quantitative' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='survey_t0' datatype='string' name='[survey_t0]' role='dimension' type='nominal' />
+      <column caption='survey_t1' datatype='string' name='[survey_t1]' role='dimension' type='nominal' />
+      <column caption='mpi_series' datatype='string' name='[mpi_series]' role='dimension' type='nominal' />
+      <column caption='run_date' datatype='string' name='[run_date]' role='dimension' type='nominal' />
+      <column-instance column='[dmpi_annual]' derivation='Sum' name='[sum:dmpi_annual:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[aligned_share]' derivation='Sum' name='[sum:aligned_share:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[interval]' derivation='None' name='[none:interval:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Circle' />
+          <encodings>
+            <lod column='[federated.0partyalignment].[none:state:nk]' />
+            <color column='[federated.0partyalignment].[none:interval:nk]' />
+          </encodings>
+          <style>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='true' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>[federated.0partyalignment].[sum:dmpi_annual:qk]</rows>
+        <cols>[federated.0partyalignment].[sum:aligned_share:qk]</cols>
+      </table>
+    </worksheet>
   </worksheets>
   <dashboards>
     <dashboard name='Equity Atlas'>
@@ -635,6 +736,17 @@
       </cards>
     </window>
     <window class='worksheet' name='Incidence vs intensity'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Party alignment and MPI change'>
       <cards>
         <edge name='left'>
           <strip size='160'>

@@ -12,6 +12,7 @@ The five visuals follow the project spec, section 1.4:
   3. Conflict overlay        scatter, MPI vs Conflict Exposure Index
   4. Geographic gradient     MPI vs latitude, NOT vs climate -- see visual 4
   5. State comparison        radar, one state against the 37-state mean
+  6. Party alignment         MPI change vs federal alignment (stage 8), not a spec visual
 
 Three of these depart from the spec, deliberately and for documented reasons.
 
@@ -56,6 +57,8 @@ from common import DOCS, PROCESSED, RAW  # noqa: E402
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
 PANEL = PROCESSED / "mpi_trends_panel.csv"
+ALIGN_PANEL = PROCESSED / "party_alignment_panel.csv"
+ALIGN_RESULT = PROCESSED / "party_alignment_result.csv"
 
 HEALTH, EDUCATION, LIVING = "#b2182b", "#2166ac", "#1b7837"
 GRID = "#d9d9d9"
@@ -408,6 +411,65 @@ def visual_radar(rows: list[dict[str, str]]) -> None:
     print("  5_state_radar.png")
 
 
+# ---------------------------------------------------------------- visual 6
+
+
+def visual_party_alignment() -> None:
+    """dmpi_annual against aligned_share, one facet per interval (stage 8 outputs).
+
+    Neutral greys only: party is never a colour in this atlas. The subtitle is the
+    section 4 sentence chosen by stage 8 from the pre-registered templates, so this
+    chart makes no claim of its own.
+    """
+    align = read(ALIGN_PANEL)
+    result = read(ALIGN_RESULT)
+    assert len(align) == 108, f"expected 108 state-intervals, got {len(align)}"
+    primary = result[0]
+    assert primary["model"].startswith("Primary"), "party_alignment_result.csv row 0 must be primary"
+
+    intervals = sorted({r["interval"] for r in align})
+    ys = [float(r["dmpi_annual"]) for r in align]
+    pad = 0.08 * (max(ys) - min(ys))
+    fig, axes = plt.subplots(1, len(intervals), figsize=(11.5, 4.6), sharey=True)
+    for ax, interval in zip(axes, intervals, strict=True):
+        sub = [r for r in align if r["interval"] == interval]
+        ax.scatter(
+            [float(r["aligned_share"]) for r in sub], [float(r["dmpi_annual"]) for r in sub],
+            s=34, color="#6b6f76", alpha=0.75, edgecolor="white", linewidth=0.6, zorder=3,
+        )
+        ax.axhline(0, color="#8a8a8a", linewidth=0.8, zorder=2)
+        ax.set_xlim(-0.05, 1.05)
+        ax.set_ylim(min(ys) - pad, max(ys) + pad)
+        ax.set_title(f"{interval}  (n = {len(sub)})", fontsize=10, loc="left")
+        ax.set_xlabel("Share of interval aligned with federal ruling party", fontsize=8.6)
+        ax.grid(True, color=GRID, linewidth=0.6)
+        ax.set_axisbelow(True)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+    axes[0].set_ylabel("MPI change per year (negative = poverty fell)", fontsize=8.6)
+
+    note = (
+        f"Primary β = {float(primary['beta']):+.4f} MPI per year "
+        f"(95% CI {float(primary['ci_lo']):+.4f} to {float(primary['ci_hi']):+.4f}, "
+        f"permutation p = {primary['p_perm']}); model has interval FE and MPI at t0. "
+        f"MDE {primary['mde']}. n = {primary['n']}, FCT excluded (no elected governor)."
+    )
+    fig.text(0.01, -0.02, note, fontsize=8.4, color=INK, ha="left", va="top")
+    sentence = primary["sentence"].replace("*", "")
+    fig.suptitle(
+        "Federal alignment and the pace of MPI change, 2013–2021",
+        x=0.01, y=1.10, ha="left", fontsize=13, fontweight="700",
+    )
+    fig.text(
+        0.01, 1.04, "\n".join(textwrap.wrap(sentence, width=150)),
+        fontsize=8.6, color="#555555", ha="left", va="top", linespacing=1.35,
+    )
+    fig.tight_layout()
+    fig.savefig(PREVIEW / "6_party_alignment.png", dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print("  6_party_alignment.png")
+
+
 def main() -> int:
     PREVIEW.mkdir(parents=True, exist_ok=True)
     rows = read(ATLAS)
@@ -421,7 +483,8 @@ def main() -> int:
     visual_conflict(rows)
     visual_climate(rows, panel)
     visual_radar(rows)
-    print(f"\nwrote 5 previews to {PREVIEW}")
+    visual_party_alignment()
+    print(f"\nwrote 6 previews to {PREVIEW}")
     return 0
 
 

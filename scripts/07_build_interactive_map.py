@@ -7,8 +7,11 @@ plotly + the geoBoundaries GeoJSON already in data/raw. No Tableau, no login.
 
 Reads:  data/processed/mpi_atlas_2021.csv (37 rows, incl. poverty_group)
         data/raw/nga_adm1.geojson (37 ADM1 features, keyed by shapeISO == pcode)
-        data/reference/state_dominant_party.csv (37 rows: mode acronym, ties,
-          winning years of the dominant party/parties)
+        data/reference/governorship_events.csv (as-won party per seating event)
+        data/processed/party_alignment_state.csv (stage 8: years aligned with
+          the federal ruling party, 1999-2021)
+        data/processed/party_alignment_result.csv (stage 8: section 4 sentence,
+          primary beta + CI)
 Writes: docs/preview/interactive_map.html (self-contained, works offline)
 
 Honesty rules baked in (docs/CLAIMS.md):
@@ -16,10 +19,12 @@ Honesty rules baked in (docs/CLAIMS.md):
   all 36 adjacent pairs overlap at 95%)
 - hover shows MPI + 95% CI, never a bare rank; Borno carries its 7/27-LGA flag
 - toggle says Poorest 12 vs Other 25, never north vs south
-- party (most governorship wins 1999-2021 + the years won, see
-  docs/dominant_party.md) lives in the HOVER only, never on the map and never
-  as colour: it is context, not an explanation (every causal path is closed
-  at n=37 -- docs/CAUSAL_DECISION.md)
+- party (years aligned with the federal ruling party 1999-2021, plus the
+  as-won governorship wins, see docs/dominant_party.md) lives in the HOVER
+  only, never on the map and never as colour: it is context, not an
+  explanation (every causal path is closed at n=37 -- docs/CAUSAL_DECISION.md)
+- the result panel below the map quotes docs/party_alignment.md section 4
+  verbatim from stage 8's output; it is never re-worded here
 """
 
 from __future__ import annotations
@@ -27,7 +32,9 @@ from __future__ import annotations
 import base64
 import copy
 import csv
+import html
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -35,7 +42,9 @@ from common import DOCS, PROCESSED, RAW, REFERENCE
 
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
 GEOJSON = RAW / "nga_adm1.geojson"
-PARTY = REFERENCE / "state_dominant_party.csv"
+EVENTS = REFERENCE / "governorship_events.csv"
+ALIGN_STATE = PROCESSED / "party_alignment_state.csv"
+ALIGN_RESULT = PROCESSED / "party_alignment_result.csv"
 OUT = DOCS / "preview" / "interactive_map.html"
 FLAG_PNG = DOCS / "preview" / "nigeria_flag.png"
 COVER_JPG = DOCS / "preview" / "cover.jpg"
@@ -88,14 +97,20 @@ def main() -> int:
     band_of = {r["pcode"]: r["mpi_band"] for r in rows}
     assert sorted(set(band_of.values())) == BAND_ORDER, "mpi_band values drifted"
 
-    with PARTY.open(newline="", encoding="utf-8-sig") as fh:
-        party_rows = list(csv.DictReader(fh))
-    assert len(party_rows) == 37, f"party file has {len(party_rows)} rows, expected 37"
-    party_of = {r["pcode"]: r["dom_party"] for r in party_rows}
-    years_of = {r["pcode"]: r["win_years"] for r in party_rows}
-    assert set(party_of) == row_ids, (
-        f"party join mismatch: {sorted(set(party_of) ^ row_ids)[:5]}"
+    with ALIGN_STATE.open(newline="", encoding="utf-8-sig") as fh:
+        align_rows = list(csv.DictReader(fh))
+    assert len(align_rows) == 37, f"alignment file has {len(align_rows)} rows, expected 37"
+    aligned_of = {r["pcode"]: r["aligned_years_1999_2021"] for r in align_rows}
+    span_years = align_rows[0]["span_years"]
+    assert set(aligned_of) == row_ids, (
+        f"alignment join mismatch: {sorted(set(aligned_of) ^ row_ids)[:5]}"
     )
+    # As-won wins per party, in order of first win (docs/dominant_party.md rule).
+    wins_of: dict[str, dict[str, list[str]]] = {}
+    with EVENTS.open(newline="", encoding="utf-8-sig") as fh:
+        for ev in csv.DictReader(fh):
+            wins_of.setdefault(ev["pcode"], {}).setdefault(ev["party"], []).append(ev["year"])
+    assert set(wins_of) == row_ids - {"NG-FC"}, "every governed state needs events; FCT none"
 
     poorest = [p for p in by_pcode if by_pcode[p]["poverty_group"] == "Poorest 12"]
     rest = [p for p in by_pcode if by_pcode[p]["poverty_group"] != "Poorest 12"]
@@ -105,17 +120,15 @@ def main() -> int:
         return band.split(". ", 1)[1].replace(" to ", "–").replace(" and above", "+")
 
     def party_years_line(pcode: str) -> str:
-        party = party_of[pcode]
-        if party == "—":
-            return "Dominant party 1999–2021: none (no elected governor)"
-        yrs = years_of[pcode].replace(",", ", ")
-        if "|" in years_of[pcode]:
-            segs = " · ".join(
-                f"{p} ({y.replace(',', ', ')})"
-                for p, y in (s.split(":") for s in years_of[pcode].split("|"))
-            )
-            return f"Dominant 1999–2021 (tie): {segs}"
-        return f"Dominant 1999–2021: {party} ({yrs})"
+        if pcode not in wins_of:
+            return "Federal alignment: not applicable (no elected governor)"
+        wins = " · ".join(
+            f"{party} {', '.join(dict.fromkeys(years))}" for party, years in wins_of[pcode].items()
+        )
+        return (
+            f"Aligned with federal ruling party: {aligned_of[pcode]} of {span_years} yrs "
+            f"(1999–2021)<br><i>Governorship wins, as won: {wins}</i>"
+        )
 
     def poor_fmt(thousands: float) -> str:
         return f"≈{thousands / 1000:.1f}M" if thousands >= 1000 else f"≈{thousands:.0f}k"
@@ -206,8 +219,8 @@ def main() -> int:
                     "alone (Nutrition missing everywhere); within-Nigeria OK, cross-country no.<br>"
                     "Boundaries: geoBoundaries ADM1. Capitals: GeoNames. "
                     "Say Poorest 12 vs Other 25, never north vs south.<br>"
-                    "Party = most governorship wins 1999–2021 (winning years in "
-                    "hover); context only, not an explanation of poverty."
+                    "Party = years aligned with the federal ruling party 1999–2021 and "
+                    "as-won governorship wins (hover); context only, never colour."
                 ),
                 x=0,
                 y=-0.14,
@@ -252,10 +265,70 @@ def main() -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     fig.write_html(str(OUT), include_plotlyjs=True, full_html=True)
     _add_cover()
+    _add_result_panel()
     print(f"wrote {OUT.relative_to(Path.cwd())} ({OUT.stat().st_size/1024:.0f} KB)")
     print("bands: " + ", ".join(f"{b}={sum(1 for v in band_of.values() if v==b)}" for b in BAND_ORDER))
     print(f"toggle: Poorest 12 = {len(poorest)}, Other 25 = {len(rest)}")
     return 0
+
+
+def _add_result_panel() -> None:
+    """Append the stage 8 result below the map: the section 4 sentence, verbatim,
+    and a mini chart of the primary estimate with its 95% CI.
+
+    The sentence is read from stage 8's output (it chose it from the
+    pre-registered templates); markdown *italics* become <i>. Neutral greys only.
+    """
+    with ALIGN_RESULT.open(newline="", encoding="utf-8-sig") as fh:
+        res = list(csv.DictReader(fh))
+    primary = res[0]
+    assert primary["model"].startswith("Primary") and primary["sentence"], (
+        "run scripts/08_party_alignment.py first"
+    )
+    sentence = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", html.escape(primary["sentence"]))
+    beta, lo, hi = (float(primary[k]) for k in ("beta", "ci_lo", "ci_hi"))
+
+    # Mini chart: an axis symmetric about zero, the CI as a bar, beta as a dot.
+    width, height, pad = 520, 96, 40
+    span = max(abs(lo), abs(hi), abs(beta)) * 1.25
+
+    def sx(v: float) -> float:
+        return pad + (v + span) / (2 * span) * (width - 2 * pad)
+
+    ticks = [-span * 0.8, -span * 0.4, 0.0, span * 0.4, span * 0.8]
+    tick_svg = "".join(
+        f'<line x1="{sx(t):.1f}" y1="58" x2="{sx(t):.1f}" y2="62" stroke="#8a8a8a"/>'
+        f'<text x="{sx(t):.1f}" y="75" font-size="10" text-anchor="middle" fill="#555">{t:+.3f}</text>'
+        for t in ticks
+    )
+    svg = (
+        f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" '
+        f'aria-label="Primary estimate {beta:+.4f}, 95% CI {lo:+.4f} to {hi:+.4f}" '
+        'style="max-width:100%;height:auto;display:block;">'
+        f'<line x1="{pad}" y1="58" x2="{width - pad}" y2="58" stroke="#8a8a8a"/>'
+        f'<line x1="{sx(0):.1f}" y1="28" x2="{sx(0):.1f}" y2="58" stroke="#8a8a8a" stroke-dasharray="3,3"/>'
+        f'<line x1="{sx(lo):.1f}" y1="38" x2="{sx(hi):.1f}" y2="38" stroke="#4a4f57" stroke-width="3"/>'
+        f'<line x1="{sx(lo):.1f}" y1="32" x2="{sx(lo):.1f}" y2="44" stroke="#4a4f57" stroke-width="2"/>'
+        f'<line x1="{sx(hi):.1f}" y1="32" x2="{sx(hi):.1f}" y2="44" stroke="#4a4f57" stroke-width="2"/>'
+        f'<circle cx="{sx(beta):.1f}" cy="38" r="6" fill="#22252a"/>'
+        f'<text x="{sx(beta):.1f}" y="22" font-size="11" text-anchor="middle" fill="#22252a">'
+        f"β {beta:+.4f} (95% CI {lo:+.4f} to {hi:+.4f})</text>{tick_svg}"
+        f'<text x="{width / 2:.0f}" y="92" font-size="10" text-anchor="middle" fill="#555">'
+        "MPI change per year per unit of aligned share (primary model)</text></svg>"
+    )
+    panel = f"""<div style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;
+margin:8px auto 40px;padding:18px 22px;border:1px solid #d9d9d9;border-radius:10px;color:#22252a;">
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;color:#555;font-weight:700;">
+PRE-REGISTERED TEST · FEDERAL ALIGNMENT AND MPI CHANGE, 2013–2021</p>
+<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">{sentence}</p>
+{svg}
+<p style="margin:10px 0 0;font-size:11px;color:#666;">n = {primary["n"]} state-intervals; FCT
+excluded (no elected governor). Minimum detectable effect {primary["mde"]} per year.
+Method and robustness checks: docs/party_alignment.md.</p>
+</div>"""
+    page = OUT.read_text(encoding="utf-8")
+    assert page.count("</body>") == 1
+    OUT.write_text(page.replace("</body>", panel + "</body>"), encoding="utf-8")
 
 
 def flag_data_uri() -> str:
