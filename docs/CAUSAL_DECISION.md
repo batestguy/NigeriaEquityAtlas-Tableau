@@ -146,6 +146,22 @@ Permitted: *"baseline precipitation is a proxy for latitude; the association
 with MPI reflects a north–south development gradient, not a climate effect."*
 Useful word from OPHI's 2025 report: **overlap**.
 
+### 2d. Party → poverty: **association only, and a fragile one** (added 2026-10-09)
+
+The dominant (mode) governorship party cannot carry any claim: 26 of 36 states are
+PDP, and the three ANPP states are northern poorest states, so a cross-state party
+gap is the latitude problem of 1a again. The question was therefore asked
+*within states over time* — federal–state alignment against the pace of MPI change,
+2013–21 — and pre-registered before any result (`docs/party_alignment.md`).
+
+Even within states this is not causal: alignment is chosen by voters and governors
+(selection), the 2015 federal change coincides with everything else that happened
+in 2015, and four survey rounds give three changes per state. The result (aligned
+states' MPI fell slower, p = 0.036) rests on one interval and does not survive the
+sitting-party check. Permitted: the §3 sentence of `docs/party_alignment.md`,
+verbatim, with its robustness line beside it. Never "alignment slowed poverty
+reduction" and never "party does not matter".
+
 ---
 
 ## 3. What is left, and it is better

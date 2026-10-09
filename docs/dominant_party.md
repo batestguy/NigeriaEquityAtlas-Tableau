@@ -7,6 +7,12 @@ Shown in the interactive map hover ONLY (no on-map labels, never colour). **Cont
 never colour by party, never read party as an explanation of poverty**
 (see `docs/CAUSAL_DECISION.md` — every causal path is closed at n=37).
 
+**Whether party is associated with poverty is tested separately**, as a pre-registered
+within-state federal-alignment test (`docs/party_alignment.md`). The mode label below
+cannot answer that question: 26 of 36 states have mode PDP, and the non-PDP groups
+are 1–3 states each. The event matrix below is the source for
+`data/reference/governorship_events.csv`.
+
 ## Counting rule
 
 One entry per governorship **seating event** 1999–2021 (scheduled cycles

@@ -30,18 +30,23 @@ Four commits, one per stage. `git log` is the reliable history.
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
 | 4 | `04_merge.py` | the three processed tables + `docs/normalisation.md`, `docs/data_quality.md` |
 | 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — Hyper extracts; opens and renders in Tableau Public 2025.1 |
-| 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party + winning years), All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — Hyper extracts; opens and renders in Tableau Public 2026.2 |
+| 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party, 1999–2021 aligned-years tally), party-alignment result panel, All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
+| 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05–07 read its outputs |
 
 Stage 4 also writes `poverty_group` (Poorest 12 vs Other 25) into
 `mpi_atlas_2021.csv`; `data/reference/state_dominant_party.csv` +
 `docs/dominant_party.md` carry the mode governorship party 1999–2021 per state
-(6 ties, FCT none, full event matrix + sources). Party is hover-only, never
-colour. Cover framing decision (D6: "one country, two realities", never "two
+(6 ties, FCT none, full event matrix + sources). The mode label is hover context
+only; whether party is associated with poverty is the stage 8 test (see Findings).
+`data/reference/governorship_events.csv` (every seating, sourced `seated_year`) and
+`governor_defections.csv` (sourced sitting-party changes) feed it; stage 0 asserts
+the events recompute `dom_party` exactly. Never colour by party. Cover framing decision (D6: "one country, two realities", never "two
 zones") is recorded in `docs/SESSION_HANDOFF.md` 2026-10-08.
 
 **Remaining manual step:** publishing, and it needs your account login. Tableau Public
-Desktop 2025.1 **is installed** at `C:\TableauPublic` — nothing to install. The
+2026.2 **is installed** at `C:\Program Files\Tableau\Tableau Public 2026.2\bin\tabpublic.exe`
+(the old `C:\TableauPublic` 2025.1 path no longer exists) — nothing to install. The
 open-and-render check it unblocked has been done: the workbook loads with no error
 dialog and draws. There is no write API or publishing CLI for Tableau Public. Follow
 `docs/PUBLISH.md`, then verify the live URL with the MCP server's
@@ -118,6 +123,17 @@ The spec was written before the sources were checked. These are settled now:
   geographic one.** All 12 states with MPI > 0.20 sit in the two northern latitude
   bands, and among poor states latitude does *not* predict the dimension mix
   (r = -0.25). Say "poorest states vs the rest".
+- **Federal party alignment: a fragile result, not a finding.** Pre-registered
+  (`152c13d`, before any code): within-state ΔMPI per year 2013–21 on the share of
+  years the governor shared the federal ruling party, n = 108 state-intervals (FCT
+  has no governor). The pre-set rule (p < 0.05) fired: β = +0.008/yr, i.e. aligned
+  states' MPI fell *slower*, permutation p = 0.036, but the 95% CI crosses 0 and
+  |β| < MDE 0.0115. It rests on 2013–16 alone and fails the sitting-party
+  (defection) check (p ≈ 0.08), relative change, binary exposure and dropping any
+  interval; it holds only with poverty group × interval. Display the §3 sentence
+  verbatim *with* the robustness context line beside it — never alone, never as
+  "party affects poverty". The dominant-party (mode) label cannot test anything:
+  26 of 36 states are PDP.
 
 ## Environment rules that matter here
 
@@ -126,7 +142,8 @@ The spec was written before the sources were checked. These are settled now:
 | Python / data work | `& C:\Users\TOSHIBA\ds-general\python.exe` | bare `python` (= C:\Python314, tooling-only) |
 | Install | `uv pip install --python C:\Users\TOSHIBA\ds-general\python.exe <pkg>` | `pip install` into the wrong interpreter |
 | Stats / geo | `Rscript` | bare `R` (PowerShell alias for `Invoke-History`) |
-| Tableau | `C:\TableauPublic\bin\tabpublic.exe` (installed; `winget install --id Tableau.Public -e` to reinstall) | Tableau Desktop (paid; different app, cannot publish to Public) || Tableau (analysis) | `tableau` MCP server (Public API, read-only) | direct downloads from `tableau.com` — HTTP 403 here |
+| Tableau | `C:\Program Files\Tableau\Tableau Public 2026.2\bin\tabpublic.exe` (installed; `winget install --id Tableau.Public -e` to reinstall) | Tableau Desktop (paid; different app, cannot publish to Public) |
+| Tableau (analysis) | `tableau` MCP server (Public API, read-only) | direct downloads from `tableau.com` — HTTP 403 here |
 | Shell | one call, chained with `;` or `&&` | assuming state persists between calls |
 
 - `D:\` is an **external USB SSD**. Everything here disappears if it's unplugged. Anything that must

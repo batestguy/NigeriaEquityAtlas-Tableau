@@ -44,6 +44,7 @@ structurally more influential than in a fully-specified country, and Nigeria's
 | Borno's exposure | "Borno records the most *reported* conflict exposure of the 37 states in 2021." |
 | Zero-event states | "10 of 37 states recorded no UCDP event in 2021, which reflects reporting coverage as much as absence of violence." |
 | Resolution limit | "State is the finest resolution at which the survey supports estimates." |
+| Party and poverty | Only the pre-registered federal-alignment result, in the exact sentence `docs/party_alignment.md` §4 selected from §3. Within-state over 2013–2021, n = 36 (FCT has no governor). |
 
 ---
 
@@ -62,6 +63,9 @@ structurally more influential than in a fully-specified country, and Nigeria's
 | "Borno's high poverty follows from the insurgency" | Ecological fallacy, and Borno's 2021 MPI samples 29% of its population | Forbidden outright |
 | Any household, LGA or person-level statement | Aggregate-of-37 only | Forbidden outright |
 | Any WCAG-conformance claim | Tableau Public is not on the Server/Cloud conformance path; Salesforce's own report records partial support | Don't claim it |
+| "PDP/APC/ANPP states are poorer" (dominant party as explanation) | 26 of 36 states have mode PDP; the ANPP group is 3 northern poorest states, so a party gap is the latitude gradient again; no time alignment, and poor states electing a party is indistinguishable from a party governing poor states | Hover context only. The tested question is federal alignment: `docs/party_alignment.md` |
+| "Party is not associated with poverty" | A null result is bounded by the test's minimum detectable effect | Use the §3 "not detected" sentence with its MDE |
+| Colouring the map by party | Invites reading poverty geography as party geography | Forbidden; MPI band only |
 
 ---
 
