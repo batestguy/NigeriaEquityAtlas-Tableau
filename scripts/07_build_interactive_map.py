@@ -126,15 +126,15 @@ def main() -> int:
     def dominant_line(pcode: str) -> str:
         party = party_of[pcode]
         if party == "—":
-            return "Dominant party 1999–2021: none (no elected governor)"
+            return "Party: none (FCT has no elected governor)"
         yrs = years_of[pcode].replace(",", ", ")
         if "|" in years_of[pcode]:
             segs = " · ".join(
                 f"{p} ({y.replace(',', ', ')})"
                 for p, y in (s.split(":") for s in years_of[pcode].split("|"))
             )
-            return f"Dominant 1999–2021 (tie): {segs}"
-        return f"Dominant 1999–2021: {party} ({yrs})"
+            return f"Party that won most often, 1999–2021 (tie): {segs}"
+        return f"Party that won most often, 1999–2021: {party} ({yrs})"
 
     def party_years_line(pcode: str) -> str:
         # Two lines of context: the mode party (§1 of docs/party_alignment.md keeps
@@ -143,9 +143,15 @@ def main() -> int:
         if party_of[pcode] == "—":
             return dominant_line(pcode)
         return (
-            f"{dominant_line(pcode)}<br><i>Whole period 1999–2021: aligned with the federal "
-            f"ruling party {aligned_of[pcode]} of {span_years} yrs (not the 2013–21 test)</i>"
+            f"{dominant_line(pcode)}<br><i>Governor from the President's party: "
+            f"{aligned_of[pcode]} of {span_years} years, 1999–2021</i>"
         )
+
+    def share_words(pct: float) -> str:
+        # "about 7 in 10" reads better than "1 in 1" once more than half are poor.
+        if pct >= 20:
+            return f"about {round(pct / 10)} in 10"
+        return f"about 1 in {round(100 / pct)}"
 
     def poor_fmt(thousands: float) -> str:
         return f"≈{thousands / 1000:.1f}M" if thousands >= 1000 else f"≈{thousands:.0f}k"
@@ -161,8 +167,9 @@ def main() -> int:
         base = (
             f"<b>{r['state']}</b><br>"
             f"<i>{r['poverty_group']} · poverty band {band_short(r['mpi_band'])}</i><br>"
-            f"MPI {float(r['mpi']):.3f} (95% CI {float(r['mpi_ci_lo']):.3f}–{float(r['mpi_ci_hi']):.3f})<br>"
-            f"{h:.1f}% of people are poor (≈1 in {round(100 / h)}); "
+            f"Poverty score (MPI) {float(r['mpi']):.3f} "
+            f"(likely range {float(r['mpi_ci_lo']):.3f}–{float(r['mpi_ci_hi']):.3f})<br>"
+            f"{h:.1f}% of people are poor ({share_words(h)}); "
             f"the poor miss {a:.0f}% of basic needs<br>"
             f"{poor_fmt(float(r['mpi_poor_thousands']))} people are poor<br>"
             f"{party_years_line(pcode)}"
@@ -204,7 +211,7 @@ def main() -> int:
         title=(
             "🇳🇬 Nigeria MPI Equity Atlas — Where poverty sits<br>"
             "<sup>MICS 2021 · 36 states + FCT · 5 bands, not 37 ranks. "
-            "Hover any state for MPI + 95% CI.</sup>"
+            "Hover over a state for its poverty score.</sup>"
         ),
         mapbox=dict(
             # Blank base: no tile server, no API key, works fully offline.
@@ -213,7 +220,12 @@ def main() -> int:
             center=dict(lat=9.2, lon=8.5),
             zoom=4.8,
         ),
-        margin=dict(l=10, r=10, t=200, b=80),
+        # Fixed height: with the default 100%-of-window height, a laptop screen left
+        # ~290 px for the map and the fixed zoom cut Nigeria off top and bottom.
+        # Zoom and centre are refitted to the real map box by FIT_JS on load,
+        # resize and every view button, so no screen width clips a state.
+        height=MAP_HEIGHT,
+        margin=dict(l=10, r=10, t=170, b=110),
         annotations=[
             dict(
                 text=(
@@ -236,8 +248,8 @@ def main() -> int:
                     "alone (Nutrition missing everywhere); within-Nigeria OK, cross-country no.<br>"
                     "Boundaries: geoBoundaries ADM1. Capitals: GeoNames. "
                     "Say Poorest 12 vs Other 25, never north vs south.<br>"
-                    "Party = dominant governorship party and years aligned with the federal "
-                    "ruling party, 1999–2021 (hover); context only, never colour."
+                    "Party (hover only): the party that most often won the governorship, and the "
+                    "years the governor shared the President's party, 1999–2021. Colours show poverty, never party."
                 ),
                 x=0,
                 y=-0.14,
@@ -257,36 +269,159 @@ def main() -> int:
                 type="buttons",
                 direction="right",
                 x=0.0,
-                y=1.12,
+                y=1.10,
                 xanchor="left",
                 yanchor="top",
                 showactive=True,
                 buttons=[
-                    dict(label="All 37", method="update",
-                         args=[{"visible": [True, True]},
-                               {"mapbox.center.lat": 9.2, "mapbox.center.lon": 8.5,
-                                "mapbox.zoom": 4.8}]),
-                    dict(label="Poorest 12", method="update",
-                         args=[{"visible": [True, False]},
-                               {"mapbox.center.lat": 11.0, "mapbox.center.lon": 9.3,
-                                "mapbox.zoom": 5.2}]),
-                    dict(label="Other 25", method="update",
-                         args=[{"visible": [False, True]},
-                               {"mapbox.center.lat": 7.4, "mapbox.center.lon": 7.0,
-                                "mapbox.zoom": 5.0}]),
+                    dict(label="All 37", method="restyle", args=[{"visible": [True, True]}]),
+                    dict(label="Poorest 12", method="restyle", args=[{"visible": [True, False]}]),
+                    dict(label="Other 25", method="restyle", args=[{"visible": [False, True]}]),
                 ],
             )
         ],
     )
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.write_html(str(OUT), include_plotlyjs=True, full_html=True)
+    fig.write_html(str(OUT), include_plotlyjs=True, full_html=True,
+                   default_height=f"{MAP_HEIGHT}px")
+    _add_fit_script({
+        "All 37": _bounds(gj_plot, set(by_pcode)),
+        "Poorest 12": _bounds(gj_plot, set(poorest)),
+        "Other 25": _bounds(gj_plot, set(rest)),
+    })
     _add_cover()
     _add_result_panel()
     print(f"wrote {OUT.relative_to(Path.cwd())} ({OUT.stat().st_size/1024:.0f} KB)")
     print("bands: " + ", ".join(f"{b}={sum(1 for v in band_of.values() if v==b)}" for b in BAND_ORDER))
     print(f"toggle: Poorest 12 = {len(poorest)}, Other 25 = {len(rest)}")
     return 0
+
+
+MAP_HEIGHT = 860
+
+FIT_JS = """<script>
+(function () {
+  // Fit the selected view's bounding box into the map's real pixel box.
+  // Web-mercator maths for 512 px tiles; 8% padding so edge states never touch.
+  var BOUNDS = __BOUNDS__, view = "All 37";
+  var g = document.querySelector(".plotly-graph-div");
+  function merc(lat) { var r = lat * Math.PI / 180; return Math.log(Math.tan(Math.PI / 4 + r / 2)); }
+  function fit() {
+    var s = g._fullLayout && g._fullLayout._size;
+    if (!s) return;
+    var b = BOUNDS[view], w = s.w * 0.92, h = s.h * 0.92;
+    var lonSpan = (b[2] - b[0]) * Math.PI / 180, latSpan = merc(b[3]) - merc(b[1]);
+    var zoom = Math.log2(Math.min(w * 2 * Math.PI / (lonSpan * 512), h * 2 * Math.PI / (latSpan * 512)));
+    var my = (merc(b[1]) + merc(b[3])) / 2;
+    var lat = (2 * Math.atan(Math.exp(my)) - Math.PI / 2) * 180 / Math.PI;
+    Plotly.relayout(g, {"mapbox.zoom": zoom, "mapbox.center.lat": lat, "mapbox.center.lon": (b[0] + b[2]) / 2});
+  }
+  // Narrow screens: Plotly never wraps text and a vertical legend eats half the
+  // width, so swap to a horizontal legend under the map and pre-broken lines.
+  var NARROW = __NARROW__, wide = null, mode = null;
+  function arrange() {
+    var m = window.innerWidth < 700 ? "narrow" : "wide";
+    if (m === mode) return Promise.resolve();
+    mode = m;
+    var L = g.layout, both = [0, 1];
+    if (!wide) {
+      wide = {title: L.title.text, a0: L.annotations[0].text, a1: L.annotations[1].text,
+              a1y: L.annotations[1].y, a0y: L.annotations[0].y, menuY: L.updatemenus[0].y, margin: Object.assign({}, L.margin),
+              cb: JSON.parse(JSON.stringify(g.data[0].colorbar))};
+    }
+    var n = m === "narrow";
+    legend.style.display = n ? "flex" : "none";
+    var h = n ? 170 + Math.round((window.innerWidth - 20) * 0.9) + 120 : __HEIGHT__;
+    g.style.height = h + "px";
+    return Plotly.restyle(g, {"showscale": !n}, both).then(function () {
+      return Plotly.relayout(g, n ? {
+        "title.text": NARROW.title, "annotations[0].text": NARROW.a0,
+        "annotations[1].text": NARROW.a1, "annotations[1].y": -0.04,
+        "annotations[1].yanchor": "top", "margin.r": 10, "margin.b": 120, "height": h,
+        // Pixel-placed above the map: buttons, then the two-line caption.
+        "updatemenus[0].y": 1 + 92 / (h - 290), "annotations[0].y": 1 + 6 / (h - 290),
+        "annotations[0].yanchor": "bottom",
+        "margin.autoexpand": false
+      } : {
+        "title.text": wide.title, "annotations[0].text": wide.a0, "annotations[1].text": wide.a1,
+        "annotations[1].y": wide.a1y, "annotations[1].yanchor": "auto", "height": h,
+        "updatemenus[0].y": wide.menuY, "annotations[0].y": wide.a0y, "annotations[0].yanchor": "auto",
+        "margin.r": wide.margin.r, "margin.b": wide.margin.b,
+        "margin.autoexpand": true
+      });
+    });
+  }
+  // HTML legend for narrow screens, inserted under the map once.
+  var legend = document.createElement("div");
+  legend.setAttribute("role", "list");
+  legend.setAttribute("aria-label", "MPI band");
+  legend.style.cssText = "display:none;flex-wrap:wrap;gap:6px 14px;margin:0 10px 12px;" +
+    "font:12px Arial,sans-serif;color:#22252a;";
+  legend.innerHTML = "<b style='width:100%'>MPI band</b>" + NARROW.ticks.map(function (t, i) {
+    return "<span role='listitem' style='display:inline-flex;align-items:center;gap:5px'>" +
+      "<span style='width:14px;height:14px;border:1px solid #8a8a8a;background:" +
+      NARROW.colors[i] + "'></span>" + t + "</span>";
+  }).join("");
+  g.parentNode.insertBefore(legend, g.nextSibling);
+  function refresh() {
+    // Width first (Plotly keeps the old width after a height-only relayout).
+    arrange().then(function () { return Plotly.Plots.resize(g); }).then(fit);
+  }
+  function init() { if (g._fullLayout && g._fullLayout._size) { refresh(); } else { setTimeout(init, 100); } }
+  g.on && g.on("plotly_buttonclicked", function (e) { view = e.button.label; fit(); });
+  var timer;
+  window.addEventListener("resize", function () { clearTimeout(timer); timer = setTimeout(refresh, 250); });
+  window.addEventListener("load", init);
+})();
+</script>"""
+
+
+def _bounds(gj: dict, pcodes: set[str]) -> list[float]:
+    """[west, south, east, north] of the given states' polygons."""
+    xs: list[float] = []
+    ys: list[float] = []
+
+    def walk(c: list) -> None:
+        if c and isinstance(c[0], (int, float)):
+            xs.append(float(c[0]))
+            ys.append(float(c[1]))
+        else:
+            for sub_c in c:
+                walk(sub_c)
+
+    for feat in gj["features"]:
+        if feat["id"] in pcodes:
+            walk(feat["geometry"]["coordinates"])
+    assert xs, "no polygons for this view"
+    return [min(xs), min(ys), max(xs), max(ys)]
+
+
+def _add_fit_script(views: dict[str, list[float]]) -> None:
+    page = OUT.read_text(encoding="utf-8")
+    assert page.count("</body>") == 1
+    narrow = {
+        "ticks": ["under 0.05", "0.05–0.10", "0.10–0.20", "0.20–0.30", "0.30 and above"],
+        "colors": BAND_COLORS,
+        "title": (
+            "🇳🇬 Nigeria MPI Equity Atlas<br><sup>Where poverty sits · MICS 2021<br>"
+            "5 bands, not 37 ranks. Tap a state for details.</sup>"
+        ),
+        "a0": "Poorest 12 — the 12 highest-MPI states<br>Other 25 — the rest",
+        "a1": (
+            "Global MPI, harmonised series (OPHI Table 6, MN 63).<br>"
+            "Health = child mortality alone; compare within<br>Nigeria only. "
+            "Boundaries: geoBoundaries. Capitals: GeoNames.<br>"
+            "Party appears in the hover only. Colours show<br>poverty, never party."
+        ),
+    }
+    script = (
+        FIT_JS
+        .replace("__BOUNDS__", json.dumps({k: [round(v, 4) for v in b] for k, b in views.items()}))
+        .replace("__NARROW__", json.dumps(narrow, ensure_ascii=False))
+        .replace("__HEIGHT__", str(MAP_HEIGHT))
+    )
+    OUT.write_text(page.replace("</body>", script + "</body>"), encoding="utf-8")
 
 
 def _add_result_panel() -> None:
@@ -357,10 +492,47 @@ def _add_result_panel() -> None:
         f'<text x="{width / 2:.0f}" y="92" font-size="10" text-anchor="middle" fill="#555">'
         "MPI change per year per unit of aligned share (primary model)</text></svg>"
     )
-    panel = f"""<div style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;
+    lead, summary = _plain_summary(res, checks)
+    plain_rows = "".join(
+        f'<tr style="border-top:1px solid #eee;"><td style="padding:5px 12px 5px 0;">'
+        f"{html.escape(_plain_check_label(r))}</td>"
+        f'<td style="padding:5px 0;font-weight:600;white-space:nowrap;">'
+        f'{"Yes" if float(r["p_perm"]) < 0.05 else "No"}</td></tr>'
+        for r in checks
+    )
+    panel = f"""<style>
+.pa-panel summary{{display:inline-block;cursor:pointer;list-style:none;margin:14px 10px 0 0;
+padding:8px 14px;border:1px solid #4a4f57;border-radius:999px;font-size:14px;font-weight:600;
+color:#22252a;background:#fff;}}
+.pa-panel summary::-webkit-details-marker{{display:none;}}
+.pa-panel summary:hover{{background:#f2f3f5;}}
+.pa-panel summary:focus-visible{{outline:3px solid #1f6feb;outline-offset:2px;}}
+.pa-panel details[open] > summary{{background:#22252a;color:#fff;}}
+.pa-panel details > div{{margin-top:14px;}}
+.pa-panel .pa-swipe{{display:none;}}
+@media (max-width:699px){{.pa-panel .pa-swipe{{display:block;}}}}
+</style>
+<div class="pa-panel" style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;
 margin:8px auto 40px;padding:18px 22px;border:1px solid #d9d9d9;border-radius:10px;color:#22252a;">
+<h2 style="margin:0 0 10px;font-size:20px;line-height:1.3;">Does having a governor from the
+President's party help a state cut poverty faster?</h2>
+<p style="margin:0 0 8px;font-size:17px;font-weight:700;">{html.escape(lead)}</p>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.6;max-width:70ch;">{html.escape(summary)}</p>
+<p style="margin:0 0 4px;font-size:14px;font-weight:700;">We re-tested it in {len(checks)} other ways.
+Was the gap still there?</p>
+<table style="border-collapse:collapse;font-size:14px;color:#333;margin-bottom:4px;">
+<tbody>{plain_rows}</tbody></table>
+<details>
+<summary>Why we can't say the party caused it</summary>
+<div>{_causal_graph_html()}</div>
+</details>
+<details>
+<summary>Technical details</summary>
+<div>
 <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;color:#555;font-weight:700;">
 PRE-REGISTERED TEST · FEDERAL ALIGNMENT AND MPI CHANGE, 2013–2021</p>
+<p style="margin:0 0 6px;font-size:13px;color:#555;">The exact wording below was fixed before
+the analysis was run (docs/party_alignment.md).</p>
 <div style="display:flex;flex-wrap:wrap;gap:18px 28px;align-items:flex-start;">
 <div style="flex:1 1 400px;min-width:0;">
 <p style="margin:0 0 12px;font-size:15px;line-height:1.5;">{sentence}</p>
@@ -377,10 +549,168 @@ ROBUSTNESS AND LEAVE-ONE-INTERVAL-OUT</p>
 excluded (no elected governor). Minimum detectable effect {primary["mde"]} per year. Check (d)
 and the interval rows were added after the primary result was known. Permutation p is a Monte
 Carlo estimate (about ±0.005). Per-interval estimates and method: docs/party_alignment.md §4.</p>
+</div>
+</details>
 </div>"""
     page = OUT.read_text(encoding="utf-8")
     assert page.count("</body>") == 1
     OUT.write_text(page.replace("</body>", panel + "</body>"), encoding="utf-8")
+
+
+PLAIN_CHECK_LABELS = {
+    "(a)": "Measuring the change in percent instead of points",
+    "(b)": "Letting poorer and less-poor states follow their own trends",
+    "(c)": "Counting a state simply as 'in' or 'out' of the President's party",
+    "(d)": "Counting governors who switched party under their new party",
+}
+
+
+def _plain_check_label(row: dict[str, str]) -> str:
+    """Everyday wording for one robustness row; fails loudly on an unknown check."""
+    if row["kind"] == "loio":
+        return f"Leaving out the years {row['interval']}"
+    key = row["short"].split(" ", 1)[0]
+    assert key in PLAIN_CHECK_LABELS, f"no plain label for check {row['short']!r}"
+    return PLAIN_CHECK_LABELS[key]
+
+
+def _plain_summary(res: list[dict[str, str]], checks: list[dict[str, str]]) -> tuple[str, str]:
+    """A plain-language reading of the pre-registered result, built from the CSV.
+
+    It may not say more than the section 4 sentence plus the robustness rows:
+    direction and size only when detected, how many re-tests kept the gap, and
+    no cause. The exact pre-registered sentence stays under "Technical details".
+    """
+    primary = res[0]
+    beta, p = float(primary["beta"]), float(primary["p_perm"])
+    held = sum(float(r["p_perm"]) < 0.05 for r in checks)
+    years = "Between 2013 and 2021"
+    who = "states whose governor belonged to the President's party"
+    no_gov = "FCT is left out because it has no elected governor."
+    if p >= 0.05:
+        return (
+            "Short answer: we can't see a clear link.",
+            (
+                f"{years}, poverty did not fall at a clearly different pace in {who} "
+                "than in other states. With only 36 states and four surveys, a small "
+                f"difference could still exist without us being able to see it. {no_gov}"
+            ),
+        )
+    pace = "a little more slowly" if beta > 0 else "a little faster"
+    if held == len(checks):
+        return (
+            "Short answer: there is a small gap, and it held up when we re-tested it.",
+            (
+                f"{years}, poverty fell {pace} in {who} than in other states. The gap "
+                f"was still there in all {len(checks)} re-tests. That shows a pattern, "
+                f"not that the party caused it. {no_gov}"
+            ),
+        )
+    per = [r for r in res if r["kind"] == "per_interval"]
+    rests = [r["interval"] for r in per if float(r["p_perm"]) < 0.05]
+    where = (
+        f", it comes mostly from {' and '.join(rests)}"
+        if rests and len(rests) < len(per) else ""
+    )
+    return (
+        "Short answer: we can't really tell.",
+        (
+            f"{years}, poverty fell {pace} in {who} than in other states. But the gap "
+            f"is small{where}, and it was still there in only {held} of {len(checks)} "
+            "re-tests. Treat it as a hint, not a finding. Even a solid gap would not "
+            f"show that the party caused it. {no_gov}"
+        ),
+    )
+
+
+def _causal_graph_html() -> str:
+    """A plain-language cause-and-effect diagram: why the party comparison can show
+    a pattern but not a cause. Inline SVG, greys only, readable without colour."""
+    box = (
+        '<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="{fill}" '
+        'stroke="#4a4f57" stroke-width="1.5"/>'
+    )
+
+    def node(x: int, y: int, w: int, h: int, lines: list[str], *, fill: str = "#fff",
+             bold: bool = False) -> str:
+        weight = ' font-weight="700"' if bold else ""
+        cy = y + h / 2 - (len(lines) - 1) * 9
+        text = "".join(
+            f'<text x="{x + w / 2:.0f}" y="{cy + i * 18 + 5:.0f}" font-size="14" '
+            f'text-anchor="middle" fill="#22252a"{weight}>{html.escape(t)}</text>'
+            for i, t in enumerate(lines)
+        )
+        return box.format(x=x, y=y, w=w, h=h, fill=fill) + text
+
+    def arrow(x1: float, y1: float, x2: float, y2: float, *, dashed: bool = False) -> str:
+        dash = ' stroke-dasharray="7,5"' if dashed else ""
+        return (
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#4a4f57" '
+            f'stroke-width="2"{dash} marker-end="url(#pa-arrow)"/>'
+        )
+
+    svg = (
+        '<svg viewBox="0 0 760 430" role="img" aria-labelledby="pa-dag-title pa-dag-desc" '
+        'style="width:100%;min-width:640px;max-width:760px;height:auto;display:block;" '
+        'font-family="-apple-system,Segoe UI,Arial,sans-serif">'
+        '<title id="pa-dag-title">Why party cannot be shown to cause the poverty change</title>'
+        '<desc id="pa-dag-desc">Four other things push on the comparison: where a state is '
+        "and how poor it already was, which affects both its party and its poverty; voters "
+        "choosing governors; the big national events around the 2015 change of President; "
+        "and survey error in measuring poverty. The arrow from party to poverty is the "
+        "question mark we tested.</desc>"
+        '<defs><marker id="pa-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" '
+        'markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" '
+        'fill="#4a4f57"/></marker></defs>'
+        # the tested question
+        + node(20, 170, 220, 74, ["Governor is from the", "President's party"], fill="#f2f3f5", bold=True)
+        + node(520, 170, 220, 74, ["How fast poverty", "fell in the state"], fill="#f2f3f5", bold=True)
+        + arrow(240, 207, 516, 207, dashed=True)
+        + '<text x="380" y="196" font-size="22" font-weight="700" text-anchor="middle" fill="#22252a">?</text>'
+        + '<text x="380" y="232" font-size="12" text-anchor="middle" fill="#555">what we tested</text>'
+        # 1: region and starting poverty -> both
+        + node(260, 14, 240, 62, ["1. Where the state is and", "how poor it already was"])
+        + arrow(300, 76, 170, 166) + arrow(460, 76, 590, 166)
+        # 2: voters -> party
+        + node(20, 330, 200, 62, ["2. Who voters chose"])
+        + arrow(120, 330, 120, 248)
+        # 3: national events around 2015 -> both
+        + node(260, 330, 240, 62, ["3. Big events around 2015:", "oil price fall, recession"])
+        + arrow(300, 330, 200, 248) + arrow(460, 330, 560, 248)
+        # 4: survey error -> measured poverty change
+        + node(540, 330, 200, 62, ["4. Survey error", "(only 4 surveys)"])
+        + arrow(640, 330, 640, 248)
+        + "</svg>"
+    )
+    notes = [
+        ("Where the state is and how poor it already was",
+         "shapes both which party tends to win and how much poverty can fall."),
+        ("Who voters chose",
+         ("decides the governor's party, so party is not handed out at random the "
+          "way a fair test would need.")),
+        ("Big events around 2015",
+         ("the President's party changed in 2015, the same time as an oil price fall "
+          "and a recession, so we can't pull party apart from timing.")),
+        ("Survey error",
+         ("poverty is measured by surveys only four times, giving each state just "
+          "three changes to compare, each with some error.")),
+    ]
+    items = "".join(
+        f'<li style="margin:0 0 6px;"><b>{html.escape(t)}</b> {html.escape(d)}</li>'
+        for t, d in notes
+    )
+    return (
+        '<p class="pa-swipe" style="margin:0 0 6px;font-size:13px;color:#555;">'
+        "Swipe sideways to see the whole diagram.</p>"
+        f'<div style="overflow-x:auto;">{svg}</div>'
+        '<p style="margin:12px 0 6px;font-size:15px;line-height:1.6;max-width:70ch;">The dashed '
+        "arrow is the question we asked. The four numbered boxes also push on the result, and "
+        "we can't fully separate them from the party effect:</p>"
+        f'<ol style="margin:0 0 8px 20px;padding:0;font-size:15px;line-height:1.6;max-width:70ch;">{items}</ol>'
+        '<p style="margin:0;font-size:15px;line-height:1.6;max-width:70ch;">To prove cause and '
+        "effect we would need something like a fair experiment. We don't have one, so the atlas "
+        "only describes patterns.</p>"
+    )
 
 
 def flag_data_uri() -> str:

@@ -131,7 +131,9 @@ The spec was written before the sources were checked. These are settled now:
   |β| < MDE 0.0115. It rests on 2013–16 alone and fails the sitting-party
   (defection) check (p ≈ 0.08), relative change, binary exposure and dropping any
   interval; it holds only with poverty group × interval. Display the §3 sentence
-  verbatim *with* the robustness context line beside it — never alone, never as
+  verbatim *with* the robustness context line beside it (the map panel leads with a
+  plain-language reading generated from the same CSV, and keeps the exact sentence
+  under "Technical details") — never alone, never as
   "party affects poverty". The dominant-party (mode) label cannot test anything:
   26 of 36 states are PDP.
 
