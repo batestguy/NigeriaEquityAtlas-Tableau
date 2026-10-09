@@ -1,0 +1,25 @@
+pcode,date,from_party,to_party,kind,source_url,note
+NG-ED,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,"INEC registered APC 31 Jul 2013 and withdrew the ACN, ANPP and CPC certificates; sitting ACN governor (Oshiomhole) relabelled APC"
+NG-EK,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ACN certificate withdrawn at APC registration; sitting ACN governor (Fayemi)
+NG-LA,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ACN certificate withdrawn at APC registration; sitting ACN governor (Fashola)
+NG-OG,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ACN certificate withdrawn at APC registration; sitting ACN governor (Amosun)
+NG-OS,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ACN certificate withdrawn at APC registration; sitting ACN governor (Aregbesola)
+NG-OY,2013-07-31,ACN,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ACN certificate withdrawn at APC registration; sitting ACN governor (Ajimobi)
+NG-BO,2013-07-31,ANPP,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ANPP certificate withdrawn at APC registration; sitting ANPP governor (Shettima)
+NG-YO,2013-07-31,ANPP,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ANPP certificate withdrawn at APC registration; sitting ANPP governor (Gaidam)
+NG-ZA,2013-07-31,ANPP,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,ANPP certificate withdrawn at APC registration; sitting ANPP governor (Yari)
+NG-NA,2013-07-31,CPC,APC,merger,https://en.wikipedia.org/wiki/All_Progressives_Congress ; https://thewillnews.com/inec-registers-apc/,CPC certificate withdrawn at APC registration; sitting CPC governor (Al-Makura)
+NG-IM,2013-02-06,APGA,APC,defection,https://www.vanguardngr.com/2013/02/apga-disowns-okorocha-over-apc/ ; https://en.wikipedia.org/wiki/Rochas_Okorocha,"Okorocha (elected APGA 2011) joined the APC merger announced 6 Feb 2013; APGA disowned him by 11 Feb 2013; exact personal date not found, month used"
+NG-RI,2013-11-26,PDP,APC,defection,https://www.icirnigeria.org/?p=2925,"nPDP governors joined APC in Abuja on Tue 26 Nov 2013 (ICIR, dated 26 Nov 2013); formal announcement 10 Dec 2013 per https://nation.africa/kenya/news/africa/nigerian-governors-defect-to-opposition-925242"
+NG-KN,2013-11-26,PDP,APC,defection,https://www.icirnigeria.org/?p=2925,nPDP governor (Kwankwaso); formal announcement 10 Dec 2013 per nation.africa
+NG-SO,2013-11-26,PDP,APC,defection,https://www.icirnigeria.org/?p=2925,nPDP governor (Wamakko); formal announcement 10 Dec 2013 per nation.africa
+NG-AD,2013-11-26,PDP,APC,defection,https://www.icirnigeria.org/?p=2925,nPDP governor (Nyako); formal announcement 10 Dec 2013 per nation.africa; Nyako impeached 15 Jul 2014 and succeeded by PDP office-holders (succession not modelled)
+NG-KW,2013-11-26,PDP,APC,defection,https://www.icirnigeria.org/?p=2925,nPDP governor (Ahmed); formal announcement 10 Dec 2013 per nation.africa
+NG-ON,2014-10-02,LP,PDP,defection,https://saharareporters.com/2018/06/13/breaking-%E2%80%98-utmost-humility%E2%80%99-mimiko-leaves-pdp,"""Mimiko had left LP on October 2, 2014, for the PDP"" (other reports: 3 Oct 2014)"
+NG-BE,2018-07-25,APC,PDP,defection,https://www.channelstv.com/2018/07/25/breaking-benue-governor-ortom-announces-defection-from-apc-to-pdp,Ortom left APC 16 Jul 2018 and announced PDP 25 Jul 2018
+NG-KW,2018-07-31,APC,PDP,defection,https://www.thecable.ng/?p=278236,Ahmed announced move to PDP 31 Jul 2018 (same evening as Saraki)
+NG-SO,2018-08-01,APC,PDP,defection,https://www.channelstv.com/2018/08/01/breaking-sokoto-governor-aminu-tambuwal-dumps-apc/,Tambuwal announced move to PDP 1 Aug 2018
+NG-ED,2020-06-19,APC,PDP,defection,https://www.channelstv.com/2020/06/19/breaking-obaseki-joins-pdp/amp/,Obaseki resigned APC 16 Jun and joined PDP 19 Jun 2020 (before his Nov 2020 PDP seating)
+NG-EB,2020-11-19,PDP,APC,defection,https://www.channelstv.com/2020/11/19/live-gov-umahi-officially-defects-to-apc/,Umahi officially joined APC Thu 19 Nov 2020
+NG-CR,2021-05-20,PDP,APC,defection,https://www.channelstv.com/2021/05/20/remain-united-pdp-tells-members-after-ayades-defection/amp/,Ayade announced move to APC 20 May 2021
+NG-ZA,2021-06-29,PDP,APC,defection,https://en.wikipedia.org/wiki/Bello_Matawalle,Matawalle switch announced 27 Jun and formalised 29 Jun 2021 in Gusau
