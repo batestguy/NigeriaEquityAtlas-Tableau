@@ -1,0 +1,5 @@
+model,beta,ci_lo,ci_hi,p_perm,n,mde,run_date,sentence
+Primary: aligned_share,0.0080,-0.0002,0.0168,0.0355,108,0.0115,2026-10-09,"Over 2013–2021, states governed in alignment with the federal ruling party saw MPI fall 0.0080 MPI points *slower* per year than non-aligned states (95% CI -0.0002 to 0.0168, permutation p = 0.0355). This is an association within states over time, not an effect of party."
+(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0),0.0386,-0.0385,0.1221,0.2393,108,0.0115,2026-10-09,
+(b) + poverty_group x interval,0.0081,0.0015,0.0143,0.0254,108,0.0115,2026-10-09,
+(c) exposure = aligned_share >= 0.5,0.0055,-0.0021,0.0131,0.1270,108,0.0115,2026-10-09,

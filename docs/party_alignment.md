@@ -113,4 +113,21 @@ Never phrase it as north vs south.
 
 ## 4. Result
 
-*Written by `scripts/08_party_alignment.py`. Empty until the stage runs.*
+*Written by `scripts/08_party_alignment.py` on 2026-10-09. Do not edit by hand.*
+
+Over 2013–2021, states governed in alignment with the federal ruling party saw MPI fall 0.0080 MPI points *slower* per year than non-aligned states (95% CI -0.0002 to 0.0168, permutation p = 0.0355). This is an association within states over time, not an effect of party.
+
+| Model | β | 95% CI (state-cluster bootstrap) | Permutation p |
+|---|---|---|---|
+| Primary: aligned_share | 0.0080 | -0.0002 to 0.0168 | 0.0355 |
+| (a) outcome = log(MPI_t1/MPI_t0)/(t1-t0) | 0.0386 | -0.0385 to 0.1221 | 0.2393 |
+| (b) + poverty_group x interval | 0.0081 | 0.0015 to 0.0143 | 0.0254 |
+| (c) exposure = aligned_share >= 0.5 | 0.0055 | -0.0021 to 0.0131 | 0.1270 |
+
+- MDE (80% power, α = 0.05, 500 simulated datasets × 1,000 permutations, grid 0.0005): |β| = 0.0115 MPI points per year (β < 0: 0.0115; β > 0: 0.0110).
+- n = 108 state-intervals (36 states × 3 intervals). FCT excluded: no elected governor.
+- β is in MPI points (0–1 scale) per year per unit of `aligned_share`; check (a) is in
+  log-ratio per year. Permutation: 10,000 draws; bootstrap: 5,000 draws; seed 20261009.
+- Limitations: sitting-party defections are not modelled; MPI change carries survey error
+  (median relative SE about 15%); n = 36 states, so a null result is a statement about
+  this design, not about the world.
