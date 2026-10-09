@@ -10,14 +10,21 @@ Reads:
   data/reference/federal_party.csv        PDP from 1999-05-29, APC from 2015-05-29
   data/processed/mpi_trends_panel.csv     harmonised MPI, 37 states x 4 rounds
   data/processed/mpi_atlas_2021.csv       poverty_group (robustness check b)
+  data/reference/governor_defections.csv  sourced sitting-party changes (robustness check d)
 
 Produces:
   data/processed/party_alignment_panel.csv   108 rows: 36 states x 3 intervals
   data/processed/party_alignment_state.csv   37 rows: aligned years 1999-2021 (map hover)
-  data/processed/party_alignment_result.csv  primary + robustness rows, MDE, §4 sentence
+  data/processed/party_alignment_result.csv  primary, robustness (a)-(d), leave-one-interval-out
+                                             and per-interval rows, MDE, §4 sentence
   docs/party_alignment.md                    §4 only (text under "## 4. Result")
 
 FCT is excluded from the test (no elected governor) and is listed as excluded.
+
+Robustness row (d) and the interval-dependence rows were added on 2026-10-09 AFTER
+the primary result was known: (d) under the §2 limitation clause (defections only
+with sourced dates, only as an extra robustness row), the interval rows as factual
+context. Neither changes the primary model or the §3 sentence it selects.
 """
 
 from __future__ import annotations
@@ -25,11 +32,19 @@ from __future__ import annotations
 import csv
 import sys
 from datetime import date, datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import numpy as np
 
-from common import DOCS, PROCESSED, REFERENCE, read_lookup, write_csv
+from common import (
+    DOCS,
+    PROCESSED,
+    REFERENCE,
+    alignment_context_line,
+    read_lookup,
+    write_csv,
+)
 
 SEED = 20261009
 N_PERM = 10_000
@@ -48,9 +63,14 @@ SPAN_FIRST, SPAN_LAST = 1999, 2021
 # A change of governing party within a year is placed in late May: 5/12 of the year
 # goes to the outgoing party and 7/12 to the incoming one (spec §2, year weighting).
 W_OUT, W_IN = 5 / 12, 7 / 12
+# The same rule at monthly resolution: a seating takes effect after month 5 (May).
+SEAT_MONTH = 5
+N_SEED_CHECK = 10
+INTERVAL_LABEL = {(2013, 2016): "2013–16", (2016, 2018): "2016–18", (2018, 2021): "2018–21"}
 
 EVENTS = REFERENCE / "governorship_events.csv"
 FEDERAL = REFERENCE / "federal_party.csv"
+DEFECTIONS = REFERENCE / "governor_defections.csv"
 PANEL_IN = PROCESSED / "mpi_trends_panel.csv"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
 PANEL_OUT = PROCESSED / "party_alignment_panel.csv"
@@ -100,6 +120,51 @@ def year_weights(
         f0, f1 = fed[year]
         w[year] = W_OUT * (g0 is not None and g0 == f0) + W_IN * (g1 is not None and g1 == f1)
     return w
+
+
+def monthly_weights(
+    seatings: list[tuple[int, str]],
+    changes: list[tuple[int, int, str, str]],
+    fed_seatings: list[tuple[int, str]],
+) -> dict[int, float]:
+    """Aligned fraction of each year at monthly resolution, with sitting-party changes.
+
+    Robustness check (d). Seatings and the federal handover take effect after month 5,
+    which is the 5/12-7/12 rule expressed in months; a sitting-party change dated in
+    month m (``changes`` = (year, month, from_party, to_party)) takes effect after
+    month m. With no changes this reproduces ``year_weights`` exactly, which main()
+    asserts for every state.
+    """
+    timeline: list[tuple[int, int, int, str, str | None, str]] = []
+    for i, (year, party) in enumerate(seatings):
+        timeline.append((year, SEAT_MONTH, i, "gov", None, party))
+    for j, (year, month, frm, to) in enumerate(changes):
+        timeline.append((year, month, len(seatings) + j, "gov", frm, to))
+    for j, (year, party) in enumerate(fed_seatings):
+        timeline.append((year, SEAT_MONTH, -1 - j, "fed", None, party))
+    timeline.sort(key=lambda e: (e[0], e[1], e[2]))
+
+    gov: str | None = None
+    fed: str | None = None
+    pos = 0
+    out: dict[int, float] = {}
+    for year in range(SPAN_FIRST, SPAN_LAST + 1):
+        aligned = 0
+        for month in range(1, 13):
+            # Apply every event dated strictly before this month.
+            while pos < len(timeline) and (timeline[pos][0], timeline[pos][1]) < (year, month):
+                _, _, _, who, frm, to = timeline[pos]
+                if who == "fed":
+                    fed = to
+                else:
+                    assert frm is None or gov in (frm, to), (
+                        f"defection {frm}->{to} in {timeline[pos][0]} does not match sitting party {gov}"
+                    )
+                    gov = to
+                pos += 1
+            aligned += gov is not None and gov == fed
+        out[year] = aligned / 12
+    return out
 
 
 # --------------------------------------------------------------------------- estimation
@@ -225,7 +290,8 @@ def fmt(v: float) -> str:
 
 
 def fmt_p(p: float) -> str:
-    return f"{p:.4f}"
+    """Three decimals, half-up, so 0.0355 prints 0.036 rather than float-rounding to 0.035."""
+    return str(Decimal(str(round(p, 6))).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
 
 
 def choose_sentence(beta: float, lo: float, hi: float, p: float, mde: float | None) -> str:
@@ -251,35 +317,67 @@ def choose_sentence(beta: float, lo: float, hi: float, p: float, mde: float | No
 
 
 def write_section4(
-    sentence: str, results: list[dict[str, str]], mde_line: str, n: int, run_date: str
+    sentence: str,
+    results: list[dict[str, str]],
+    mde_line: str,
+    seed_range: tuple[float, float],
+    run_date: str,
 ) -> None:
     text = SPEC.read_text(encoding="utf-8")
     head = "## 4. Result"
     assert text.count(head) == 1, "docs/party_alignment.md must contain exactly one '## 4. Result'"
     before = text.split(head)[0]
     rows = "\n".join(
-        f"| {r['model']} | {r['beta']} | {r['ci_lo']} to {r['ci_hi']} | {r['p_perm']} |"
+        f"| {r['model']} | {r['beta']} | {r['ci_lo']} to {r['ci_hi']} | {r['p_perm']} | {r['n']} |"
         for r in results
     )
+    context = alignment_context_line(results)
     body = f"""{head}
 
 *Written by `scripts/08_party_alignment.py` on {run_date}. Do not edit by hand.*
 
 {sentence}
 
-| Model | β | 95% CI (state-cluster bootstrap) | Permutation p |
-|---|---|---|---|
+| Model | β | 95% CI (state-cluster bootstrap) | Permutation p | n |
+|---|---|---|---|---|
 {rows}
 
+- {context or "No check listed above has permutation p ≥ 0.05."}
+- Robustness (d) and the leave-one-interval-out and per-interval rows were added after the
+  primary result was known. (d) uses the §2 limitation clause (defections only with sourced
+  dates, only as an extra robustness row): the as-won party, switched at the month of each
+  sourced change in `data/reference/governor_defections.csv` (the Nov 2013 PDP→APC
+  governors, the 31 Jul 2013 ACN/ANPP/CPC→APC merger, later moves through Jun 2021), at
+  monthly resolution. Successions after impeachment (Adamawa 2014) are not modelled.
+  None of these rows replaces the primary result or changes the §3 sentence.
+- Permutation p is a Monte Carlo estimate ({N_PERM:,} draws, seed {SEED}), shown to 3 dp.
+  Across {N_SEED_CHECK} other seeds the primary p ranged {fmt_p(seed_range[0])}–{fmt_p(seed_range[1])},
+  so read it as about ±0.005.
 - {mde_line}
-- n = {n} state-intervals (36 states × 3 intervals). FCT excluded: no elected governor.
+- n = 108 state-intervals (36 states × 3 intervals) for the full models. FCT excluded: no
+  elected governor.
 - β is in MPI points (0–1 scale) per year per unit of `aligned_share`; check (a) is in
-  log-ratio per year. Permutation: {N_PERM:,} draws; bootstrap: {N_BOOT:,} draws; seed {SEED}.
-- Limitations: sitting-party defections are not modelled; MPI change carries survey error
-  (median relative SE about 15%); n = 36 states, so a null result is a statement about
-  this design, not about the world.
+  log-ratio per year. Bootstrap: {N_BOOT:,} draws; seed {SEED}.
+- Limitations: the primary model does not model sitting-party defections (see (d)); MPI
+  change carries survey error (median relative SE about 15%); n = 36 states, so a null
+  result is a statement about this design, not about the world.
 """
     SPEC.write_text(before + body, encoding="utf-8")
+
+
+def subset_design(
+    kept: list[int], y_full: np.ndarray, hist_full: np.ndarray, mpi_t0: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """y, exposure history and controls restricted to the interval indices ``kept``."""
+    n_states, k = hist_full.shape
+    yy = y_full.reshape(n_states, k)[:, kept].reshape(-1)
+    hh = hist_full[:, kept]
+    m0 = mpi_t0.reshape(n_states, k)[:, kept].reshape(-1)
+    dummies = [
+        np.tile(np.eye(len(kept))[i], n_states) for i in range(1, len(kept))
+    ]
+    zz = np.column_stack([np.ones(len(yy)), *dummies, m0])
+    return yy, hh, zz
 
 
 # --------------------------------------------------------------------------- main
@@ -306,6 +404,20 @@ def main() -> int:
         p: year_weights(party_by_year(seatings[p]), fed) for p in governed
     }
 
+    changes: dict[str, list[tuple[int, int, str, str]]] = {}
+    for d in read(DEFECTIONS):
+        when = date.fromisoformat(d["date"])
+        assert d["pcode"] in seatings, f"defection for ungoverned unit {d['pcode']}"
+        assert d["source_url"].startswith("http"), f"{d['pcode']} {d['date']}: defection needs a source"
+        changes.setdefault(d["pcode"], []).append((when.year, when.month, d["from_party"], d["to_party"]))
+    # The monthly series must reproduce the annual one when no change is applied.
+    for p in governed:
+        plain = monthly_weights(seatings[p], [], fed_seatings)
+        assert all(abs(plain[y] - weights[p][y]) < 1e-12 for y in plain), f"{p}: monthly != annual"
+    weights_d: dict[str, dict[int, float]] = {
+        p: monthly_weights(seatings[p], changes.get(p, []), fed_seatings) for p in governed
+    }
+
     # Sanity: pre-2015 years of states never governed by PDP before 2015 are unaligned.
     for p in ("NG-LA", "NG-BO"):
         pre = [weights[p][y] for y in range(2000, 2015)]
@@ -322,6 +434,7 @@ def main() -> int:
     for p in governed:
         for t0, t1 in INTERVALS:
             share = sum(weights[p][y] for y in range(t0, t1)) / (t1 - t0)
+            share_d = sum(weights_d[p][y] for y in range(t0, t1)) / (t1 - t0)
             m0 = float(panel[(p, t0)]["mpi"])
             m1 = float(panel[(p, t1)]["mpi"])
             rows.append(
@@ -333,6 +446,7 @@ def main() -> int:
                     "t1": t1,
                     "aligned_share": round(share, 6),
                     "aligned_binary": int(share >= 0.5),
+                    "aligned_share_sitting": round(share_d, 6),
                     "mpi_t0": m0,
                     "mpi_t1": m1,
                     "dmpi_annual": round((m1 - m0) / (t1 - t0), 6),
@@ -351,6 +465,7 @@ def main() -> int:
     n_states, k = len(governed), len(INTERVALS)
     hist = np.array([float(r["aligned_share"]) for r in rows]).reshape(n_states, k)
     hist_bin = (hist >= 0.5).astype(float)
+    hist_d = np.array([float(r["aligned_share_sitting"]) for r in rows]).reshape(n_states, k)
     y = np.array([float(r["dmpi_annual"]) for r in rows])
     y_log = np.array([float(r["dlogmpi_annual"]) for r in rows])
     mpi_t0 = np.array([float(r["mpi_t0"]) for r in rows])
@@ -360,15 +475,35 @@ def main() -> int:
     poor_x_int = np.column_stack([poor * (np.array([r["t0"] for r in rows]) == t0) for t0, _ in INTERVALS])
     z_b = np.column_stack([z, poor_x_int])
 
-    specs = [
-        ("Primary: aligned_share", y, hist, z),
-        ("(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0)", y_log, hist, z),
-        ("(b) + poverty_group x interval", y, hist, z_b),
-        ("(c) exposure = aligned_share >= 0.5", y, hist_bin, z),
+    # (kind, short label for compact displays, table label, interval, y, exposure, controls)
+    Spec = tuple[str, str, str, str, np.ndarray, np.ndarray, np.ndarray]
+    specs: list[Spec] = [
+        ("primary", "primary", "Primary: aligned_share (as won)", "", y, hist, z),
+        ("robustness", "(a) relative change", "(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0)", "",
+         y_log, hist, z),
+        ("robustness", "(b) + poverty group × interval", "(b) + poverty_group x interval", "",
+         y, hist, z_b),
+        ("robustness", "(c) binary exposure", "(c) exposure = aligned_share >= 0.5", "",
+         y, hist_bin, z),
+        ("robustness", "(d) sitting party", ("(d) sitting party: as won, switched at sourced "
+         "defection month (added after the primary result was known, §2 limitation clause)"), "",
+         y, hist_d, z),
     ]
+    for drop, (t0, t1) in enumerate(INTERVALS):
+        label = INTERVAL_LABEL[(t0, t1)]
+        kept = [i for i in range(k) if i != drop]
+        yy, hh, zz = subset_design(kept, y, hist, mpi_t0)
+        specs.append(("loio", f"dropping {label}", f"Leave out {label} (primary model, 2 intervals)",
+                      label, yy, hh, zz))
+    for only, (t0, t1) in enumerate(INTERVALS):
+        label = INTERVAL_LABEL[(t0, t1)]
+        yy, hh, zz = subset_design([only], y, hist, mpi_t0)
+        specs.append(("per_interval", f"{label} only", (f"Interval {label} only (cross-section, "
+                      "aligned_share + mpi_t0)"), label, yy, hh, zz))
+
     results: list[dict[str, str]] = []
     primary: tuple[float, float, float, float] | None = None
-    for name, yy, hh, zz in specs:
+    for kind, short, name, interval, yy, hh, zz in specs:
         beta, p = permutation_p(yy, hh, zz, N_PERM, SEED)
         lo, hi = cluster_bootstrap_ci(yy, hh, zz, N_BOOT, SEED)
         if primary is None:
@@ -377,11 +512,19 @@ def main() -> int:
             beta2, p2 = permutation_p(yy, hh, zz, N_PERM, SEED)
             assert beta2 == beta and p2 == p, "seed does not reproduce the permutation p"
         results.append(
-            {"model": name, "beta": fmt(beta), "ci_lo": fmt(lo), "ci_hi": fmt(hi), "p_perm": fmt_p(p)}
+            {"kind": kind, "short": short, "interval": interval, "model": name,
+             "beta": fmt(beta), "ci_lo": fmt(lo), "ci_hi": fmt(hi), "p_perm": fmt_p(p),
+             "n": str(len(yy))}
         )
-        print(f"{name:45s} beta={beta:+.5f}  CI [{lo:+.5f}, {hi:+.5f}]  p={p:.4f}")
+        print(f"{short:32s} n={len(yy):3d} beta={beta:+.5f}  CI [{lo:+.5f}, {hi:+.5f}]  p={p:.4f}")
     assert primary is not None
     beta, lo, hi, p = primary
+    assert [r["kind"] for r in results].count("primary") == 1 and results[0]["kind"] == "primary"
+
+    # Monte Carlo spread of the primary p across other seeds (reported, never used).
+    seed_ps = [permutation_p(y, hist, z, N_PERM, SEED + i)[1] for i in range(1, N_SEED_CHECK + 1)]
+    seed_range = (min(seed_ps), max(seed_ps))
+    print(f"primary p across {N_SEED_CHECK} other seeds: {seed_range[0]:.4f}-{seed_range[1]:.4f}")
 
     mde_neg, mde_pos, _curve = minimum_detectable_effect(y, hist, z, SEED)
     # Conservative reading of "smallest |beta|": the magnitude detected with >= 80%
@@ -396,23 +539,25 @@ def main() -> int:
     )
 
     sentence = choose_sentence(beta, lo, hi, p, mde)
-    write_section4(sentence, results, mde_line, len(rows), run_date)
+    write_section4(sentence, results, mde_line, seed_range, run_date)
 
     for r in results:
-        r.update({"n": str(len(rows)), "mde": fmt(mde) if mde is not None else "", "run_date": run_date})
+        r.update({"mde": fmt(mde) if mde is not None else "", "run_date": run_date})
     results[0]["sentence"] = sentence
     write_csv(
         RESULT_OUT,
         results,
-        ["model", "beta", "ci_lo", "ci_hi", "p_perm", "n", "mde", "run_date", "sentence"],
+        ["kind", "short", "interval", "model", "beta", "ci_lo", "ci_hi", "p_perm", "n", "mde",
+         "run_date", "sentence"],
     )
+    print(alignment_context_line(results))
 
     write_csv(
         PANEL_OUT,
         rows,
         [
             "pcode", "state", "interval", "t0", "t1", "aligned_share", "aligned_binary",
-            "mpi_t0", "mpi_t1", "dmpi_annual", "dlogmpi_annual", "poverty_group",
+            "aligned_share_sitting", "mpi_t0", "mpi_t1", "dmpi_annual", "dlogmpi_annual", "poverty_group",
             "survey_t0", "survey_t1", "mpi_series", "run_date",
         ],
     )

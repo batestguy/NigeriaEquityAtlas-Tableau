@@ -150,6 +150,7 @@
       <column caption='t1' datatype='string' name='[t1]' role='dimension' type='nominal' />
       <column caption='aligned_share' datatype='real' name='[aligned_share]' role='measure' type='quantitative' />
       <column caption='aligned_binary' datatype='real' name='[aligned_binary]' role='measure' type='quantitative' />
+      <column caption='aligned_share_sitting' datatype='real' name='[aligned_share_sitting]' role='measure' type='quantitative' />
       <column caption='mpi_t0' datatype='real' name='[mpi_t0]' role='measure' type='quantitative' />
       <column caption='mpi_t1' datatype='real' name='[mpi_t1]' role='measure' type='quantitative' />
       <column caption='dmpi_annual' datatype='real' name='[dmpi_annual]' role='measure' type='quantitative' />
@@ -617,6 +618,7 @@
       <column caption='t1' datatype='string' name='[t1]' role='dimension' type='nominal' />
       <column caption='aligned_share' datatype='real' name='[aligned_share]' role='measure' type='quantitative' />
       <column caption='aligned_binary' datatype='real' name='[aligned_binary]' role='measure' type='quantitative' />
+      <column caption='aligned_share_sitting' datatype='real' name='[aligned_share_sitting]' role='measure' type='quantitative' />
       <column caption='mpi_t0' datatype='real' name='[mpi_t0]' role='measure' type='quantitative' />
       <column caption='mpi_t1' datatype='real' name='[mpi_t1]' role='measure' type='quantitative' />
       <column caption='dmpi_annual' datatype='real' name='[dmpi_annual]' role='measure' type='quantitative' />

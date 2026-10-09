@@ -383,8 +383,8 @@ PANEL_CONN = "hyper.0mpipanel2021"
 ALIGN_DS_NAME = "federated.0partyalignment"
 ALIGN_DS_CAPTION = "Party alignment panel"
 ALIGN_CONN = "hyper.0partyalignment"
-ALIGN_MEASURES = ["aligned_share", "aligned_binary", "mpi_t0", "mpi_t1", "dmpi_annual",
-                  "dlogmpi_annual"]
+ALIGN_MEASURES = ["aligned_share", "aligned_binary", "aligned_share_sitting", "mpi_t0", "mpi_t1",
+                  "dmpi_annual", "dlogmpi_annual"]
 ALIGN_SHEET = "Party alignment and MPI change"
 
 

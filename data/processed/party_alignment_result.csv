@@ -1,5 +1,12 @@
-model,beta,ci_lo,ci_hi,p_perm,n,mde,run_date,sentence
-Primary: aligned_share,0.0080,-0.0002,0.0168,0.0355,108,0.0115,2026-10-09,"Over 2013–2021, states governed in alignment with the federal ruling party saw MPI fall 0.0080 MPI points *slower* per year than non-aligned states (95% CI -0.0002 to 0.0168, permutation p = 0.0355). This is an association within states over time, not an effect of party."
-(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0),0.0386,-0.0385,0.1221,0.2393,108,0.0115,2026-10-09,
-(b) + poverty_group x interval,0.0081,0.0015,0.0143,0.0254,108,0.0115,2026-10-09,
-(c) exposure = aligned_share >= 0.5,0.0055,-0.0021,0.0131,0.1270,108,0.0115,2026-10-09,
+kind,short,interval,model,beta,ci_lo,ci_hi,p_perm,n,mde,run_date,sentence
+primary,primary,,Primary: aligned_share (as won),0.0080,-0.0002,0.0168,0.036,108,0.0115,2026-10-09,"Over 2013–2021, states governed in alignment with the federal ruling party saw MPI fall 0.0080 MPI points *slower* per year than non-aligned states (95% CI -0.0002 to 0.0168, permutation p = 0.036). This is an association within states over time, not an effect of party."
+robustness,(a) relative change,,(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0),0.0386,-0.0385,0.1221,0.239,108,0.0115,2026-10-09,
+robustness,(b) + poverty group × interval,,(b) + poverty_group x interval,0.0081,0.0015,0.0143,0.025,108,0.0115,2026-10-09,
+robustness,(c) binary exposure,,(c) exposure = aligned_share >= 0.5,0.0055,-0.0021,0.0131,0.127,108,0.0115,2026-10-09,
+robustness,(d) sitting party,,"(d) sitting party: as won, switched at sourced defection month (added after the primary result was known, §2 limitation clause)",0.0070,-0.0009,0.0156,0.083,108,0.0115,2026-10-09,
+loio,dropping 2013–16,2013–16,"Leave out 2013–16 (primary model, 2 intervals)",0.0039,-0.0027,0.0110,0.368,72,0.0115,2026-10-09,
+loio,dropping 2016–18,2016–18,"Leave out 2016–18 (primary model, 2 intervals)",0.0077,-0.0010,0.0167,0.088,72,0.0115,2026-10-09,
+loio,dropping 2018–21,2018–21,"Leave out 2018–21 (primary model, 2 intervals)",0.0117,-0.0019,0.0254,0.057,72,0.0115,2026-10-09,
+per_interval,2013–16 only,2013–16,"Interval 2013–16 only (cross-section, aligned_share + mpi_t0)",0.0159,0.0013,0.0281,0.009,36,0.0115,2026-10-09,
+per_interval,2016–18 only,2016–18,"Interval 2016–18 only (cross-section, aligned_share + mpi_t0)",0.0043,-0.0077,0.0177,0.626,36,0.0115,2026-10-09,
+per_interval,2018–21 only,2018–21,"Interval 2018–21 only (cross-section, aligned_share + mpi_t0)",0.0008,-0.0107,0.0124,0.903,36,0.0115,2026-10-09,

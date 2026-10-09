@@ -52,7 +52,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Polygon as MplPolygon  # noqa: E402
 
-from common import DOCS, PROCESSED, RAW  # noqa: E402
+from common import DOCS, PROCESSED, RAW, alignment_context_line  # noqa: E402
 
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
@@ -425,7 +425,7 @@ def visual_party_alignment() -> None:
     result = read(ALIGN_RESULT)
     assert len(align) == 108, f"expected 108 state-intervals, got {len(align)}"
     primary = result[0]
-    assert primary["model"].startswith("Primary"), "party_alignment_result.csv row 0 must be primary"
+    assert primary["kind"] == "primary", "party_alignment_result.csv row 0 must be primary"
 
     intervals = sorted({r["interval"] for r in align})
     ys = [float(r["dmpi_annual"]) for r in align]
@@ -455,6 +455,20 @@ def visual_party_alignment() -> None:
         f"MDE {primary['mde']}. n = {primary['n']}, FCT excluded (no elected governor)."
     )
     fig.text(0.01, -0.02, note, fontsize=8.4, color=INK, ha="left", va="top")
+    # Robustness and leave-one-interval-out rows, compactly, plus the context line --
+    # all read from stage 8's result file, none composed here.
+    checks = [r for r in result if r["kind"] in {"robustness", "loio"}]
+    lines = [
+        f"{r['short']:<32}β {float(r['beta']):+.4f}  "
+        f"CI {float(r['ci_lo']):+.4f} to {float(r['ci_hi']):+.4f}  p {r['p_perm']}  n {r['n']}"
+        for r in checks
+    ]
+    fig.text(0.01, -0.08, "\n".join(lines), fontsize=8.0, color=INK, ha="left", va="top",
+             family="monospace", linespacing=1.4)
+    context = alignment_context_line(result)
+    if context:
+        fig.text(0.01, -0.08 - 0.034 * (len(lines) + 0.6), context, fontsize=8.6, color=INK,
+                 ha="left", va="top", fontweight="700")
     sentence = primary["sentence"].replace("*", "")
     fig.suptitle(
         "Federal alignment and the pace of MPI change, 2013–2021",

@@ -130,3 +130,35 @@ def minmax(values: dict[str, float]) -> tuple[dict[str, float], float, float]:
     if hi == lo:
         return {k: 0.0 for k in values}, lo, hi
     return {k: 100.0 * (v - lo) / (hi - lo) for k, v in values.items()}, lo, hi
+
+def alignment_context_line(rows: list[dict[str, str]], alpha: float = 0.05) -> str:
+    """One factual line on how far the stage 8 primary result holds up.
+
+    Built only from party_alignment_result.csv rows (kind, short, interval, p_perm),
+    so stage 8 (section 4), stage 5 (PNG) and stage 7 (map panel) print the same
+    words. "Rests on" names the intervals whose own cross-section has p < alpha when
+    that is not all of them; "not robust to" lists every robustness check and every
+    leave-one-interval-out fit with p >= alpha. Empty when the primary result is not
+    detected, because "not robust" has nothing to qualify then.
+    """
+    primary = [r for r in rows if r["kind"] == "primary"]
+    if len(primary) != 1 or float(primary[0]["p_perm"]) >= alpha:
+        return ""
+    per = [r for r in rows if r["kind"] == "per_interval"]
+    rests = [r["interval"] for r in per if float(r["p_perm"]) < alpha]
+    weak = [r["short"] for r in rows if r["kind"] == "robustness" and float(r["p_perm"]) >= alpha]
+    loio = [r for r in rows if r["kind"] == "loio"]
+    loio_weak = [r for r in loio if float(r["p_perm"]) >= alpha]
+    if loio_weak and len(loio_weak) == len(loio):
+        weak.append("dropping any one interval")
+    else:
+        weak.extend(f"dropping {r['interval']}" for r in loio_weak)
+    parts = []
+    if rests and len(rests) < len(per):
+        parts.append(f"Result rests on {' and '.join(rests)}")
+    if weak:
+        parts.append(f"not robust to {', '.join(weak)}")
+    if not parts:
+        return "Every robustness and leave-one-interval-out check also has p < 0.05."
+    line = "; ".join(parts)
+    return line[0].upper() + line[1:] + "."
