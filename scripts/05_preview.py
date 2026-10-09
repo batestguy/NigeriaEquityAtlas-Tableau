@@ -466,9 +466,16 @@ def visual_party_alignment() -> None:
     fig.text(0.01, -0.08, "\n".join(lines), fontsize=8.0, color=INK, ha="left", va="top",
              family="monospace", linespacing=1.4)
     context = alignment_context_line(result)
+    y_ctx = -0.08 - 0.034 * (len(lines) + 0.6)
     if context:
-        fig.text(0.01, -0.08 - 0.034 * (len(lines) + 0.6), context, fontsize=8.6, color=INK,
+        fig.text(0.01, y_ctx, context, fontsize=8.6, color=INK,
                  ha="left", va="top", fontweight="700")
+    fig.text(
+        0.01, y_ctx - 0.05,
+        "Check (d) and the interval rows were added after the primary result was known. "
+        "Per-interval estimates: docs/party_alignment.md §4.",
+        fontsize=8.0, color="#555555", ha="left", va="top",
+    )
     sentence = primary["sentence"].replace("*", "")
     fig.suptitle(
         "Federal alignment and the pace of MPI change, 2013–2021",

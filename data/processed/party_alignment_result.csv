@@ -3,7 +3,7 @@ primary,primary,,Primary: aligned_share (as won),0.0080,-0.0002,0.0168,0.036,108
 robustness,(a) relative change,,(a) outcome = log(MPI_t1/MPI_t0)/(t1-t0),0.0386,-0.0385,0.1221,0.239,108,0.0115,2026-10-09,
 robustness,(b) + poverty group × interval,,(b) + poverty_group x interval,0.0081,0.0015,0.0143,0.025,108,0.0115,2026-10-09,
 robustness,(c) binary exposure,,(c) exposure = aligned_share >= 0.5,0.0055,-0.0021,0.0131,0.127,108,0.0115,2026-10-09,
-robustness,(d) sitting party,,"(d) sitting party: as won, switched at sourced defection month (added after the primary result was known, §2 limitation clause)",0.0070,-0.0009,0.0156,0.083,108,0.0115,2026-10-09,
+robustness,(d) sitting party,,"(d) sitting party: as won, switched at sourced defection month (added after the primary result was known, §2 limitation clause)",0.0071,-0.0009,0.0158,0.079,108,0.0115,2026-10-09,
 loio,dropping 2013–16,2013–16,"Leave out 2013–16 (primary model, 2 intervals)",0.0039,-0.0027,0.0110,0.368,72,0.0115,2026-10-09,
 loio,dropping 2016–18,2016–18,"Leave out 2016–18 (primary model, 2 intervals)",0.0077,-0.0010,0.0167,0.088,72,0.0115,2026-10-09,
 loio,dropping 2018–21,2018–21,"Leave out 2018–21 (primary model, 2 intervals)",0.0117,-0.0019,0.0254,0.057,72,0.0115,2026-10-09,

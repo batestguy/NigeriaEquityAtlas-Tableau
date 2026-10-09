@@ -376,7 +376,7 @@ ROBUSTNESS AND LEAVE-ONE-INTERVAL-OUT</p>
 <p style="margin:10px 0 0;font-size:11px;color:#666;">n = {primary["n"]} state-intervals; FCT
 excluded (no elected governor). Minimum detectable effect {primary["mde"]} per year. Check (d)
 and the interval rows were added after the primary result was known. Permutation p is a Monte
-Carlo estimate (about ±0.005). Method: docs/party_alignment.md.</p>
+Carlo estimate (about ±0.005). Per-interval estimates and method: docs/party_alignment.md §4.</p>
 </div>"""
     page = OUT.read_text(encoding="utf-8")
     assert page.count("</body>") == 1

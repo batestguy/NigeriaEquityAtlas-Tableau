@@ -346,7 +346,7 @@ def write_section4(
 - Robustness (d) and the leave-one-interval-out and per-interval rows were added after the
   primary result was known. (d) uses the §2 limitation clause (defections only with sourced
   dates, only as an extra robustness row): the as-won party, switched at the month of each
-  sourced change in `data/reference/governor_defections.csv` (the Nov 2013 PDP→APC
+  sourced change in `data/reference/governor_defections.csv` (the 10 Dec 2013 PDP→APC
   governors, the 31 Jul 2013 ACN/ANPP/CPC→APC merger, later moves through Jun 2021), at
   monthly resolution. Successions after impeachment (Adamawa 2014) are not modelled.
   None of these rows replaces the primary result or changes the §3 sentence.

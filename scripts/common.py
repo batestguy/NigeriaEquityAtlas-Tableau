@@ -137,25 +137,35 @@ def alignment_context_line(rows: list[dict[str, str]], alpha: float = 0.05) -> s
     Built only from party_alignment_result.csv rows (kind, short, interval, p_perm),
     so stage 8 (section 4), stage 5 (PNG) and stage 7 (map panel) print the same
     words. "Rests on" names the intervals whose own cross-section has p < alpha when
-    that is not all of them; "not robust to" lists every robustness check and every
-    leave-one-interval-out fit with p >= alpha. Empty when the primary result is not
-    detected, because "not robust" has nothing to qualify then.
+    that is not all of them; "holds under" lists every robustness check and
+    leave-one-interval-out fit with p < alpha, and "not robust to" every one with
+    p >= alpha, so the line is never selective. Empty when the primary result is
+    not detected, because "not robust" has nothing to qualify then.
     """
     primary = [r for r in rows if r["kind"] == "primary"]
     if len(primary) != 1 or float(primary[0]["p_perm"]) >= alpha:
         return ""
     per = [r for r in rows if r["kind"] == "per_interval"]
     rests = [r["interval"] for r in per if float(r["p_perm"]) < alpha]
-    weak = [r["short"] for r in rows if r["kind"] == "robustness" and float(r["p_perm"]) >= alpha]
+    robust = [r for r in rows if r["kind"] == "robustness"]
+    hold = [r["short"] for r in robust if float(r["p_perm"]) < alpha]
+    weak = [r["short"] for r in robust if float(r["p_perm"]) >= alpha]
     loio = [r for r in rows if r["kind"] == "loio"]
     loio_weak = [r for r in loio if float(r["p_perm"]) >= alpha]
+    loio_hold = [r for r in loio if float(r["p_perm"]) < alpha]
     if loio_weak and len(loio_weak) == len(loio):
         weak.append("dropping any one interval")
     else:
         weak.extend(f"dropping {r['interval']}" for r in loio_weak)
+    if loio_hold and len(loio_hold) == len(loio):
+        hold.append("dropping any one interval")
+    else:
+        hold.extend(f"dropping {r['interval']}" for r in loio_hold)
     parts = []
     if rests and len(rests) < len(per):
         parts.append(f"Result rests on {' and '.join(rests)}")
+    if hold and weak:
+        parts.append(f"holds under {', '.join(hold)}")
     if weak:
         parts.append(f"not robust to {', '.join(weak)}")
     if not parts:

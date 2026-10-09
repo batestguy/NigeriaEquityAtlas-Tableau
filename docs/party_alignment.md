@@ -123,7 +123,7 @@ Over 2013–2021, states governed in alignment with the federal ruling party saw
 | (a) outcome = log(MPI_t1/MPI_t0)/(t1-t0) | 0.0386 | -0.0385 to 0.1221 | 0.239 | 108 |
 | (b) + poverty_group x interval | 0.0081 | 0.0015 to 0.0143 | 0.025 | 108 |
 | (c) exposure = aligned_share >= 0.5 | 0.0055 | -0.0021 to 0.0131 | 0.127 | 108 |
-| (d) sitting party: as won, switched at sourced defection month (added after the primary result was known, §2 limitation clause) | 0.0070 | -0.0009 to 0.0156 | 0.083 | 108 |
+| (d) sitting party: as won, switched at sourced defection month (added after the primary result was known, §2 limitation clause) | 0.0071 | -0.0009 to 0.0158 | 0.079 | 108 |
 | Leave out 2013–16 (primary model, 2 intervals) | 0.0039 | -0.0027 to 0.0110 | 0.368 | 72 |
 | Leave out 2016–18 (primary model, 2 intervals) | 0.0077 | -0.0010 to 0.0167 | 0.088 | 72 |
 | Leave out 2018–21 (primary model, 2 intervals) | 0.0117 | -0.0019 to 0.0254 | 0.057 | 72 |
@@ -131,11 +131,11 @@ Over 2013–2021, states governed in alignment with the federal ruling party saw
 | Interval 2016–18 only (cross-section, aligned_share + mpi_t0) | 0.0043 | -0.0077 to 0.0177 | 0.626 | 36 |
 | Interval 2018–21 only (cross-section, aligned_share + mpi_t0) | 0.0008 | -0.0107 to 0.0124 | 0.903 | 36 |
 
-- Result rests on 2013–16; not robust to (a) relative change, (c) binary exposure, (d) sitting party, dropping any one interval.
+- Result rests on 2013–16; holds under (b) + poverty group × interval; not robust to (a) relative change, (c) binary exposure, (d) sitting party, dropping any one interval.
 - Robustness (d) and the leave-one-interval-out and per-interval rows were added after the
   primary result was known. (d) uses the §2 limitation clause (defections only with sourced
   dates, only as an extra robustness row): the as-won party, switched at the month of each
-  sourced change in `data/reference/governor_defections.csv` (the Nov 2013 PDP→APC
+  sourced change in `data/reference/governor_defections.csv` (the 10 Dec 2013 PDP→APC
   governors, the 31 Jul 2013 ACN/ANPP/CPC→APC merger, later moves through Jun 2021), at
   monthly resolution. Successions after impeachment (Adamawa 2014) are not modelled.
   None of these rows replaces the primary result or changes the §3 sentence.
