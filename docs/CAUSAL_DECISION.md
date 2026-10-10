@@ -102,8 +102,10 @@ measurement error is *correlated with the treatment*:
 | 2018 | 14 | 0.213 | 0.156 |
 | 2021 | **10** | **0.218** | **0.142** |
 
-In 2021 the five poorest states in Nigeria — Bauchi, Jigawa, Kebbi, Katsina,
-Kano — all record zero UCDP events. UCDP GED is newswire-built; its own codebook
+In 2021 five of the poorest 12 states — Bauchi, Jigawa, Kebbi, Katsina,
+Kano — all record zero UCDP events (10 of 37 states do). Sokoto and Zamfara,
+also near the top, record 6 and 3. (Corrected 2026-10-10: this line used to say
+"the five poorest states", which they are not.) UCDP GED is newswire-built; its own codebook
 says reporting "is not consistent across time or space". Rural farmer–herder and
 banditry violence is what it misses. **The instrument fails hardest where the
 outcome is highest.** That is not noise around zero; it is bias toward zero.

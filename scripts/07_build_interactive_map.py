@@ -40,6 +40,7 @@ import re
 import sys
 from pathlib import Path
 
+import atlas_text
 from common import DOCS, PROCESSED, RAW, REFERENCE, alignment_context_line
 
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
@@ -292,6 +293,7 @@ def main() -> int:
     })
     _add_cover()
     _add_result_panel()
+    _add_reader_sections()
     print(f"wrote {OUT.relative_to(Path.cwd())} ({OUT.stat().st_size/1024:.0f} KB)")
     print("bands: " + ", ".join(f"{b}={sum(1 for v in band_of.values() if v==b)}" for b in BAND_ORDER))
     print(f"toggle: Poorest 12 = {len(poorest)}, Other 25 = {len(rest)}")
@@ -512,7 +514,7 @@ color:#22252a;background:#fff;}}
 .pa-panel .pa-swipe{{display:none;}}
 @media (max-width:699px){{.pa-panel .pa-swipe{{display:block;}}}}
 </style>
-<div class="pa-panel" style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;
+<div class="pa-panel" id="party-question" style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;
 margin:8px auto 40px;padding:18px 22px;border:1px solid #d9d9d9;border-radius:10px;color:#22252a;">
 <h2 style="margin:0 0 10px;font-size:20px;line-height:1.3;">Does having a governor from the
 President's party help a state cut poverty faster?</h2>
@@ -713,6 +715,82 @@ def _causal_graph_html() -> str:
     )
 
 
+def _add_reader_sections() -> None:
+    """Append the two reader sheets from scripts/atlas_text.py: what the words mean,
+    and how the atlas was made, in plain language. Same text as the Tableau
+    dashboards (stage 6)."""
+    e = html.escape
+    terms = "".join(
+        f'<div class="rd-term"><dt>{e(t["term"])}</dt><dd>{e(t["meaning"])}</dd></div>'
+        for t in atlas_text.TERMS
+    )
+    rows = "".join(
+        f'<tr><td data-label="Area">{e(i["area"])}</td>'
+        f'<td data-label="Need"><b>{e(i["need"])}</b></td>'
+        f'<td data-label="Weight" class="rd-num">{e(i["weight"])}</td>'
+        f'<td data-label="Missing if">{e(i["missing_if"])}</td></tr>'
+        for i in atlas_text.INDICATORS
+    )
+    example = "".join(
+        f'<tr><td>{e(item)}</td><td class="rd-num">{e(w)}</td></tr>'
+        for item, w in atlas_text.EXAMPLE_LINES
+    )
+    method = "".join(
+        f'<h3>{e(s["heading"])}</h3>' + "".join(f"<p>{e(par)}</p>" for par in s["paragraphs"])
+        for s in atlas_text.METHOD
+    )
+    block = f"""<style>
+.rd{{font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:860px;margin:0 auto 40px;
+padding:20px 22px;border:1px solid #d9d9d9;border-radius:10px;color:#22252a;line-height:1.6;}}
+.rd h2{{font-size:24px;margin:0 0 6px;}} .rd h3{{font-size:17px;margin:22px 0 4px;}}
+.rd p{{font-size:15px;margin:0 0 10px;max-width:72ch;}}
+.rd dl{{margin:12px 0 0;}} .rd-term{{padding:10px 0;border-top:1px solid #eee;}}
+.rd dt{{font-weight:700;font-size:15px;}} .rd dd{{margin:2px 0 0;font-size:15px;max-width:72ch;}}
+.rd-scroll{{overflow-x:auto;margin:10px 0;}}
+.rd table{{border-collapse:collapse;font-size:14px;width:100%;min-width:560px;}}
+.rd th{{text-align:left;font-size:12px;letter-spacing:1px;color:#555;padding:6px 10px 6px 0;
+border-bottom:2px solid #d9d9d9;}}
+.rd td{{padding:7px 10px 7px 0;border-top:1px solid #eee;vertical-align:top;}}
+.rd .rd-num{{white-space:nowrap;}}
+.rd .rd-example{{background:#f6f7f8;border-radius:8px;padding:14px 16px;margin:16px 0 0;}}
+.rd .rd-example table{{min-width:0;}}
+@media (max-width:599px){{
+.rd .rd-needs table,.rd .rd-needs tbody,.rd .rd-needs tr,.rd .rd-needs td{{display:block;min-width:0;}}
+.rd .rd-needs thead{{display:none;}}
+.rd .rd-needs tr{{border-top:1px solid #d9d9d9;padding:8px 0;}}
+.rd .rd-needs td{{border:0;padding:2px 0;}}
+.rd .rd-needs td::before{{content:attr(data-label) ": ";color:#555;font-size:13px;}}
+}}
+.rd .rd-top{{font-size:14px;}} .rd .rd-top a{{color:#22252a;}}
+</style>
+<section class="rd" id="words" aria-labelledby="words-h">
+<h2 id="words-h">{e(atlas_text.WORDS_TITLE)}</h2>
+<p>{e(atlas_text.WORDS_INTRO)}</p>
+<dl>{terms}</dl>
+<h3>{e(atlas_text.INDICATORS_TITLE)}</h3>
+<p>{e(atlas_text.INDICATORS_INTRO)}</p>
+<div class="rd-scroll rd-needs"><table>
+<thead><tr><th>AREA</th><th>NEED</th><th>WEIGHT</th><th>MISSING IF…</th></tr></thead>
+<tbody>{rows}</tbody></table></div>
+<p>{e(atlas_text.INDICATORS_NOTE)}</p>
+<div class="rd-example"><h3 style="margin-top:0;">{e(atlas_text.EXAMPLE_TITLE)}</h3>
+<table><tbody>{example}
+<tr><td><b>Deprivation score</b></td><td class="rd-num"><b>{e(atlas_text.EXAMPLE_TOTAL)}</b></td></tr>
+</tbody></table>
+<p style="margin:10px 0 0;">{e(atlas_text.EXAMPLE_VERDICT)}</p></div>
+<p class="rd-top" style="margin-top:16px;"><a href="#atlas-map">Back to the map ↑</a></p>
+</section>
+<section class="rd" id="method" aria-labelledby="method-h">
+<h2 id="method-h">{e(atlas_text.METHOD_TITLE)}</h2>
+<p>{e(atlas_text.METHOD_INTRO)}</p>
+{method}
+<p class="rd-top" style="margin-top:16px;"><a href="#atlas-map">Back to the map ↑</a></p>
+</section>"""
+    page = OUT.read_text(encoding="utf-8")
+    assert page.count("</body>") == 1
+    OUT.write_text(page.replace("</body>", block + "</body>"), encoding="utf-8")
+
+
 def flag_data_uri() -> str:
     """Nigerian flag PNG (green-white-green), generated once, embedded base64."""
     if not FLAG_PNG.exists():
@@ -773,7 +851,10 @@ border-bottom:1px solid #e3e3e3;}}
 .atlas-sub{{font-size:18px;color:#444;max-width:720px;margin:0 auto;line-height:1.55;}}
 .atlas-chips{{margin:24px 0 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}}
 .atlas-chips span{{border:1px solid #c9c9c9;border-radius:999px;padding:7px 16px;font-size:13px;color:#333;background:#fff;}}
-.atlas-scroll{{margin-top:38px;color:{GREEN};font-weight:700;font-size:15px;}}
+.atlas-nav{{margin-top:34px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}}
+.atlas-nav a{{color:{GREEN};font-weight:700;font-size:15px;text-decoration:none;
+border:2px solid {GREEN};border-radius:999px;padding:8px 16px;background:#fff;}}
+.atlas-nav a:hover,.atlas-nav a:focus-visible{{background:{GREEN};color:#fff;}}
 </style>
 <div class="atlas-cover">
 <div class="atlas-watermark"></div>
@@ -782,11 +863,13 @@ border-bottom:1px solid #e3e3e3;}}
 <h1>One country, two realities.</h1>
 <p class="atlas-sub">Poverty fell, but its shape held: the poorest states are held
 back by schooling and living standards far more than the rest. Hover, filter and compare.</p>
-<div class="atlas-chips"><span>National MPI 0.175</span><span>37 states + FCT</span>
+<div class="atlas-chips"><span>National MPI 0.175</span><span>36 states + FCT</span>
 <span>4 survey rounds</span><span>Read bands, not ranks</span></div>
 {visual}
-<p class="atlas-scroll">Scroll to explore the map ↓</p>
-</div>"""
+<nav class="atlas-nav" aria-label="Sections">
+<a href="#atlas-map">The map ↓</a><a href="#party-question">The party question</a>
+<a href="#words">What the words mean</a><a href="#method">How we did it</a></nav>
+</div><div id="atlas-map"></div>"""
     html = OUT.read_text(encoding="utf-8")
     html = html.replace("<body>", "<body>" + cover, 1)
     OUT.write_text(html, encoding="utf-8")

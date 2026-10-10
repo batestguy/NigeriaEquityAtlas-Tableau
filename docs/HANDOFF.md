@@ -341,8 +341,8 @@ Every one of these was found the hard way; re-encountering them will cost time.
 - Conflict and poverty are **not detectably** associated in these data (rho +0.34 → −0.20
   across rounds). **This is a null with a power floor, not a result about the world.** At
   n = 37 the power is 0.75 at rho = 0.4 and nothing survives Bonferroni; and the
-  conflict variable *undercounts where poverty is highest* — in 2021 the five poorest
-  states all record zero UCDP events. Say "we detect none, and our design cannot see
+  conflict variable *undercounts where poverty is highest* — in 2021 five of the poorest 12 states (Bauchi, Jigawa, Kebbi, Katsina, Kano)
+  record zero UCDP events. Say "we detect none, and our design cannot see
   below |rho| ~ 0.4". See `docs/CAUSAL_DECISION.md` §2a.
 
 ---

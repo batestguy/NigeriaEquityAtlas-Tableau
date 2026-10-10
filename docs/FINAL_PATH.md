@@ -58,8 +58,8 @@ as a climate finding.
 Not as "conflict and poverty are not associated". Three reasons, all measured:
 
 - **Power.** 0.75 at rho = 0.4. Nothing survives Bonferroni.
-- **Coverage failure correlated with the outcome.** In 2021 the five poorest states
-  recorded zero UCDP events; their mean MPI (0.218) exceeds the rest (0.142). The
+- **Coverage failure correlated with the outcome.** In 2021 five of the poorest 12 states (Bauchi, Jigawa, Kebbi, Katsina, Kano)
+  recorded zero UCDP events; the 10 zero-event states' mean MPI (0.218) exceeds the rest (0.142). The
   instrument fails hardest where the signal should be.
 - **Robust to the casualty estimate, and that is worth saying.** Across UCDP's full
   low-to-high band the 2021 correlation runs +0.01 to +0.08. The null is not an

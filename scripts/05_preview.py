@@ -265,7 +265,7 @@ def visual_conflict(rows: list[dict[str, str]]) -> None:
         "survives multiple comparisons. At n=37 the design has power 0.75 at rho=0.4, so a "
         "moderate effect would be invisible. The null also holds across UCDP's full "
         "low-to-high fatality band, so it is not an artefact of the casualty estimate. "
-        "But 10 of 37 states recorded no event in 2021, including the five poorest — "
+        "But 10 of 37 states recorded no event in 2021, including five of the poorest 12 — "
         "a coverage statement, not evidence of peace.",
         width=104,
     )

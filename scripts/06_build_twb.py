@@ -44,6 +44,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
+import atlas_text
 from common import PROCESSED, REPO_ROOT
 
 DS_NAME = "federated.0mpiatlas2021"
@@ -388,6 +389,143 @@ ALIGN_MEASURES = ["aligned_share", "aligned_binary", "aligned_share_sitting", "m
 ALIGN_SHEET = "Party alignment and MPI change"
 
 
+# --- Reader dashboards: plain-language text from scripts/atlas_text.py ---------
+# Two text-only dashboards, "What the words mean" and "How we did it", built from
+# the same strings stage 7 renders on the HTML page. The words live in
+# atlas_text.py and are never retyped here; this code only lays them out.
+
+READER_WIDTH = 1000  # px; fixed-size dashboards, tall rather than clipped
+READER_PAD = 30  # px of slack added to every estimated zone height
+TEXT_COLOUR = "#22252a"
+BODY_SIZE = 11
+TERM_SIZE = 11
+HEADING_SIZE = 14
+TITLE_SIZE = 20
+# Tableau marks a paragraph break inside formatted text with this pair.
+PARA_BREAK = "Æ&#10;"
+
+# A paragraph is a list of (text, bold, fontsize) runs that share one line.
+Run = tuple[str, bool, int]
+
+
+def para(text: str, *, bold: bool = False, size: int = BODY_SIZE) -> list[Run]:
+    return [(text, bold, size)]
+
+
+def _run_xml(text: str, bold: bool, size: int) -> str:
+    weight = " bold='true'" if bold else ""
+    return f"<run{weight} fontcolor='{TEXT_COLOUR}' fontsize='{size}'>{escape(text)}</run>"
+
+
+def _estimate_height(paragraphs: list[list[Run]], width_px: int) -> int:
+    """Rendered height in px, sized for the worst case so nothing is clipped.
+
+    Calibrated by eye on Tableau Public Desktop at 150% Windows scaling, which
+    enlarges text but not the dashboard: an 11pt line there is ~30.5 px tall and
+    holds ~93 characters across 1000 px. Fonts render smaller on the web, so
+    the published dashboards get slack, never clipping.
+    """
+    import math
+
+    height = 0.0
+    for runs in paragraphs:
+        size = max(r[2] for r in runs)
+        chars_per_line = max(1, int((width_px - 40) / (size * 0.95)))
+        chars = sum(len(r[0]) for r in runs) * 1.08  # word-wrap waste
+        lines = max(1, math.ceil(chars / chars_per_line))
+        height += lines * size * 2.8
+    return int(height) + READER_PAD
+
+
+def reader_zone(zone_id: int, y: int, h: int, paragraphs: list[list[Run]]) -> str:
+    """One full-width text zone. Tiled zone geometry is in 1/100000ths of the
+    dashboard, so y and h arrive already scaled."""
+    body = f"<run fontsize='{BODY_SIZE}'>{PARA_BREAK}</run>".join(
+        "".join(_run_xml(*r) for r in runs) for runs in paragraphs
+    )
+    return (
+        f"          <zone h='{h}' id='{zone_id}' type-v2='text' w='100000' x='0' y='{y}'>\n"
+        f"            <formatted-text>{body}</formatted-text>\n"
+        "            <zone-style>\n"
+        "              <format attr='margin' value='12' />\n"
+        "            </zone-style>\n"
+        "          </zone>\n"
+    )
+
+
+def reader_dashboard(name: str, zones: list[list[list[Run]]], first_id: int) -> str:
+    """A fixed-width, text-only dashboard of vertically stacked text zones."""
+    heights = [_estimate_height(z, READER_WIDTH) for z in zones]
+    total = sum(heights)
+    parts: list[str] = []
+    y = 0
+    for offset, (paragraphs, h_px) in enumerate(zip(zones, heights)):
+        # The last zone takes the remainder so rounding never leaves a gap.
+        h = 100000 - y if offset == len(zones) - 1 else round(h_px * 100000 / total)
+        parts.append(reader_zone(first_id + offset, y, h, paragraphs))
+        y += h
+    return f"""    <dashboard name='{escape(name)}'>
+      <style />
+      <size maxheight='{total}' maxwidth='{READER_WIDTH}' minheight='{total}' minwidth='{READER_WIDTH}' />
+      <zones>
+        <zone h='100000' id='{first_id - 1}' type-v2='layout-basic' w='100000' x='0' y='0'>
+{"".join(parts)}        </zone>
+      </zones>
+    </dashboard>
+"""
+
+
+BLANK: list[Run] = para(" ")
+
+
+def words_dashboard() -> str:
+    t = atlas_text
+    terms = [
+        [para(t.WORDS_TITLE, bold=True, size=TITLE_SIZE), para(t.WORDS_INTRO), BLANK]
+    ]
+    half = (len(t.TERMS) + 1) // 2
+    for chunk in (t.TERMS[:half], t.TERMS[half:]):
+        zone: list[list[Run]] = []
+        for term in chunk:
+            zone += [para(term["term"], bold=True, size=TERM_SIZE), para(term["meaning"]), BLANK]
+        terms.append(zone)
+    terms[0] += terms.pop(1)
+    needs: list[list[Run]] = [para(t.INDICATORS_TITLE, bold=True, size=HEADING_SIZE),
+                              para(t.INDICATORS_INTRO), BLANK]
+    for i in t.INDICATORS:
+        needs.append([
+            (f"{i['area']} · {i['need']} · {i['weight']}", True, BODY_SIZE),
+            (f" — Missing if: {i['missing_if']}", False, BODY_SIZE),
+        ])
+    needs += [BLANK, para(t.INDICATORS_NOTE), BLANK,
+              para(t.EXAMPLE_TITLE, bold=True, size=HEADING_SIZE)]
+    needs += [para(f"{item} — {w}") for item, w in t.EXAMPLE_LINES]
+    # The total's label is the glossary's own term for it, not a retyped string.
+    score_term = next(x["term"] for x in t.TERMS if x["term"] == "Deprivation score")
+    needs += [para(f"{score_term} — {t.EXAMPLE_TOTAL}", bold=True), para(t.EXAMPLE_VERDICT)]
+    return reader_dashboard(t.WORDS_TITLE, [*terms, needs], first_id=40)
+
+
+def method_dashboard() -> str:
+    t = atlas_text
+    zones: list[list[list[Run]]] = [
+        [para(t.METHOD_TITLE, bold=True, size=TITLE_SIZE), para(t.METHOD_INTRO), BLANK]
+    ]
+    half = (len(t.METHOD) + 1) // 2
+    for chunk in (t.METHOD[:half], t.METHOD[half:]):
+        zone: list[list[Run]] = []
+        for section in chunk:
+            zone.append(para(section["heading"], bold=True, size=HEADING_SIZE))
+            zone += [para(p) for p in section["paragraphs"]]
+            zone.append(BLANK)
+        zones.append(zone)
+    zones[0] += zones.pop(1)
+    return reader_dashboard(t.METHOD_TITLE, zones, first_id=60)
+
+
+READER_DASHBOARDS = [atlas_text.WORDS_TITLE, atlas_text.METHOD_TITLE]
+
+
 def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
                    panel_columns: list[tuple[str, str, str]], panel_rows: int,
                    align_columns: list[tuple[str, str, str]], align_rows: int) -> str:
@@ -622,7 +760,7 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         </zone>
       </zones>
     </dashboard>
-  </dashboards>
+{words_dashboard()}{method_dashboard()}  </dashboards>
 """
 
     windows = """  <windows source-height='1500'>
@@ -707,7 +845,14 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
       </viewpoints>
       <active id='-1' />
     </window>
-  </windows>
+""" + "".join(
+        f"    <window class='dashboard' name='{escape(name)}'>\n"
+        # The schema wants viewpoints before active, even when there are none.
+        "      <viewpoints />\n"
+        "      <active id='-1' />\n"
+        "    </window>\n"
+        for name in READER_DASHBOARDS
+    ) + """  </windows>
 """
 
     atlas_sheets = " ".join([sheet_map, sheet_bar, sheet_scatter, sheet_quadrant])

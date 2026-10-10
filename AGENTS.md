@@ -103,8 +103,8 @@ The spec was written before the sources were checked. These are settled now:
 - **No conflict-poverty association is *detectable*, and the design cannot detect one.**
   Spearman rho is +0.34 (2013), -0.20 (2016), +0.10 (2018), -0.06 (2021). Power at
   n=37 is 0.75 at rho=0.4 and nothing survives Bonferroni. Worse, the conflict variable
-  *undercounts where poverty is highest*: in 2021 the five poorest states all record
-  zero UCDP events. Never report this as a negative result about the world.
+  *undercounts where poverty is highest*: in 2021 five of the poorest 12 states (Bauchi, Jigawa, Kebbi, Katsina, Kano)
+  record zero UCDP events (10 of 37 states do). Never report this as a negative result about the world.
 - **Climate is a north-south gradient, not a driver.** Baseline 1991-2020
   precipitation correlates with MPI at rho = -0.80, but precipitation <-> latitude is
   -0.903 and latitude <-> MPI is **+0.821 — better than precipitation <-> MPI at

@@ -78,7 +78,7 @@ Worth understanding, because both are attacked by the same move.
 codebook says media reporting "is not consistent across time or space". Nigerian
 farmer–herder conflict, banditry and communal violence are rural, frequently
 reported without reliable death tolls, and often without a state name. The
-result lands where we need it not to: the five poorest states all record zero
+result lands where we need it not to: five of the poorest 12 states (Bauchi, Jigawa, Kebbi, Katsina, Kano) all record zero
 events in 2021. That is not evidence of peace; it is evidence the instrument was
 looking elsewhere.
 

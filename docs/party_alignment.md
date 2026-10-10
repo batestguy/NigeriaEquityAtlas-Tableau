@@ -113,7 +113,7 @@ Never phrase it as north vs south.
 
 ## 4. Result
 
-*Written by `scripts/08_party_alignment.py` on 2026-10-09. Do not edit by hand.*
+*Written by `scripts/08_party_alignment.py` on 2026-10-10. Do not edit by hand.*
 
 Over 2013–2021, states governed in alignment with the federal ruling party saw MPI fall 0.0080 MPI points *slower* per year than non-aligned states (95% CI -0.0002 to 0.0168, permutation p = 0.036). This is an association within states over time, not an effect of party.
 
