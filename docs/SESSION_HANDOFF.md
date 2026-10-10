@@ -1,3 +1,92 @@
+# Handoff — sessions 2026-10-09/10 (party test, map fit, plain-language sheets)
+
+**Start here.** Pipeline is 9 stages, all green (`.\scripts\run_all.ps1`, exit 0,
+~2 min). Everything below is committed and pushed. The atlas is still **not
+published** — that remains the one manual step (your Tableau Public login).
+
+## State in one paragraph
+
+The atlas now has: a filled HTML map that fits every screen (`docs/preview/interactive_map.html`,
+stage 7); a pre-registered party test (stage 8) whose result is **fragile — "we
+can't really tell"**; and two plain-language reader sheets ("What the words mean",
+"How we did it") in both the HTML page and the Tableau workbook, written once in
+`scripts/atlas_text.py`. The Tableau workbook has 6 worksheets + 3 dashboards
+(`Equity Atlas`, `What the words mean`, `How we did it`).
+
+## What changed, by commit
+
+| Commit | What |
+|---|---|
+| `152c13d` | Pre-registration of the party test (`docs/party_alignment.md` §1–§3). **Never edit §1–§3.** |
+| `ac3b81e` `7041f4f` | `data/reference/governorship_events.csv` (231 seatings, every off-cycle/court date sourced), `governor_defections.csv` (24 sourced sitting-party changes), `federal_party.csv`; stage 0 gate recomputes `dom_party` exactly |
+| `aeb3c0c` `4117988` `dae341b` | Stage 8 `08_party_alignment.py`: primary β +0.0080/yr, permutation p 0.036, CI −0.0002 to 0.0168, MDE 0.0115; fails (a) relative change, (c) binary, (d) sitting party p 0.079, and dropping any interval; holds only under (b). Rests on 2013–16. |
+| `89a83e9` | Result in PNG, map panel, Tableau sheet "Party alignment and MPI change" |
+| `f639c16` | CLAIMS / CAUSAL_DECISION §2d / AGENTS findings for party |
+| `93b7c2e` | Map fit fix (was always clipped top+bottom), phone layout, plain-language party panel + "why we can't say it caused it" diagram, hover wording, "1 in 1" bug |
+| `d4993b0` | Reader sheets (HTML + Tableau); **"five poorest states had zero events" corrected everywhere** — it is five *of the poorest 12* (Bauchi, Jigawa, Kebbi, Katsina, Kano); 10 of 37 states had none |
+| this commit | `CLAUDE.md` (imports AGENTS.md) + this handoff |
+
+## Verified by execution vs not
+
+- **Verified:** run_all exit 0; stage 8 numbers reproduced independently by two
+  reviewers; §1–§3 byte-identical to `152c13d`; workbook opens in Tableau Public
+  2026.2 with title `Nigeria-MPI-Equity-Atlas`, no non-telemetry log errors; both
+  reader dashboards render (top of each seen); HTML map fits at 1366×768 and
+  390×844 with no sideways scroll; all 3 view buttons refit.
+- **Not verified:** the *lower part* of the Tableau "What the words mean" dashboard
+  (1000×4126 px) was never scrolled on screen — reviewer judged clipping unlikely
+  from the zone-height code. The stage 7 cover hero itself (photo slot etc.) has
+  been seen only incidentally.
+
+## Next steps, in order
+
+1. **Scroll both reader dashboards in Tableau** (5 min). Open the workbook
+   (`C:\Program Files\Tableau\Tableau Public 2026.2\bin\tabpublic.exe tableau\Nigeria-MPI-Equity-Atlas.twbx`),
+   go to *What the words mean* and *How we did it*, scroll to the bottom; if text
+   is clipped, raise `READER_PAD` or the per-line factor in `_estimate_height`
+   (`scripts/06_build_twb.py`) and rebuild stage 6.
+2. **GUI fixes before publishing** (`docs/PUBLISH.md`): `Where poverty sits` →
+   filled choropleth; `Dimension breakdown` → stacked bar. Optionally put the
+   party sheet on the `Equity Atlas` dashboard (it is standalone now) and turn its
+   mark labels off.
+3. **Publish**: File → Save to Tableau Public. Paste attribution into the
+   description. Then verify with the `tableau` MCP `get_workbook_image`.
+4. **Host the HTML page** if wanted (it is self-contained, 8.5 MB, offline).
+5. **Housekeeping:** `AGENTS.md` says "ruff clean" — not true: pre-existing
+   findings 05=3, 06=4, 07=14 (run ruff from `scripts\`; from the root it
+   misreads the `common` imports). The static preview PNG and the Tableau party
+   sheet still use technical wording, not the plain-language version.
+   `.codewhale/` is an unknown tool's state dir, untracked — gitignore or delete.
+
+## Traps paid for this session (do not re-learn)
+
+- **Tableau path changed:** 2026.2 at `C:\Program Files\Tableau\Tableau Public 2026.2\`.
+  `C:\TableauPublic` no longer exists.
+- **Capturing a Tableau dashboard:** SendKeys Ctrl+Tab does not reach Tableau.
+  Instead build a scratch copy of the `.twbx` with the target dashboard's
+  `<window>` moved to the top of `<windows>` (the twb uses CRLF), open it, and
+  PrintWindow (flag 2). Opening the real file always lands on the first sheet.
+- **Headless Chrome cannot draw the map** (mapbox needs WebGL); use the
+  chrome-devtools MCP. Its `emulate` viewport change fires no resize event —
+  reload after emulating, or the plot keeps the old width.
+- **Never `git stash` while another agent has uncommitted work** — a stash during
+  an executor's lint comparison made a concurrent stage 7 build emit an old page.
+  Compare against HEAD with `git show HEAD:<file> > scratch` instead.
+- **Two processes rebuilding `interactive_map.html` at once** corrupts it
+  (`</body>` assertion fails). Run stage 7 from one place at a time.
+- Subagents can stop on the usage cap mid-task without reporting — verify their
+  work yourself before trusting it (this happened to the Tableau-dashboard executor).
+
+## Rules that now apply (also in AGENTS.md / CLAIMS.md)
+
+- Party: show the §3 sentence verbatim **with** its robustness line; the map
+  panel leads with a plain-language reading generated from the result CSV.
+  Never colour by party. Mode party is hover context only.
+- Reader text lives only in `scripts/atlas_text.py`; every figure in it must trace
+  to the repo or a cited OPHI source listed in its docstring.
+
+---
+
 # Handoff — session 2026-10-08 (interactive map: Sheet 1 CLI alternative)
 
 Sheet-by-sheet rebuild started at Sheet 1. The Tableau map sheet cannot become a
