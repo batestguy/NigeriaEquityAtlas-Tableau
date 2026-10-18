@@ -148,3 +148,40 @@ If H2 returns p ≥ 0.05, the sheet ships as "no neighbour resemblance beyond th
 north–south slope" with the same four-line structure adjusted to say so, and no
 maps, hotspot layers or per-state highlight are drawn. The workbook is not
 adjusted afterwards to make the result look stronger.
+
+## Amendment 1 (2026-10-18): an added surface, not a changed test
+
+**Nothing the test consists of has changed.** The statistic, the weights, the
+permutation count and seed, the corrections, the decision rule, the sensitivities and
+the wording of the four reading lines are exactly as frozen above, and every number in
+§3 of `docs/spatial_analysis.md` comes from that test, run by the code in
+`scripts/spatial_diagnostics.R` as first conceived.
+
+What changed, and it changed **after H2 and H3 were seen**, is presentation. The
+declared output was one worksheet — the scatter. A second worksheet has been added at
+the user's request: the same 37 state polygons sheet 1 draws, coloured by the four
+neighbourhood types. It sits immediately after the poverty map in the tab order, and
+the scatter sits immediately after it. The gate PNG for the scatter is renamed
+`8_spatial_scatter.png`; the map's is `7_spatial_clusters_map.png`. This amendment is
+dated and appended rather than folded into the sections above, because editing a
+frozen specification in place would hide exactly the thing pre-registration exists to
+expose.
+
+Two consequences follow from the result rather than from any revision of the test, and
+both are deliberate:
+
+1. **The map's colours are descriptive, never a significance map.** H3 leaves one
+   state surviving Bonferroni and none surviving Benjamini–Yekutieli (§3). A map
+   coloured by significance would therefore be a single state on a field of grey, and
+   it would invite the reader to name that state as "the poorest cluster" — the
+   per-state ordering this atlas withdrew (`docs/FIX_LEDGER.md` A1). The count is
+   stated instead: in the hovering text, in §3, and in the plain-language reading
+   beside both surfaces. No claim about the named state survives beyond the count,
+   which is what H3 already required.
+2. **The four colours encode only the quadrant.** Which side of the national average
+   the state is on (hue), and whether its neighbours are on that same side (shade).
+   Nothing else — no third variable, and specifically not the poverty ramp, so the
+   sheet cannot be read as a second poverty map.
+
+The added surface does not touch the decision rule above, and it was not used to
+justify any change to the statistics.
