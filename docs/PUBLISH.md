@@ -156,6 +156,18 @@ the governorship line reads `Governorship 1999–2021: PDP (14 of 22 years)`, wi
 computed in stage 4 from `data/reference/governorship_events.csv` and asserted against
 the vetted `dom_party`. **Party is hover context only; the fill never encodes party.**
 
+**The legend names the index in full.** A colour card's title is the colour field's
+*caption* (it cannot be italic — a caption is plain text), so stage 6 now sets
+`mpi_band`'s caption to `MPI band (Multidimensional Poverty Index)` instead of the
+internal column name. The caption is one word list for the whole workbook: it is also
+what the Data pane and the shelf pill show. The full meaning sentence —
+*"the share of people who are poor multiplied by how deprived they are on average, as a
+percentage of the index"* — lives in the tooltip's italic MPI line and, italicised, in the
+HTML map's colour-bar title and narrow-screen legend. All of it comes from
+`MPI_LEGEND_*` in `scripts/atlas_text.py`, so the five surfaces cannot drift apart.
+Since the caption is what the legend card keys on, hand-changing the caption in the GUI
+would desync the workbook from the generator.
+
 **One cosmetic consequence, and its fix.** A geographic sheet is drawn at a fixed map
 scale, so a short pane crops it — the standalone sheet shows roughly the northern
 four-fifths at a 1295x687 window. The dashboard fixes this without the GUI:

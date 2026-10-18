@@ -191,6 +191,17 @@ EXAMPLE_VERDICT = (
 )
 
 METHOD_TITLE = "How we did it"
+MPI_LEGEND_TITLE = "MPI band"
+# The acronym expanded, and what the index itself means. Used wherever a legend
+# renders: the Tableau colour card (its title is the colour field's caption,
+# which cannot be italic), the Plotly colour-bar title, the narrow-screen HTML
+# legend (both italic there) and the tooltip's italic MPI line. The glossary's
+# own MPI entry stays the long-form source of truth.
+MPI_LEGEND_EXPANSION = "Multidimensional Poverty Index"
+MPI_LEGEND_MEANING = (
+    "the share of people who are poor multiplied by how deprived they are on "
+    "average, as a percentage of the index"
+)
 METHOD_INTRO = (
     "In plain terms: where the numbers come from, how they are put together, how sure "
     "we can be, and what this atlas cannot tell you."

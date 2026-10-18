@@ -184,7 +184,7 @@
       <column caption='point_order' datatype='integer' name='[point_order]' role='dimension' type='ordinal' />
       <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
-      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='MPI band (Multidimensional Poverty Index)' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
       <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
@@ -336,7 +336,7 @@
               <run>% to </run>
               <run><![CDATA[<[federated.0mpipolygons].[sum:mpi_ci_hi_pct:qk]>]]></run>
               <run>%)&#10;</run>
-              <run>MPI is the share of people who are poor multiplied by how deprived they are, as a percentage of the index.&#10;&#10;</run>
+              <run italic='true'>MPI is the share of people who are poor multiplied by how deprived they are, as a percentage of the index.&#10;&#10;</run>
               <run italic='true'>Neighbouring states' intervals overlap, so the map groups states into bands instead of ranking them.</run>
             </formatted-text>
           </customized-tooltip>

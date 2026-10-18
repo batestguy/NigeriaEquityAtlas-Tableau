@@ -27,6 +27,12 @@ with visible borders).
   years-mode party equals the vetted `dom_party`, or sits inside its tie set.
 - **`poverty_group` now says what it is**: `Bauchi · Poorest 12 of the 37 states, by MPI`.
   "Poorest 12" alone does not say 12 of what.
+- **The legend names the index in full, the full meaning is italic where italics exist.**
+  The Tableau colour card's title is the field caption, so `mpi_band` is now captioned
+  `MPI band (Multidimensional Poverty Index)` — a caption cannot be italic, so the
+  expansion is where the width allows. Every other legend surface is italic: the tooltip's
+  MPI line, the HTML map's Plotly colour-bar title and its narrow-screen legend. All from
+  `MPI_LEGEND_*` in `scripts/atlas_text.py`.
 - **The state outlines are thick white strokes now.** The grammar that works is
   `has-stroke` / `stroke-color` / `stroke-size` on the **worksheet-level** mark style
   rule. The obvious-looking `border-color` / `border-width` on the same element is

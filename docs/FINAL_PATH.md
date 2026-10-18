@@ -126,9 +126,13 @@ the MPI value now prints as a **percentage of the index** — bands `1. under 5%
 still shown
 separately so the two percentages cannot be confused; the hover gained a governorship
 line (`Governorship 1999–2021: PDP (14 of 22 years)`, ties `PDP/APC (tied)`) and a
-definition for `poverty_group` (`Poorest 12 of the 37 states, by MPI`); and the state
+definition for `poverty_group` (`Poorest 12 of the 37 states, by MPI`); the state
 outlines became thick white **strokes** — `has-stroke` / `stroke-color` / `stroke-size`,
-because `border-color` / `border-width` validate and then do nothing on a mark. Still left
+because `border-color` / `border-width` validate and then do nothing on a mark; and the
+legend now names the index in full — the colour card's title is the colour field's
+caption, so `mpi_band` is captioned `MPI band (Multidimensional Poverty Index)`
+(plain text, since a caption cannot be italic), while the tooltip's MPI line and the HTML
+map's two legends carry the full meaning in italics. Still left
 to the GUI, with the exact click recorded in `docs/PUBLISH.md`: the **colour legend**, and
 `Dimension breakdown` as a stacked bar.
 

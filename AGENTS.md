@@ -142,6 +142,13 @@ The spec was written before the sources were checked. These are settled now:
    never be swapped: the first is the MPI value, the second is H. (Percent fields render at
    Tableau's default two decimals; `44.10%` is the same number as the data's `44.1`.)
 
+   The legend expands the acronym: the Tableau colour card's title **is** the colour
+   field's caption, so `mpi_band` is captioned
+   `MPI band (Multidimensional Poverty Index)` rather than the internal column name. A
+   caption is plain text — the italic form of the full meaning lives in the tooltip's MPI
+   line and on the HTML map's colour-bar title / narrow-screen legend, all sourced from
+   `MPI_LEGEND_*` in `scripts/atlas_text.py`.
+
 ## Findings that constrain what may be claimed
 
 - **No conflict-poverty association is *detectable*, and the design cannot detect one.**

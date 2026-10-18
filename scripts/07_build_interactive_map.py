@@ -194,7 +194,17 @@ def main() -> int:
             zmin=0,
             zmax=4,
             colorscale=[[i / 4, c] for i, c in enumerate(BAND_COLORS)],
-            colorbar=dict(title="MPI band", tickvals=list(range(5)), ticktext=BAND_ORDER),
+            # The colour bar's title is the legend a reader sees. Plotly honours
+            # a <br> (and <i>/<b>) in a title string.
+            colorbar=dict(
+                title=(
+                    f"<i>{atlas_text.MPI_LEGEND_TITLE} — "
+                    f"{atlas_text.MPI_LEGEND_EXPANSION}: "
+                    f"{atlas_text.MPI_LEGEND_MEANING}</i>"
+                ),
+                tickvals=list(range(5)),
+                ticktext=BAND_ORDER,
+            ),
             hovertext=[hover(p) for p in pcodes],
             hoverinfo="text",
             hoverlabel=HOVER_CHROME,
@@ -360,7 +370,9 @@ FIT_JS = """<script>
   legend.setAttribute("aria-label", "MPI band");
   legend.style.cssText = "display:none;flex-wrap:wrap;gap:6px 14px;margin:0 10px 12px;" +
     "font:12px Arial,sans-serif;color:#22252a;";
-  legend.innerHTML = "<b style='width:100%'>MPI band</b>" + NARROW.ticks.map(function (t, i) {
+  legend.innerHTML = "<b style='width:100%'>MPI band</b>" +
+    "<i style='width:100%;margin-bottom:4px'>__MPI_MEANING__</i>" +
+    NARROW.ticks.map(function (t, i) {
     return "<span role='listitem' style='display:inline-flex;align-items:center;gap:5px'>" +
       "<span style='width:14px;height:14px;border:1px solid #8a8a8a;background:" +
       NARROW.colors[i] + "'></span>" + t + "</span>";
@@ -376,7 +388,11 @@ FIT_JS = """<script>
   window.addEventListener("resize", function () { clearTimeout(timer); timer = setTimeout(refresh, 250); });
   window.addEventListener("load", init);
 })();
-</script>"""
+</script>""".replace(
+    "__MPI_MEANING__",
+    f"{atlas_text.MPI_LEGEND_TITLE} — {atlas_text.MPI_LEGEND_EXPANSION}: "
+    f"{atlas_text.MPI_LEGEND_MEANING}",
+)
 
 
 def _bounds(gj: dict, pcodes: set[str]) -> list[float]:

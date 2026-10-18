@@ -129,7 +129,7 @@ def ref(column: str, kind: str, ds: str = DS_NAME) -> str:
 
 
 def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
-              default_agg: str = "") -> str:
+              default_agg: str = "", caption: str = "") -> str:
     """One <column> declaration.
 
     Two schema rules learned the hard way, by loading the workbook in Tableau:
@@ -140,8 +140,14 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
       the datasource, once. Putting it inside the column produces the same
       "missing required attribute" error, because the schema parser trips over the
       unexpected child before it ever reads the attributes.
+
+    ``caption`` is what Tableau shows for the field everywhere it names it --
+    shelf pills, tooltips' default fields and, for a colour field, the title of
+    the colour legend. The captions default to the column name, which is how the
+    legend used to read the internal name ``mpi_band``.
     """
     extra = f" default-aggregation-type='{default_agg}'" if default_agg else ""
+    cap = f" caption='{escape(caption)}'" if caption else f" caption='{escape(name)}'"
     if datatype == "string":
         type_attr = "nominal"
     elif datatype == "integer":
@@ -161,7 +167,7 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
     else:
         semantic_role = ""
     return (
-        f"      <column caption='{escape(name)}' datatype='{datatype}' name='[{escape(name)}]' "
+        f"      <column{cap} datatype='{datatype}' name='[{escape(name)}]' "
         f"role='{role}' type='{type_attr}'{semantic_role}{extra} />\n"
     )
 
@@ -235,7 +241,7 @@ def build_hyper(csv_path: Path, out_path: Path,
 
 
 def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row_count: int,
-                   instances: str = "", extra_columns: str = "") -> str:
+                   instances: str = "", extra_columns: str = "", **kwargs) -> str:
     """One datasource over a packaged Hyper extract, with every column declared.
 
     Tableau Public refuses any workbook whose datasource is not an extract
@@ -252,8 +258,10 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
     loads as "the field does not exist in your database" (error 9CA7205B).
     """
     cols = []
+    captions: dict[str, str] = kwargs.get("captions", {})
     for name, datatype, role in columns:
-        cols.append(col_block(name, datatype, role, geographic=(name == "state")))
+        cols.append(col_block(name, datatype, role, geographic=(name == "state"),
+                              caption=captions.get(name, "")))
 
     col_blocks = "".join(cols)
     dbname = f"Data/{hyper_filename}"
@@ -653,8 +661,8 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     # the polygon (pcode, ring, point_order, mpi_se, and the two coordinate axes).
     # A customized tooltip replaces the default list outright, so those stop
     # reaching the reader while staying on the shelves where the drawing needs
-    # them. The MPI line carries a one-sentence definition instead of the band
-    # name, because the legend beside the sheet already keys the colours.
+    # them. The MPI line explains the index in full and is italic, so the reader
+    # does not take its percentage for the headcount share.
     #
     # Tableau drops a <run> whose content is only whitespace, so every run below
     # carries at least one character of text: a line break belongs to the run that
@@ -699,7 +707,8 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
             + txt("%)&#10;")
             + txt(
                 "MPI is the share of people who are poor multiplied by how deprived "
-                "they are, as a percentage of the index.&#10;&#10;"
+                "they are, as a percentage of the index.&#10;&#10;",
+                " italic='true'",
             )
             + txt(
                 "Neighbouring states' intervals overlap, so the map groups states "
@@ -1066,7 +1075,23 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         .replace(f"caption='{DS_CAPTION}'", f"caption='{ALIGN_DS_CAPTION}'", 1)
     )
     poly_ds = (
-        datasource_xml(POLY_COLUMNS, POLY_HYPER, poly_rows, column_instances(poly_sheets))
+        datasource_xml(
+            POLY_COLUMNS, POLY_HYPER, poly_rows, column_instances(poly_sheets),
+            # The colour field's caption is the legend's title text, so it has to
+            # say what the reader is looking at -- the internal name "mpi_band"
+            # is not that. The full meaning matches the glossary (atlas_text.py).
+            captions={
+                # The colour field's caption is the legend's title text. A legend
+                # strip is 190px wide, so the title must be short: the acronym
+                # expanded, not the full sentence. The full meaning lives in the
+                # tooltip's italic line, the colour-bar/HTML legend on the HTML
+                # map and the glossary.
+                "mpi_band": (
+                    f"{atlas_text.MPI_LEGEND_TITLE} "
+                    f"({atlas_text.MPI_LEGEND_EXPANSION})"
+                ),
+            },
+        )
         .replace(DS_NAME, POLY_DS_NAME)
         .replace(CONN_NAME, POLY_CONN)
         .replace(f"caption='{DS_CAPTION}'", f"caption='{POLY_DS_CAPTION}'", 1)
