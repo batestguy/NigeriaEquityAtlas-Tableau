@@ -54,15 +54,11 @@ COVER_JPG = DOCS / "preview" / "cover.jpg"
 
 GREEN = "#008751"  # Nigerian flag green
 
-BAND_ORDER = [
-    "1. under 5%",
-    "2. 5% to 10%",
-    "3. 10% to 20%",
-    "4. 20% to 30%",
-    "5. 30% and above",
-]
-# ColorBrewer YlOrBr, 5-class sequential -- no red-green, readable by CVD.
-BAND_COLORS = ["#ffffd4", "#fed98e", "#fe9929", "#d95f0e", "#993404"]
+# The bands and their colours are the single list in atlas_text, which is also
+# where stage 6 reads them for the workbook's colour palette and stage 5 for the
+# QA-gate PNG. The two maps must not drift: they colour the same field.
+BAND_ORDER = [name for name, _ in atlas_text.MPI_BANDS]
+BAND_COLORS = [colour for _, colour in atlas_text.MPI_BANDS]
 
 
 def read_atlas() -> list[dict[str, str]]:

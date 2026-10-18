@@ -16,12 +16,15 @@ The five visuals follow the project spec, section 1.4:
 
 Three of these depart from the spec, deliberately and for documented reasons.
 
-Visual 1 is NOT a filled choropleth. The spec asked for one, and the workbook
-carried a "filled map" for its whole life -- but it was never a map. Verified in
-Tableau Public on 2026-10-06: it drew 74 small lat/lon bar charts. Hand-written
-Tableau XML does not produce the generated-geographic-field pairing a filled map
-needs, so this is a correctly georeferenced scatter of the 37 capitals, which
-shows the same thing and does not overstate what the geometry supports.
+Visual 1 IS a filled choropleth, and as of 2026-10-18 this gate draws the same
+thing the workbook does. It colours the five `mpi_band` bands on the MPI value, in
+the colours from `atlas_text.MPI_BANDS`, exactly as sheet 1 and the HTML map do.
+It used to draw a continuous `YlOrRd` ramp of H, the headcount ratio -- a different
+measure from the one both maps colour by -- which meant the gate could not catch a
+regression in the sheet it exists to gate. (The sheet itself was a scatter of 37
+capitals for most of the workbook's life: hand-written Tableau XML does not produce
+the generated-geographic-field pairing a filled map needs. Since 2026-10-17 the
+sheet draws shipped ADM1 rings as a Polygon mark with a Path field instead.)
 
 Visual 2 is NOT a stacked bar. Three measures on Rows give three aligned panes.
 The Measure Names/Values pair that stacks them also needs a measure-values filter,
@@ -50,8 +53,9 @@ from matplotlib.axes import Axes
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Polygon as MplPolygon  # noqa: E402
+from matplotlib.patches import Patch, Polygon as MplPolygon  # noqa: E402
 
+import atlas_text  # noqa: E402
 from common import DOCS, PROCESSED, RAW, alignment_context_line  # noqa: E402
 
 PREVIEW = DOCS / "preview"
@@ -123,22 +127,36 @@ def feature_rings(geom: dict[str, Any]) -> list[list[list[float]]]:
 
 # ---------------------------------------------------------------- visual 1
 def visual_choropleth(rows: list[dict[str, str]]) -> None:
+    """The QA gate for sheet 1: the same measure, the same bands, the same colours.
+
+    It used to draw a continuous ramp of H, the *headcount ratio*, which is not the
+    measure either map colours by -- both colour the MPI value in five bands. A gate
+    that previews a chart the workbook does not contain cannot catch a regression in
+    the workbook, so this now draws what sheet 1 and the HTML map draw: mpi_band, in
+    the five colours from atlas_text. The two measures must never be swapped on the
+    reader: H is the share of people who are poor, the MPI value is that share
+    multiplied by how deprived they are on average, and it is the second one here.
+    """
     gj = json.loads((RAW / "nga_adm1.geojson").read_text(encoding="utf-8"))
-    value = {r["pcode"]: float(r["headcount_ratio_pct"]) for r in rows}
+    band = {r["pcode"]: r["mpi_band"] for r in rows}
     label = {r["pcode"]: r["state"] for r in rows}
 
-    fig, ax = plt.subplots(figsize=(8.6, 9.4))
-    vals = list(value.values())
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=max(vals))
-    cmap = plt.get_cmap("YlOrRd")
+    order = [name for name, _ in atlas_text.MPI_BANDS]
+    colour_of = dict(atlas_text.MPI_BANDS)
+    depth = {name: i for i, name in enumerate(order)}
+    unexpected = sorted(set(band.values()) - set(order))
+    assert not unexpected, f"mpi_band values not in atlas_text.MPI_BANDS: {unexpected}"
 
+    fig, ax = plt.subplots(figsize=(8.6, 9.4))
     for feat in gj["features"]:
         pcode = feat["properties"]["shapeISO"]
-        if pcode not in value:
+        if pcode not in band:
             continue
-        colour = cmap(norm(value[pcode]))
         for ring in feature_rings(feat["geometry"]):
-            ax.add_patch(MplPolygon(ring, closed=True, facecolor=colour, edgecolor="white", linewidth=0.6))
+            ax.add_patch(
+                MplPolygon(ring, closed=True, facecolor=colour_of[band[pcode]],
+                           edgecolor="white", linewidth=0.6)
+            )
 
     centroids = {r["pcode"]: (float(r["lat"]), float(r["lon"])) for r in rows}
     # Nudge labels in the crowded south-east so they do not overprint each other.
@@ -150,25 +168,41 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
         "NG-SO": (0.0, 0.16),
     }
     for pcode, (lat, lon) in centroids.items():
-        share = value[pcode]
         dlat, dlon = nudges.get(pcode, (0.0, 0.0))
+        # White on the two darkest bands, ink on the three light ones. The old
+        # threshold was the H value, which is a different number.
+        dark = depth[band[pcode]] >= 3
         ax.text(
             lon + dlon, lat + dlat, label[pcode], fontsize=6.6, ha="center", va="center",
-            color="white" if share > 45 else INK, fontweight="bold",
+            color="white" if dark else INK, fontweight="bold",
         )
 
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    cb = fig.colorbar(sm, ax=ax, fraction=0.030, pad=0.02)
-    cb.set_label("Headcount ratio, % of population multidimensionally poor", fontsize=8.5)
-    cb.outline.set_visible(False)
+    # A discrete legend, in band order -- not a continuous colourbar, which would
+    # advertise a resolution the five bands do not have. The "N. " sort key is
+    # stripped the same way stage 7 strips it for the HTML legend.
+    def band_short(name: str) -> str:
+        return name.split(". ", 1)[1].replace(" to ", "\u2013").replace(" and above", "+")
+
+    handles = [
+        Patch(facecolor=colour, edgecolor="#8a8a8a", linewidth=0.5, label=band_short(name))
+        for name, colour in atlas_text.MPI_BANDS
+    ]
+    legend = ax.legend(
+        handles=handles, title=f"{atlas_text.MPI_LEGEND_TITLE}\n({atlas_text.MPI_LEGEND_EXPANSION})",
+        loc="center left", bbox_to_anchor=(1.005, 0.5), frameon=False,
+        fontsize=7.6, title_fontsize=8, labelspacing=0.8,
+    )
+    legend._legend_box.align = "left"
 
     titles(
         ax,
-        "Nigeria: multidimensional poverty incidence by state",
-        "MICS 2021 · 36 states + FCT · headcount ratio H (% of population "
-        "multidimensionally poor). OPHI's standard errors put the median relative "
-        "SE at 15%, and all 36 adjacent rank pairs overlap at 95%, so no single "
-        "state is statistically the worst — read this as bands, not an order.",
+        f"Nigeria: {atlas_text.MPI_LEGEND_EXPANSION} (MPI) by state",
+        f"MICS 2021 \u00b7 36 states + FCT \u00b7 colour is the {atlas_text.MPI_LEGEND_TITLE.lower()} "
+        f"({atlas_text.MPI_LEGEND_EXPANSION}) \u2014 {atlas_text.MPI_LEGEND_MEANING}. The headcount "
+        "share H is a different number and is not this colour. OPHI's standard errors put "
+        "the median relative SE at 15%, and all 36 adjacent rank pairs overlap at 95%, so "
+        "five bands is the most the data supports; the exact value and its interval are in "
+        "the workbook's hover.",
         width=104,
     )
     ax.set_xlim(2.4, 15.0)

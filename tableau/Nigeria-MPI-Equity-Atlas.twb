@@ -202,10 +202,6 @@
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
       <column-instance column='[point_order]' derivation='None' name='[none:point_order:ok]' pivot='key' type='ordinal' />
       <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
-      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_se]' derivation='Sum' name='[sum:mpi_se:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_ci_lo]' derivation='Sum' name='[sum:mpi_ci_lo:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_ci_hi]' derivation='Sum' name='[sum:mpi_ci_hi:qk]' pivot='key' type='quantitative' />
       <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[mpi_poor_thousands]' derivation='Sum' name='[sum:mpi_poor_thousands:qk]' pivot='key' type='quantitative' />
@@ -222,6 +218,27 @@
         </connection>
       </extract>
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[none:mpi_band:nk]' type='palette'>
+            <map to='#ffffd4'>
+              <bucket>&quot;1. under 5%&quot;</bucket>
+            </map>
+            <map to='#fed98e'>
+              <bucket>&quot;2. 5% to 10%&quot;</bucket>
+            </map>
+            <map to='#fe9929'>
+              <bucket>&quot;3. 10% to 20%&quot;</bucket>
+            </map>
+            <map to='#d95f0e'>
+              <bucket>&quot;4. 20% to 30%&quot;</bucket>
+            </map>
+            <map to='#993404'>
+              <bucket>&quot;5. 30% and above&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
@@ -248,7 +265,7 @@
       <column caption='point_order' datatype='integer' name='[point_order]' role='dimension' type='ordinal' />
       <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
       <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
-      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='MPI band (Multidimensional Poverty Index)' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
       <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
       <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
       <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
@@ -268,10 +285,6 @@
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
       <column-instance column='[point_order]' derivation='None' name='[none:point_order:ok]' pivot='key' type='ordinal' />
       <column-instance column='[mpi_band]' derivation='None' name='[none:mpi_band:nk]' pivot='key' type='nominal' />
-      <column-instance column='[mpi]' derivation='Sum' name='[sum:mpi:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_se]' derivation='Sum' name='[sum:mpi_se:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_ci_lo]' derivation='Sum' name='[sum:mpi_ci_lo:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[mpi_ci_hi]' derivation='Sum' name='[sum:mpi_ci_hi:qk]' pivot='key' type='quantitative' />
       <column-instance column='[headcount_ratio_pct]' derivation='Sum' name='[sum:headcount_ratio_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[intensity_pct]' derivation='Sum' name='[sum:intensity_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[mpi_poor_thousands]' derivation='Sum' name='[sum:mpi_poor_thousands:qk]' pivot='key' type='quantitative' />
@@ -299,10 +312,6 @@
             <path column='[federated.0mpipolygons].[none:point_order:ok]' />
             <color column='[federated.0mpipolygons].[none:mpi_band:nk]' />
             <text column='[federated.0mpipolygons].[none:state:nk]' />
-            <lod column='[federated.0mpipolygons].[sum:mpi:qk]' />
-            <lod column='[federated.0mpipolygons].[sum:mpi_se:qk]' />
-            <lod column='[federated.0mpipolygons].[sum:mpi_ci_lo:qk]' />
-            <lod column='[federated.0mpipolygons].[sum:mpi_ci_hi:qk]' />
             <lod column='[federated.0mpipolygons].[sum:headcount_ratio_pct:qk]' />
             <lod column='[federated.0mpipolygons].[sum:intensity_pct:qk]' />
             <lod column='[federated.0mpipolygons].[sum:mpi_poor_thousands:qk]' />

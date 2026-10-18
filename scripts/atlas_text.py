@@ -202,6 +202,26 @@ MPI_LEGEND_MEANING = (
     "the share of people who are poor multiplied by how deprived they are on "
     "average, as a percentage of the index"
 )
+
+# The five MPI bands in the order they run, each with the colour it draws.
+# One list, three surfaces: stage 6 writes it into the workbook (a discrete field
+# given a palette -- the grammar lives inside the <datasource>, between <layout/>
+# and <semantic-values>), stage 5 draws the matplotlib QA gate from it, and stage
+# 7 draws the offline HTML map from it. Two maps that colour the same field
+# differently would read as two different findings.
+#
+# ColorBrewer YlOrBr, 5-class sequential: no red-green pair, so it survives
+# colour-vision deficiency, and it darkens monotonically, so the band order is
+# legible from the colour alone. The leading "N. " in each label is a sort key
+# (the Tableau legend sorts alphabetically), not part of what the reader is meant
+# to read -- stage 5 and stage 7 strip it.
+MPI_BANDS: list[tuple[str, str]] = [
+    ("1. under 5%", "#ffffd4"),
+    ("2. 5% to 10%", "#fed98e"),
+    ("3. 10% to 20%", "#fe9929"),
+    ("4. 20% to 30%", "#d95f0e"),
+    ("5. 30% and above", "#993404"),
+]
 METHOD_INTRO = (
     "In plain terms: where the numbers come from, how they are put together, how sure "
     "we can be, and what this atlas cannot tell you."

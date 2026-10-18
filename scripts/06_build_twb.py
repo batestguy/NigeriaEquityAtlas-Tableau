@@ -2,24 +2,25 @@
 
 What is generated, and why it is deliberately lean
 ---------------------------------------------------
-Hand-authored Tableau XML cannot be opened and checked on this machine: Tableau
-Desktop 2019.4 is too old to open a modern workbook and needs interactive
-licensing, and Tableau Public has no write API. So the workbook is built to a
-schema taken from a real, working Nigeria state-level Public viz
-(``ClimatechangeprofileNigeria``, 69.9k views), downloaded and unpacked via the
-Tableau MCP server, and every column reference it emits is verified against the
-columns it declares.
+Hand-authored Tableau XML is written to a schema taken from real, published
+Tableau-authored workbooks downloaded and unpacked via the Tableau MCP server
+(``ClimatechangeprofileNigeria`` first; later, for the colour-palette grammar,
+``Ode to Cowbell`` and ``Clinic Performance Dashboard``), and every column
+reference it emits is verified against the columns it declares. It is also opened
+in Tableau Public 2026.2 and looked at, which is the only check that catches a
+defect the schema accepts.
 
-The datasource is a CSV textscan connection with the data files packaged inside
-the .twbx. That is the lowest-risk option: no Hyper file to generate, and
-Tableau converts a local extract on publish. A live Google Sheets connection, as
-the original spec assumed, is unnecessary -- it would add a refresh dependency
-the data does not need, since the MPI survey updates annually.
+The datasource is a Hyper extract written by `tableauhyperapi` and packaged inside
+the .twbx (see the corrections list in AGENTS.md, #6): Tableau Public refuses a
+workbook whose datasource is not an extract. That is the lowest-risk option --
+nothing to refresh, since the MPI survey updates annually -- and it is the only one
+Tableau Public accepts at all.
 
 Sheet inventory
 ---------------
-  1  Where poverty sits            filled map on the geographic role
-  2  Dimension breakdown     stacked bar, three dimension contributions
+  1  Where poverty sits            filled choropleth, Polygon + Path from shipped
+                                   ADM1 rings; five assigned band colours
+  2  Dimension breakdown     three aligned panels, one per dimension contribution
   3  Poverty vs conflict     scatter
   4  Poverty over time       line across the four survey rounds
   5  Incidence x intensity   scatter with quadrant labels
@@ -240,8 +241,52 @@ def build_hyper(csv_path: Path, out_path: Path,
     return len(rows)
 
 
+def palette_block(field: str, entries: list[tuple[str, str]]) -> str:
+    """The datasource's colour-palette style rule: one colour per member.
+
+    A discrete field on Colour gets Tableau's *default categorical* palette unless
+    the workbook assigns one, so an ordered five-band scale would be drawn in five
+    unrelated hues -- colour that carries no order on a map whose whole claim is
+    that poverty rises. This is the block that fixes that.
+
+    The grammar is copied from two real Tableau-authored Public workbooks
+    (``Ode to Cowbell``, ``Clinic Performance Dashboard``, both downloaded via the
+    Tableau MCP server), where it sits *inside the <datasource>*, between
+    ``<layout .../>`` and ``<semantic-values>`` -- which is exactly where the two
+    elements already sit here. Two details are not guessable:
+
+    * the field is named **without** its datasource prefix (``[none:mpi_band:nk]``,
+      not ``[federated.0mpipolygons].[none:mpi_band:nk]``);
+    * a string member is written as a quoted ``<bucket>``, with the quotes escaped
+      as ``&quot;`` -- the bucket holds the *data value*, the same string the
+      extract stores.
+
+    ``type='palette'`` is the discrete form. The continuous form is a sibling of
+    this one (``type='interpolated'``, or ``type='custom-interpolated'`` with a
+    nested ``<color-palette>`` of hex stops and a ``max`` attribute); it does not
+    apply to a nominal dimension.
+    """
+    maps = "".join(
+        f"            <map to='{colour}'>\n"
+        f"              <bucket>{escape(chr(34) + label + chr(34), {chr(34): '&quot;', chr(39): '&apos;'})}</bucket>\n"
+        f"            </map>\n"
+        for label, colour in entries
+    )
+    return (
+        "      <style>\n"
+        "        <style-rule element='mark'>\n"
+        f"          <encoding attr='color' field='[none:{escape(field)}:nk]' type='palette'>\n"
+        f"{maps}"
+        "          </encoding>\n"
+        "        </style-rule>\n"
+        "      </style>\n"
+    )
+
+
 def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row_count: int,
-                   instances: str = "", extra_columns: str = "", **kwargs) -> str:
+                   instances: str = "", extra_columns: str = "",
+                   palette: tuple[str, list[tuple[str, str]]] | None = None,
+                   **kwargs) -> str:
     """One datasource over a packaged Hyper extract, with every column declared.
 
     Tableau Public refuses any workbook whose datasource is not an extract
@@ -265,6 +310,7 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
 
     col_blocks = "".join(cols)
     dbname = f"Data/{hyper_filename}"
+    palette_rule = palette_block(*palette) if palette else ""
     return f"""    <datasource caption='{DS_CAPTION}' inline='true' name='{DS_NAME}' version='{VERSION}'>
       <connection class='federated'>
         <named-connections>
@@ -283,7 +329,7 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
         </connection>
       </extract>
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
-      <semantic-values>
+{palette_rule}      <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
     </datasource>
@@ -328,15 +374,25 @@ def column_instances(*texts: str) -> str:
     return "".join(out)
 
 
-def deps_xml(columns: list[tuple[str, str, str]]) -> str:
+def deps_xml(columns: list[tuple[str, str, str]],
+             captions: dict[str, str] | None = None) -> str:
     """The per-worksheet column block real Tableau writes.
 
     Tableau repeats the datasource's columns inside every worksheet that uses it
     (<datasource-dependencies>). The matching <column-instance> elements are added
     by worksheet_xml, which can see which fields the shelves actually reference.
+
+    ``captions`` must be the same map the datasource was built with. Tableau writes
+    a field's caption in both places, and a workbook whose worksheet copies disagree
+    with its datasource is a state Tableau never produces itself; which of the two
+    the shelf pill and the colour legend read is not established here, so the two
+    are made to agree rather than argued about.
     """
+    captions = captions or {}
     body = "".join(
-        col_block(name, datatype, role, geographic=(name == "state")) for name, datatype, role in columns
+        col_block(name, datatype, role, geographic=(name == "state"),
+                  caption=captions.get(name, ""))
+        for name, datatype, role in columns
     )
     return f"""          <datasource-dependencies>
 {body}          </datasource-dependencies>
@@ -619,7 +675,21 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     atlas_deps = deps_xml(atlas_columns)
     panel_deps = deps_xml(panel_columns)
     align_deps = deps_xml(align_columns)
-    poly_deps = deps_xml(POLY_COLUMNS)
+    # The colour field's caption is the legend's title text, so it has to say what
+    # the reader is looking at -- the internal name "mpi_band" is not that. A legend
+    # strip is 190px wide, so the title is the acronym expanded, not the full
+    # sentence; the full meaning is in the tooltip's italic line, the HTML map's
+    # colour-bar title and the glossary, all from atlas_text.
+    #
+    # One map, two places: Tableau writes the caption on the datasource <column>
+    # AND repeats it in every worksheet's <datasource-dependencies>, so both are
+    # built from this dict. Built separately, they silently disagree.
+    poly_captions = {
+        "mpi_band": (
+            f"{atlas_text.MPI_LEGEND_TITLE} ({atlas_text.MPI_LEGEND_EXPANSION})"
+        ),
+    }
+    poly_deps = deps_xml(POLY_COLUMNS, poly_captions)
 
     # ---- sheet 1: the filled map -------------------------------------------
     # A genuine filled choropleth, drawn from shipped geometry rather than from
@@ -654,12 +724,14 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     # Colour is the *band*, not a continuous ramp: with a median 95% CI width of
     # 0.075 against a median MPI of 0.092, a ramp invites the reader to resolve
     # differences the data cannot support, and all 36 adjacent rank pairs overlap
-    # at 95%.
+    # at 95%. The five colours are assigned to the five members in the datasource's
+    # palette rule (see palette_block) -- without it a nominal field draws in
+    # Tableau's default categorical palette, which encodes no order at all.
     #
     # The tooltip is customized rather than default, because the default lists
     # every field on the view and ten of those fifteen fields exist only to draw
-    # the polygon (pcode, ring, point_order, mpi_se, and the two coordinate axes).
-    # A customized tooltip replaces the default list outright, so those stop
+    # the polygon (pcode, ring, point_order, and the two coordinate axes). A
+    # customized tooltip replaces the default list outright, so those stop
     # reaching the reader while staying on the shelves where the drawing needs
     # them. The MPI line explains the index in full and is italic, so the reader
     # does not take its percentage for the headcount share.
@@ -730,10 +802,6 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
             f"            <path column='{ref('point_order', 'ord', POLY_DS_NAME)}' />\n"
             f"            <color column='{ref('mpi_band', 'dim', POLY_DS_NAME)}' />\n"
             f"            <text column='{ref('state', 'dim', POLY_DS_NAME)}' />\n"
-            f"            <lod column='{ref('mpi', 'sum', POLY_DS_NAME)}' />\n"
-            f"            <lod column='{ref('mpi_se', 'sum', POLY_DS_NAME)}' />\n"
-            f"            <lod column='{ref('mpi_ci_lo', 'sum', POLY_DS_NAME)}' />\n"
-            f"            <lod column='{ref('mpi_ci_hi', 'sum', POLY_DS_NAME)}' />\n"
             f"            <lod column='{ref('headcount_ratio_pct', 'sum', POLY_DS_NAME)}' />\n"
             f"            <lod column='{ref('intensity_pct', 'sum', POLY_DS_NAME)}' />\n"
             f"            <lod column='{ref('mpi_poor_thousands', 'sum', POLY_DS_NAME)}' />\n"
@@ -1077,20 +1145,13 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     poly_ds = (
         datasource_xml(
             POLY_COLUMNS, POLY_HYPER, poly_rows, column_instances(poly_sheets),
-            # The colour field's caption is the legend's title text, so it has to
-            # say what the reader is looking at -- the internal name "mpi_band"
-            # is not that. The full meaning matches the glossary (atlas_text.py).
-            captions={
-                # The colour field's caption is the legend's title text. A legend
-                # strip is 190px wide, so the title must be short: the acronym
-                # expanded, not the full sentence. The full meaning lives in the
-                # tooltip's italic line, the colour-bar/HTML legend on the HTML
-                # map and the glossary.
-                "mpi_band": (
-                    f"{atlas_text.MPI_LEGEND_TITLE} "
-                    f"({atlas_text.MPI_LEGEND_EXPANSION})"
-                ),
-            },
+            captions=poly_captions,
+            # The ordered ramp for the five bands. A nominal dimension defaults to
+            # Tableau's categorical palette, which draws an ordered poverty scale
+            # in five unrelated hues; this is the only way to assign colours from
+            # XML. Colours come from atlas_text.MPI_BANDS so the workbook, the
+            # matplotlib QA gate and the HTML map cannot drift apart.
+            palette=("mpi_band", list(atlas_text.MPI_BANDS)),
         )
         .replace(DS_NAME, POLY_DS_NAME)
         .replace(CONN_NAME, POLY_CONN)
@@ -1230,6 +1291,18 @@ def main() -> int:
     # the pcode join changed, and the map would silently lose a state.
     assert {r["pcode"] for r in poly_reader} == {r["pcode"] for r in atlas_reader}, (
         "polygon extract does not cover the same 37 states as the atlas"
+    )
+    # The workbook's colour palette and the two preview maps are all built from
+    # atlas_text.MPI_BANDS. A band in the data that is not on that list would draw
+    # in the default categorical colour with no legend entry, and nothing else
+    # would complain.
+    known_bands = {label for label, _ in atlas_text.MPI_BANDS}
+    found_bands = {r["mpi_band"] for r in atlas_reader}
+    assert found_bands <= known_bands, (
+        f"mpi_band values missing from atlas_text.MPI_BANDS: {sorted(found_bands - known_bands)}"
+    )
+    assert len({colour for _, colour in atlas_text.MPI_BANDS}) == len(atlas_text.MPI_BANDS), (
+        "atlas_text.MPI_BANDS repeats a colour; the ramp must increase monotonically"
     )
 
     def infer(rows: list[dict[str, str]], numeric: list[str], dims: list[str]):

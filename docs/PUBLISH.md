@@ -137,10 +137,51 @@ in the tooltip. `poverty_group` (Poorest 12), `mpi_rank` and the rank-persistenc
 are all built on the MPI value, so colouring by H would key the fill to one measure and
 the hover to another; the band cut is justified by OPHI's *published* SEs for the MPI
 value; and neither measure is orderable anyway (0 of 36 adjacent pairs separate at 95% on
-both). It is recorded as correction #7 in `AGENTS.md`. **The consequence for this
-document's QA gate:** `scripts/05_preview.py` still draws a continuous H ramp, so
-`docs/preview/1_where_poverty_sits.png` previews a different measure from the maps. The
-two maps agree with each other; the PNG is the odd one out, deliberately.
+both). It is recorded as correction #7 in `AGENTS.md`. **The QA gate agrees:** since
+2026-10-18 `scripts/05_preview.py` draws `docs/preview/1_where_poverty_sits.png` as the
+same five bands on the same measure in the same colours, so the PNG, sheet 1 and the HTML
+map are three renderings of one chart. Before that the PNG was a continuous `YlOrRd` ramp
+of H — a different measure, which meant the gate could not catch a sheet-1 regression.
+
+**The five bands carry assigned colours.** A nominal dimension on Colour draws in
+Tableau's *default categorical* palette unless the workbook assigns a palette, which
+would put five unrelated hues on a scale whose whole meaning is its order. Stage 6 writes
+the assignment into the polygon datasource:
+
+```xml
+<layout dim-ordering='alphabetic' … />
+<style>
+  <style-rule element='mark'>
+    <encoding attr='color' field='[none:mpi_band:nk]' type='palette'>
+      <map to='#ffffd4'><bucket>&quot;1. under 5%&quot;</bucket></map>
+      …
+    </encoding>
+  </style-rule>
+</style>
+<semantic-values>
+```
+
+The grammar comes from two real Tableau-authored Public workbooks (`Ode to Cowbell`,
+`Clinic Performance Dashboard`), because it is not guessable: the block lives **inside the
+`<datasource>`**, between `<layout …/>` and `<semantic-values>`; the field is named
+**without** its datasource prefix; and a string member is a quoted `<bucket>` with the
+quotes escaped. `type='palette'` is the discrete form — the continuous form is
+`type='interpolated'` or `type='custom-interpolated'` with a nested `<color-palette>` of
+hex stops, which is what those reference workbooks use for their measures.
+`type='palette'` renders the ordered ramp: verified in the application on 2026-10-18.
+The five hex values are the single list in `atlas_text.MPI_BANDS`, read by stage 6 (the
+workbook), stage 5 (the QA-gate PNG) and stage 7 (the HTML map), so the two maps cannot
+drift apart. ColorBrewer YlOrBr, 5-class: no red-green pair, and it darkens
+monotonically, so the band order is legible without the legend. The lowest band is a pale
+cream; on a white canvas it reads as "light", which is the point, and the white state
+strokes keep its outline visible.
+
+**One field, one caption.** A caption is written twice — on the datasource `<column>` and
+repeated in every worksheet's `<datasource-dependencies>` — so both are generated from
+one map in stage 6. Built separately they disagreed (`MPI band (Multidimensional Poverty
+Index)` on the datasource, `mpi_band` in the worksheet), a state Tableau never writes
+itself; which of the two the shelf pill and legend read is not established here, so the
+two are made to agree rather than argued about.
 
 **Bands and hover read as percentages.** `mpi_band` labels are percentages *of the
 index* — `1. under 5%` through `5. 30% and above`; the `N. ` prefix is a sort key,
@@ -216,14 +257,19 @@ want the full-resolution coastline; the two differ by less than a pixel in the w
   block is definitely read. Ruled out by experiment on 2026-10-18: the modern-format
   grammar (`<simple-id>` and the reference's `<document-format-change-manifest>` are both
   rejected here — *"no declaration found for element 'simple-id'"*, `D2E8DA72`), the
-  reference's second `rows` strip, and the mark class (a Circle version of the same sheet
-  shows no legend either, so it is not Polygon-specific). Remaining suspects are the
-  extract-backed datasource and the XY-polygon view. **To fix by hand** — the one click
-  that has to happen before this sheet ships: open the sheet,
-  **Analysis → Legends → Colour Legend**, then File → Save. Whatever reproduces that
-  state has to be found by saving and diffing, not by guessing at the card again. The
-  dashboard's own `type-v2='color'` zone for `mpi_band` is likewise unverified: the
-  worksheet opens by default and the legend has only ever been checked there.
+  reference's second `rows` strip, the mark class (a Circle version of the same sheet
+  shows no legend either, so it is not Polygon-specific), and — as of 2026-10-18 — the
+  missing palette: the bands now have assigned colours and a defined sort order, and the
+  legend still does not appear. Remaining suspects are the extract-backed datasource and
+  the XY-polygon view. **To fix by hand** — the one click that has to happen before this
+  sheet ships: open the sheet,
+  **Analysis → Legends → Colour Legend**, then File → Save. What that click will now show
+  is the ordered five-step ramp on the `MPI band (Multidimensional Poverty Index)` title,
+  because both halves of the legend are already declared in the workbook. Whatever
+  reproduces the click's state has to be found by saving and diffing, not by guessing at
+  the card again. The dashboard's own `type-v2='color'` zone for `mpi_band` is likewise
+  unverified: the worksheet opens by default and the legend has only ever been checked
+  there.
 
 ## If something looks wrong
 

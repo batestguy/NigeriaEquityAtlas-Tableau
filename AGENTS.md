@@ -129,10 +129,16 @@ The spec was written before the sources were checked. These are settled now:
    (median CI width 0.075 against a median MPI of 0.092); and it is not a statistical
    choice either way, because **both** measures are equally unorderable — 0 of 36
    adjacent state pairs separate at 95% on H (median relative SE 14.3%) exactly as on
-   the MPI value (15.1%). Consequence to keep in mind: the pre-Tableau QA gate
-   (`docs/preview/1_where_poverty_sits.png`, stage 5) still renders a continuous H ramp,
-   so it previews a *different measure* from the two maps. That is a known, deliberate
-   divergence — the maps agree with each other, both on `mpi_band`.
+   the MPI value (15.1%). **Every surface now draws the same chart**: sheet 1 and the
+   HTML map colour `mpi_band` in the five colours of `atlas_text.MPI_BANDS`, and since
+   2026-10-18 the pre-Tableau QA gate (`docs/preview/1_where_poverty_sits.png`, stage 5)
+   does too — it used to render a continuous `YlOrRd` ramp of H, a different measure from
+   the one the maps colour by, which meant the gate could not catch a sheet-1 regression.
+   Stage 6 writes those five colours into the workbook's own palette block, because a
+   nominal field on Colour otherwise draws in Tableau's default categorical palette —
+   five unrelated hues on a scale whose meaning is its order. The grammar is not
+   guessable and lives in `06_build_twb.py` (`palette_block`); `docs/PUBLISH.md` carries
+   it.
 
    Both the bands and the hover print that MPI value as a **percentage of the index**,
    not as a decimal: bands `1. under 5%` … `5. 30% and above` (the `N. ` prefix is a sort

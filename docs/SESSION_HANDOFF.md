@@ -4,6 +4,57 @@
 ~90 s). Everything below is committed and pushed. The atlas is still **not
 published** — that remains the one manual step (your Tableau Public login).
 
+## 2026-10-18 (second session) — sheet 1: the bands have colours, and the gate matches
+
+Sheet-by-sheet pass, starting with the map. Four defects, all fixed in the code path and
+verified by rendering the rebuilt workbook in Tableau Public 2026.2 (window title
+`Tableau Public - Nigeria-MPI-Equity-Atlas`, log line `Finished rendering sheet: Where
+poverty sits`, `rk: ok`). Screenshot capture is scriptable: launch `tabpublic.exe` with
+the workbook, then `PrintWindow(hwnd, hdc, 2)` — `CopyFromScreen` grabs whichever window
+is on top, which is not Tableau here.
+
+- **The five bands had no colours assigned.** `mpi_band` is a nominal dimension, so
+  Colour drew it in Tableau's **default categorical palette** — five unrelated hues on a
+  scale whose entire meaning is its order. Nothing in the workbook declared a palette:
+  `grep palette` over the packaged `.twb` returned nothing, which is why the defect had
+  never been seen (the legend, which would have shown it, has never drawn either).
+  Stage 6 now writes the assignment into the polygon datasource (`palette_block`), with
+  the grammar copied from two real Tableau-authored Public workbooks downloaded via the
+  MCP server (`Ode to Cowbell`, `Clinic Performance Dashboard`). It is not guessable:
+  the block sits **inside the `<datasource>`** between `<layout …/>` and
+  `<semantic-values>`; the field is named **without** its datasource prefix; a string
+  member is a quoted `<bucket>`; `type='palette'` is the discrete form (the continuous
+  form is `type='interpolated'`, or `type='custom-interpolated'` with a nested
+  `<color-palette>` of hex stops — what both reference workbooks use for their measures).
+  Verified by rendering: the map now runs cream → brown from south to north.
+- **The colours live in one place now.** `atlas_text.MPI_BANDS` is the list of five
+  (label, hex) pairs; stage 6 reads it for the workbook, stage 5 for the QA-gate PNG and
+  stage 7 for the HTML map, which previously carried its own copy. Two maps that colour
+  the same field differently read as two different findings. Stage 6 asserts the data
+  contains no band outside that list, and that no colour repeats.
+- **The stage-5 QA gate previewed a different measure from the sheet it gates.**
+  `docs/preview/1_where_poverty_sits.png` drew a continuous `YlOrRd` ramp of **H**, the
+  headcount ratio; both maps colour the **MPI value** in five bands. A gate that previews
+  a chart the workbook does not contain cannot catch a regression in the workbook. It now
+  draws `mpi_band` in the five assigned colours, with a discrete five-band legend (not a
+  colourbar, which would advertise a resolution the bands do not have) and white labels on
+  the two darkest bands. The title now says MPI, and the subtitle keeps the two measures
+  apart explicitly.
+- **The colour field's caption was written twice and disagreed.** The datasource said
+  `MPI band (Multidimensional Poverty Index)`; all six worksheet-level `<column>` copies
+  still said `mpi_band`, which is a state Tableau never writes itself. Both are now
+  generated from one map, and the Data pane shows the caption (visible in the capture).
+  Which of the two the legend reads is still not established — they simply agree now.
+- **Four dead fields removed from sheet 1's marks card.** `mpi`, `mpi_se`, `mpi_ci_lo`,
+  `mpi_ci_hi` were detail encodings whose values never reach a reader (the customized
+  tooltip uses `mpi_pct`, `mpi_ci_lo_pct`, `mpi_ci_hi_pct`), and a comment claimed they
+  existed to draw the polygon. They did not.
+- **Still open on sheet 1, unchanged:** the colour legend does not draw, so the click
+  **Analysis → Legends → Colour Legend**, then Save, is still the one manual step — it
+  will now show the ordered ramp under the full caption. The standalone sheet still opens
+  cropped at Tableau's fixed map scale (**Fit → Entire View**; the `Equity Atlas`
+  dashboard is already fitted). Alt text is still unset.
+
 ## 2026-10-18 — the hover, the band labels and the state outlines
 
 Four requested changes to sheet 1, all generated in `scripts/04_merge.py` and
@@ -90,9 +141,10 @@ by opening the rebuilt workbook in Tableau Public 2026.2 and looking at it.
   spec asks for MPI incidence on the choropleth; it stays on `mpi_band` because the
   atlas's headline, `poverty_group`, `mpi_rank` and rank persistence are all MPI-value
   based, and both measures are equally unorderable (0/36 adjacent pairs separable at 95%
-  on each). Recorded as spec correction #7 in `AGENTS.md`. Known divergence this leaves:
-  the stage-5 preview PNG still draws a continuous **H** ramp, so the QA gate previews a
-  different measure from both maps.
+  on each). Recorded as spec correction #7 in `AGENTS.md`. **Resolved 2026-10-18:** the
+  stage-5 preview PNG used to draw a continuous **H** ramp, a different measure from both
+  maps; it now draws the five `mpi_band` bands on the MPI value in the same colours, so
+  the gate, sheet 1 and the HTML map are three renderings of one chart.
 
 ## State in one paragraph
 

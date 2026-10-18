@@ -330,6 +330,36 @@ adds it to a tooltip.
 
 ---
 
+### D9. The five MPI bands had no colours assigned
+**Severity DEFECT · status done (2026-10-18)**
+
+`mpi_band` is a nominal dimension, so Colour drew it in **Tableau's default
+categorical palette** — five unrelated hues on a scale whose whole meaning is its
+order. Nothing in the workbook declared a palette; `grep palette` over the packaged
+`.twb` returned nothing. The defect had never been seen because the one surface that
+would have shown it, the colour legend, has never drawn either (see `docs/PUBLISH.md`
+open issues).
+
+Stage 6 now assigns the five colours in the polygon datasource (`palette_block`),
+with the grammar copied from two real Tableau-authored Public workbooks downloaded
+via the MCP server. Colours and order come from `atlas_text.MPI_BANDS`, which stages
+5 and 7 also read, so the workbook and both preview maps cannot drift apart; the
+colour carries no red-green pair and darkens monotonically.
+
+Found in the same pass, same sheet, all fixed and verified by rendering:
+
+- the stage-5 QA gate rendered a continuous `YlOrRd` ramp of **H**, a different
+  measure from the one both maps colour by, so it could not catch a sheet-1
+  regression. It now draws the same five bands on the same measure;
+- the `mpi_band` caption was written twice and disagreed (datasource vs all six
+  worksheet copies). One map now feeds both;
+- four detail fields (`mpi`, `mpi_se`, `mpi_ci_lo`, `mpi_ci_hi`) were on the marks
+  card whose values never reached a reader.
+
+**Where it lands:** `docs/PUBLISH.md`, `docs/SESSION_HANDOFF.md`, `AGENTS.md` #7.
+
+---
+
 ## C. Improvements
 
 ### C1. Colour legend range
@@ -362,8 +392,10 @@ Nothing tells a viewer where to start. The dashboard text zone (D7) solves this.
 
 Confirmed clean. Each was a likely criticism; none applies.
 
-- **No rainbow colour map.** Tableau's sequential default is blue; the
-  Crameri/Borland critique does not land.
+- **No rainbow colour map, and no categorical default either.** Tableau's sequential
+  default is blue, so the Crameri/Borland critique does not land; but a *nominal* field
+  falls back to the categorical palette, which was D9 until 2026-10-18. The bands now
+  carry explicit colours (ColorBrewer YlOrBr, monotone in lightness).
 - **No 3D, no dual axes, no pie charts, no truncated bar axes.** All clean.
 - **The map encodes a rate, not a count.** Avoided the single most common
   choropleth failure.
