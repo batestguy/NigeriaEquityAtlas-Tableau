@@ -252,6 +252,15 @@ with the group contrast and the rank-persistence finding.
 about the limits of the design," which is the honest version and the defensible
 one.
 
+> **Note added 2026-10-18:** this section is a plan of 2026-10-06 and three of its four
+> items are now moot, not overturned. The relabel/promote/add steps were written for the
+> five spec sheets and the `Equity Atlas` dashboard, all withdrawn on the user's
+> instruction (`docs/FIX_LEDGER.md` W1). What survives is the rule the section exists for:
+> **no causal verb anywhere** — not on the maps, not in the tooltips, not in the reference
+> table. The withdrawn sheets' honest statements are now rows of that table, and the
+> north-west/south-east wording rule ("poorest states vs the rest") is carried in
+> `AGENTS.md` and in `atlas_text.py`.
+
 ---
 
 ## 6. If you want a real causal claim later

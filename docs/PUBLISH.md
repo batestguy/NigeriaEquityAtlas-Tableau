@@ -10,64 +10,66 @@ produces a validated `.twbx` with the data packaged inside it.
 
 ## What is already built
 
-`tableau/Nigeria-MPI-Equity-Atlas.twbx` (214 KB) contains:
+`tableau/Nigeria-MPI-Equity-Atlas.twbx` contains:
 
 ```
 Nigeria-MPI-Equity-Atlas.twb     the workbook
-Data/mpi_atlas_2021.hyper        37 rows, one per state
-Data/mpi_trends_panel.hyper      148 rows, 37 states x 4 survey rounds
-Data/party_alignment_panel.hyper 108 rows, 36 states x 3 intervals (FCT excluded)
-Data/mpi_polygons.hyper          7,089 rows, the simplified ADM1 ring vertices the map draws
-Data/spatial_diagnostics.hyper   37 rows, the spatial diagnostic (stage 9)
-Data/spatial_polygons.hyper      7,089 rows, the same rings + the neighbourhood type
+Data/mpi_polygons.hyper          7,089 rows, the simplified ADM1 ring vertices the poverty map draws
+Data/spatial_polygons.hyper      7,089 rows, the same rings + the neighbourhood type, for the cluster map
 ```
 
-The data ships as **Hyper extracts**, not CSV. This is not a preference: Tableau
-Public refuses any workbook whose datasource is not an extract — *"Workbooks saved
-to Tableau Public must use extracts"*, error `3C242D89` — and it does **not**
-convert a live file on save. Stage 6 writes the extracts itself with
-`tableauhyperapi`, and validates the schema it wrote back against the declared
-columns before packaging.
+Two extracts and nothing else. The atlas, trends-panel, party-alignment and
+spatial-diagnostic extracts were packaged until 2026-10-18, when the sheets that drew
+them were withdrawn (`docs/FIX_LEDGER.md` W1); those four `.hyper` files are no longer
+built or packaged, and stale copies of them from an earlier build may still be sitting
+in `tableau/` — they are gitignored artefacts, so delete them if the folder still lists
+them.
 
-**Eight sheets and three dashboards.** The five spec sheets sit on the `Equity Atlas`
-dashboard; the party sheet and the two spatial sheets (stage 9) are standalone.
-`Equity Atlas` also carries two text zones (the attribution paragraph and the KPI
-strip). **The five spec sheets were verified by opening the workbook in Tableau Public
-and looking at every sheet on 2026-10-06; the party sheet and the two reader dashboards
-were added and verified on 2026-10-09/10; the cluster map was verified on 2026-10-18.**
-The lower part of `What the words mean` has never been scrolled on screen — see
-`docs/SESSION_HANDOFF.md`.
+The data ships as **Hyper extracts**, not CSV. Tableau Public refuses any workbook whose
+datasource is not an extract (*"Workbooks saved to Tableau Public must use extracts"*,
+error `3C242D89`) and it does **not** convert a live file on save. Stage 6 writes both
+extracts itself with `tableauhyperapi` and validates the schema it wrote back against
+the declared columns before packaging.
 
-| Sheet | Type (mark class) | What it carries |
+**Two worksheets and three dashboards.**
+
+| Tab | Type (mark class) | What it carries |
 |---|---|---|
 | Where poverty sits | **filled map (*Polygon*)** | `AVG(lat)` on Rows, `AVG(lon)` on Columns (both `[Geographical]` roles, so the sheet stays a geographic map); `state` + `pcode` + `ring` on Detail; `point_order` on **Path**; `mpi_band` on Colour; `state` on Text. Datasource: `Nigeria MPI polygons`. Hover carries `mpi`, `mpi_se`, `mpi_ci_lo`, `mpi_ci_hi`, `headcount_ratio_pct`, `intensity_pct`, `mpi_poor_thousands`, `poverty_group`, `mpi_pct`, `mpi_ci_lo_pct`, `mpi_ci_hi_pct`, `gov_party` |
 | Where poverty clusters | **filled map (*Polygon*)** | the same shelves, from `spatial_polygons.csv`: `spatial_group` on Colour, `mpi_pct` + `spatial_lag_mpi_pct` + `neighbours` on Detail for the hover. Datasource: `Spatial polygons`. **Descriptive, not a significance map** — one state survives the correction, so a significance map would be one state; the count is in the hover |
-| Do poor states sit next to poor states? | scatter (*Circle*) | `SUM(mpi_pct)` on Rows, `SUM(spatial_lag_mpi_pct)` on Columns, `state` on Detail and Text, `spatial_group` on Colour **and** Shape. Datasource: `Spatial diagnostics`. Standalone |
-| Dimension breakdown (three panels, not stacked) | bar (*Bar*) | `SUM(contrib_health_pct) + SUM(contrib_education_pct) + SUM(contrib_living_standards_pct)` on Rows, `state` on Columns |
-| Poverty vs conflict | scatter (*Circle*) | `SUM(conflict_exposure_index)` on Rows, `SUM(mpi)` on Columns, `state` on Detail and Text, `quadrant` on Colour **and** Shape |
-| Poverty over time | line (*Line*) | `SUM(mpi)` on Rows, `survey_year` (string) on Columns, `state` on **Colour** and Detail — one line per state on one axis. Datasource: `Nigeria MPI trends panel` |
-| Incidence vs intensity | scatter (*Circle*) | `SUM(intensity_pct)` on Rows, `SUM(headcount_ratio_pct)` on Columns, `state` on Detail and Text, `quadrant` on Colour and Shape |
-| Party alignment and MPI change | scatter (*Circle*) | `SUM(dmpi_annual)` on Rows, `SUM(aligned_share)` on Columns, `state` on Detail, `interval` on Colour. Datasource: `Party alignment panel`. **Not on the `Equity Atlas` dashboard — it is standalone** |
+| What the words mean | **text zones** (part 1 of 3) | the reference table, 24 rows: the word, its formula or weight, what it means, how it was made |
+| The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
+| How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
 
-**Tab order is sheet order**: the poverty map, then the cluster map, then the spatial
-scatter, then the five remaining sheets. Sheet order is the `<worksheets>` element
-order in the `.twb`; the `<windows>` list is kept in the same order (the reader
-dashboards are last, so the workbook opens on `Equity Atlas`).
+The three reference tabs are **one table paginated on its own groups**, not three
+documents. It was two prose dashboards (`What the words mean`, `How we did it`) until it
+was merged into a single three-column table on 2026-10-18, and then split because the
+merged version measured **2000 x 8720 px** — thirteen screens on the 687 px window it
+was reviewed in (`docs/FIX_LEDGER.md` W2). Each part repeats the intro and the column
+headers on purpose, so a reader who arrives on part 3 from the tab bar is told what the
+columns are. It is a layout of text zones, not a datasource: a real multi-column Tableau
+text table needs the Measure Names / Measure Values pair *and* its filter, which this
+project could not make render from hand-written XML — the note is above
+`table_dashboards` in stage 6.
 
-The three dashboards:
+**Verified by opening the workbook in Tableau Public 2026.2 and looking at it:** the
+poverty map and the five spec sheets on 2026-10-06; the party sheet and the reader
+dashboards on 2026-10-09/10; the cluster map and all three reference parts on
+2026-10-18. In each case what was checked is the top of the tab at a 1295x687 window —
+the reference parts have not been scrolled to the end on screen, and neither has the
+map been panned.
 
-| Dashboard | Contents |
-|---|---|
-| `Equity Atlas` | the five spec sheets above (2 text zones: attribution + KPI strip) |
-| `What the words mean` | 3 text zones — the plain-language reader sheet |
-| `How we did it` | 2 text zones — sources, method, uncertainty, limits |
-
-Two sheets carry their limitation in the **title**, deliberately:
-
-- **`Where poverty sits` is a filled map as of 2026-10-17**, drawn from the shipped
-  ADM1 rings. It used to be a georeferenced scatter of the 37 capitals; see
-  "The map, and why it is drawn from shipped geometry" below.
-- **`Dimension breakdown (three panels, not stacked)` is not a stacked bar.**
+**Tab order is the `<windows>` order**: `Where poverty sits`, then `Where poverty
+clusters`, then the three reference parts. **Which tab opens is not dependable, though:**
+Tableau Public follows the first `<window>` on load most of the time, and the exceptions
+are not explainable from the file (the same generated workbook opened on its second
+window once). Treat the workbook as opening *on the maps*, and click the tab you want —
+and do not try to script that click: the padded `PrintWindow` capture's pixels are not
+window coordinates under DPI virtualization, and two clicks computed from the same
+capture landed on different tabs. To get one view reliably, `%TEMP%\opencode\review_tab.py
+"<tab name>"` rebuilds the package with a single `<window>` (and, with `right` as a second
+argument, with the third column moved to x=0, which is how a column wider than the canvas
+can be read at all).
 
 ## Steps
 
@@ -87,10 +89,10 @@ Public. See `docs/HANDOFF.md` §3b.
 2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. **It has been opened successfully on
    this machine** — it loads with no error dialog and renders (see `HANDOFF.md` §3).
 3. **File > Save to Tableau Public.**
-4. Wait for the upload and the render, then open the live URL and confirm all six
-   sheets are present and that `Where poverty sits` draws the filled choropleth, not
-   a scatter of points. Fetch it with the `tableau` MCP `get_workbook_image` rather
-   than trusting the upload dialog.
+4. Wait for the upload and the render, then open the live URL and confirm all five tabs
+   are present and that `Where poverty sits` draws the filled choropleth, not a scatter
+   of points. Fetch it with the `tableau` MCP `get_workbook_image` rather than trusting
+   the upload dialog.
 
 ## The map, and why it is drawn from shipped geometry
 
@@ -149,9 +151,9 @@ the hover to another; the band cut is justified by OPHI's *published* SEs for th
 value; and neither measure is orderable anyway (0 of 36 adjacent pairs separate at 95% on
 both). It is recorded as correction #7 in `AGENTS.md`. **The QA gate agrees:** since
 2026-10-18 `scripts/05_preview.py` draws `docs/preview/1_where_poverty_sits.png` as the
-same five bands on the same measure in the same colours, so the PNG, sheet 1 and the HTML
-map are three renderings of one chart. Before that the PNG was a continuous `YlOrRd` ramp
-of H — a different measure, which meant the gate could not catch a sheet-1 regression.
+same five bands on the same measure in the same colours, so the PNG and sheet 1 are two
+renderings of one chart. Before that the PNG was a continuous `YlOrRd` ramp of H — a
+different measure, which meant the gate could not catch a sheet-1 regression.
 
 **The five bands carry assigned colours.** A nominal dimension on Colour draws in
 Tableau's *default categorical* palette unless the workbook assigns a palette, which
@@ -163,7 +165,7 @@ the assignment into the polygon datasource:
 <style>
   <style-rule element='mark'>
     <encoding attr='color' field='[none:mpi_band:nk]' type='palette'>
-      <map to='#ffffd4'><bucket>&quot;1. under 5%&quot;</bucket></map>
+      <map to='#ffe5e5'><bucket>&quot;1. under 5%&quot;</bucket></map>
       …
     </encoding>
   </style-rule>
@@ -179,12 +181,21 @@ quotes escaped. `type='palette'` is the discrete form — the continuous form is
 `type='interpolated'` or `type='custom-interpolated'` with a nested `<color-palette>` of
 hex stops, which is what those reference workbooks use for their measures.
 `type='palette'` renders the ordered ramp: verified in the application on 2026-10-18.
-The five hex values are the single list in `atlas_text.MPI_BANDS`, read by stage 6 (the
-workbook), stage 5 (the QA-gate PNG) and stage 7 (the HTML map), so the two maps cannot
-drift apart. ColorBrewer YlOrBr, 5-class: no red-green pair, and it darkens
-monotonically, so the band order is legible without the legend. The lowest band is a pale
-cream; on a white canvas it reads as "light", which is the point, and the white state
-strokes keep its outline visible.
+The five hex values are the single list in `atlas_text.MPI_BANDS`, read by the workbook
+(stage 6) and by the QA-gate PNG (stage 5), so the gate and the sheet cannot drift apart
+— which they once did, when the gate drew a continuous ramp of a different measure.
+
+**The ramp is red, and it runs light to dark with the poverty.** `#ffe5e5` (under 5%)
+through `#ffb8b8`, `#ff8a8a`, `#f45555` to `#d80000` (30% and above) — five steps of one
+hue, monotonically darkening, so the band order is legible without the legend and no
+red-green pair exists anywhere in the workbook. The deepest red is the poorest band, so
+the states the atlas is about carry the most ink; the palest band is nearly white on a
+white canvas, which is why the state strokes are white and thick. Two things follow that
+are worth knowing before someone "improves" the palette: the ramp is **ordinal, not
+diverging** (there is no natural midpoint to hang a two-tone scale on), and red is doing
+duty as a magnitude ramp here, not as an alarm — the atlas makes no per-state ranking
+claim (`docs/CLAIMS.md`), so nothing in the ramp should be read as "this one is the
+worst".
 
 **One field, one caption.** A caption is written twice — on the datasource `<column>` and
 repeated in every worksheet's `<datasource-dependencies>` — so both are generated from
@@ -213,73 +224,54 @@ the vetted `dom_party`. **Party is hover context only; the fill never encodes pa
 internal column name. The caption is one word list for the whole workbook: it is also
 what the Data pane and the shelf pill show. The full meaning sentence —
 *"the share of people who are poor multiplied by how deprived they are on average, as a
-percentage of the index"* — lives in the tooltip's italic MPI line and, italicised, in the
-HTML map's colour-bar title and narrow-screen legend. All of it comes from
-`MPI_LEGEND_*` in `scripts/atlas_text.py`, so the five surfaces cannot drift apart.
+percentage of the index"* — lives in the tooltip's italic MPI line and, expanded, in the
+QA-gate PNG's colour-bar title and subtitle. All of it comes from `MPI_LEGEND_*` in
+`scripts/atlas_text.py`, so the caption, the tooltip and the gate cannot drift apart.
 Since the caption is what the legend card keys on, hand-changing the caption in the GUI
 would desync the workbook from the generator.
 
 **One cosmetic consequence, and its fix.** A geographic sheet is drawn at a fixed map
-scale, so a short pane crops it — the standalone sheet shows roughly the northern
-four-fifths at a 1295x687 window. The dashboard fixes this without the GUI:
-`<zoom type='entire-view' />` is written into the `Where poverty sits` viewpoint of the
-`Equity Atlas` dashboard window, which is the dashboard's Fit control stored as data
-(grammar taken from a real Tableau-authored workbook, and verified by rendering the
-dashboard zone). **`<zoom>` is not legal on a worksheet `<window>`** — putting it there
-makes the whole workbook fail to load. So the standalone sheet still opens at Tableau's
-default map scale; click **Fit > Entire View** on it if you want it whole.
+scale, so a short pane crops it — `Where poverty sits` shows roughly the northern
+four-fifths at a 1295x687 window. This used to be fixed without the GUI: the withdrawn
+`Equity Atlas` dashboard carried `<zoom type='entire-view' />` on the `Where poverty
+sits` viewpoint, which is the Fit control stored as data (grammar taken from a real
+Tableau-authored workbook, and verified by rendering the dashboard zone). With that
+dashboard gone (`docs/FIX_LEDGER.md` W1) locating the map whole is a click, and it has
+moved to the GUI list below. **`<zoom>` is not legal on a worksheet `<window>`** —
+putting it there makes the whole workbook fail to load.
 
 `scripts/05_preview.py` also renders the same choropleth in matplotlib
-(`docs/preview/1_where_poverty_sits.png`), which is the pre-Tableau QA gate. Stages 5
-and 7 draw from the raw GeoJSON, not from this simplified table — they render large and
-want the full-resolution coastline; the two differ by less than a pixel in the workbook.
+(`docs/preview/1_where_poverty_sits.png`), which is the pre-Tableau QA gate. The preview
+draws from the raw GeoJSON, not from the simplified table the workbook ships — it renders
+large and wants the full-resolution coastline; the two differ by less than a pixel in the
+workbook.
 
 ## Open issues, all safe to fix in the GUI
 
-- **The standalone `Where poverty sits` sheet opens cropped.** A geographic sheet draws
-  at a fixed map scale, so a short pane cuts off the south. The `Equity Atlas` dashboard
-  is already fitted (`<zoom type='entire-view' />` on that viewpoint). **To fix the sheet
-  itself by hand:** Fit → Entire View.
-- **`Dimension breakdown (three panels, not stacked)` is not a stacked bar.** Three
-  measures on Rows give three aligned panes. The Measure Names/Values pair was tried
-  from XML and drew one 18,000-tall bar per state, because a hand-written pair also
-  needs the measure-values filter. **To fix by hand:** Analysis → Measure Names →
-  Columns; Measure Values → Rows; `state` → Columns (below Measure Names); `state` →
-  Detail; Colour → the *Measure Names* field so each dimension gets its own colour.
-- **The radar chart is still not generated** — see below.
-- **`Party alignment and MPI change` is standalone and labelled.** It is not on the
-  `Equity Atlas` dashboard, and its mark labels are on (36 states × 3 intervals). Drag
-  it onto `Equity Atlas` if it should ship there, and turn Mark Labels off on the Marks
-  card to quiet it. It must keep the §3 pre-registered sentence verbatim with its
-  robustness line beside it — see `docs/CLAIMS.md` and `docs/party_alignment.md`.
-- **Alt text is not set.** Tableau auto-generates a description; edit it on each
-  sheet. Keep it descriptive and objective, not interpretive.
-- **No legend zones were verified on the published dashboard.** The workbook declares
-  the text and KPI zones; colour legends render from the Marks card on each sheet,
-  but check them on the live viz.
-- **The colour legend does not draw on `Where poverty sits`, though the card that should
-  draw it is declared exactly as a Tableau-authored workbook declares one.** The sheet's
-  window carries
+- **`Where poverty sits` opens cropped.** A geographic sheet is drawn at a fixed map
+  scale, so a short pane cuts off the south. Until 2026-10-18 the withdrawn `Equity
+  Atlas` dashboard fitted it (`<zoom type='entire-view' />` on that viewpoint); with the
+  dashboard gone (`docs/FIX_LEDGER.md` W1) this is a click. **To fix by hand:** open the
+  sheet, **Fit → Entire View**, then File → Save.
+- **The colour legend does not draw on `Where poverty sits`.** The card that should draw
+  it is declared exactly as a Tableau-authored workbook declares one — the sheet's window
+  carries
   `<card pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type='color' />`
-  on the right edge — byte-for-byte the shape of the working colour card on the
-  `percapita` sheet of a real Public workbook — and window cards **are** honoured:
-  deleting the Marks card from that same `<cards>` block removes it from the UI, so the
-  block is definitely read. Ruled out by experiment on 2026-10-18: the modern-format
-  grammar (`<simple-id>` and the reference's `<document-format-change-manifest>` are both
-  rejected here — *"no declaration found for element 'simple-id'"*, `D2E8DA72`), the
-  reference's second `rows` strip, the mark class (a Circle version of the same sheet
-  shows no legend either, so it is not Polygon-specific), and — as of 2026-10-18 — the
-  missing palette: the bands now have assigned colours and a defined sort order, and the
-  legend still does not appear. Remaining suspects are the extract-backed datasource and
-  the XY-polygon view. **To fix by hand** — the one click that has to happen before this
-  sheet ships: open the sheet,
-  **Analysis → Legends → Colour Legend**, then File → Save. What that click will now show
-  is the ordered five-step ramp on the `MPI band (Multidimensional Poverty Index)` title,
+  on the right edge — and window cards **are** honoured: deleting the Marks card from the
+  same `<cards>` block removes it from the UI, so the block is definitely read. Ruled out
+  by experiment on 2026-10-18: the modern-format grammar (`<simple-id>` and the
+  reference's `<document-format-change-manifest>` are both rejected here — *"no
+  declaration found for element 'simple-id'"*, `D2E8DA72`), the reference's second `rows`
+  strip, the mark class (a Circle version of the same sheet shows no legend either, so it
+  is not Polygon-specific), and the missing palette (the bands now have assigned colours
+  and a defined sort order, and the legend still does not appear). Remaining suspects are
+  the extract-backed datasource and the XY-polygon view. **To fix by hand** — the one
+  click that has to happen before this sheet ships: open the sheet,
+  **Analysis → Legends → Colour Legend**, then File → Save. What that click shows is the
+  ordered five-step red ramp under the `MPI band (Multidimensional Poverty Index)` title,
   because both halves of the legend are already declared in the workbook. Whatever
   reproduces the click's state has to be found by saving and diffing, not by guessing at
-  the card again. The dashboard's own `type-v2='color'` zone for `mpi_band` is likewise
-  unverified: the worksheet opens by default and the legend has only ever been checked
-  there.
+  the card again.
 - **Both maps show `Avg. lat` / `Avg. lon` as axis titles.** They are real axis titles
   for custom coordinate fields, not generated Latitude/Longitude, so Tableau prints the
   field captions. A map should not show them. **To fix by hand:** right-click each axis
@@ -295,6 +287,12 @@ want the full-resolution coastline; the two differ by less than a pixel in the w
   legend is broken — the earlier conclusion may have been drawn from a capture that
   clipped the right edge. Not resolved here; both sheets ship the same declaration.
 
+- **Alt text is not set on any of the five tabs.** Tableau auto-generates a description;
+  edit it per view, then Save. Keep it descriptive and objective, not interpretive: for
+  `Where poverty sits` that means naming the measure, the five bands and the period, not
+  asserting which state is worst — no single state holds the highest score defensibly
+  (`docs/CLAIMS.md`).
+
 ## If something looks wrong
 
 Most likely, in order:
@@ -306,7 +304,7 @@ Most likely, in order:
 - **`Where poverty sits` is empty.** `mpi_polygons.hyper` did not make it into the
   package, or `ring`/`point_order` lost their ordinal type — they must be declared
   `datatype='integer'` *dimensions*. Re-run `scripts/04_merge.py` then
-  `scripts/06_build_twb.py` and confirm the package lists four `.hyper` files.
+  `scripts/06_build_twb.py` and confirm the package lists two `.hyper` files.
 - **"must use extracts" (3C242D89).** A `.twbx` built by an older revision of stage 6
   still packages CSV. Re-run `scripts/06_build_twb.py` and confirm the package
   contents list `.hyper` files.
@@ -321,29 +319,38 @@ Most likely, in order:
 
 ## What is left deliberately to the GUI
 
-**The radar chart** (the spec's fifth visual) is not generated. A radar needs a
-polygon mark driven by computed path fields. Since 2026-10-17 the Polygon-mark half of
-that grammar is **proven**: `Where poverty sits` is a Polygon mark with an
-integer-dimension Path field, built entirely from XML. What is still unverified is the
-polar encoding (`Angle` / `Wedge Size`), which the map does not use. To add it:
+Four clicks per map, and the workbook is done. All of them are changes that fail the
+workbook open rather than failing quietly when attempted in XML — the `border-*` lesson,
+`docs/SESSION_HANDOFF.md` — so they are not attempted in XML here:
 
-1. Use `docs/preview/5_state_radar.png` as the design reference.
-2. Create a new sheet, `Analysis > Create > Parameters` is not needed — instead drag
-   `contrib_health_pct`, `contrib_education_pct` and `contrib_living_standards_pct`
-   onto **Angle** via the tooltip's field picker, and `mpi` onto **Size**.
-3. Set the mark type to **Polygon**, put `state` on Detail and Colour.
-4. Add `AVG(contrib_health_pct)` etc. as Reference Lines to draw the 37-state mean.
+1. **Fit → Entire View** on each map, so the country is not cropped.
+2. **Right-click each axis → uncheck Show Header** on each map, so `Avg. lat` / `Avg. lon`
+   stop printing as titles.
+3. **Analysis → Legends → Colour Legend** on `Where poverty sits`. `Where poverty
+   clusters` already draws its card from the same declaration, so it needs no click.
+4. **Description / alt text** per view.
 
-**Colour scales and captions.** The methodology text and the KPI strip are already
-on the dashboard canvas, generated in `06_build_twb.py` — so the attribution, the
-Nutrition exclusion, the standard errors and the conflict caveats are visible to a
-reader without them reading the description. Switch both scatters to Tableau's
-**Color Blind** palette, which pairs with the Shape encoding already on `quadrant`.
+Then File → Save.
 
-## Attribution — already on the dashboard canvas
+**The radar chart is withdrawn, not pending.** It was the one spec visual never
+generated — its `Angle` / `Wedge Size` polar encodings stayed unverified from XML — and it
+went with the other spec sheets on 2026-10-18 (`docs/FIX_LEDGER.md` W1). Its Polygon-mark
+half is no longer the blocker: `Where poverty sits` is a Polygon mark with an
+integer-dimension Path field, built entirely from XML. If the radar is ever wanted, the
+grammar that is missing is the polar encoding, not the mark.
 
-The dashboard carries this as a text zone, so it does not depend on the description
-field being filled in. Paste into the workbook description as well:
+**Colour scales and captions.** Both palettes are generated and written into their
+datasources by stage 6 — `atlas_text.MPI_BANDS` for the five-step red poverty ramp,
+`atlas_text.SPATIAL_QUADRANTS` for the four neighbourhood types — so neither map needs a
+GUI step to colour itself, and hand-editing a colour in the GUI would desync the workbook
+from its generator.
+
+## Attribution — in the workbook, and in its description
+
+Part 3's first row, `Where the numbers come from`, carries the sources and the licences in
+the same plain language as the rest of the table, so attribution ships inside the
+workbook and does not depend on the description field being filled in. Paste the same into
+the workbook description as well:
 
 > Poverty: OPHI / UNDP Global MPI, harmonised series (Data Table 6, MN 63),
 > MICS 2021, CC0 / CC BY. Standard errors from Table 5.4; harmonised state-level
@@ -361,7 +368,7 @@ Once published, the viz can be checked from the command line with the `tableau`
 MCP server, which is read-only but sufficient for verification:
 
 - `get_workbook_details` — confirms the views and their types
-- `get_workbook_contents` — confirms all six sheets and the three dashboards exist
+- `get_workbook_contents` — confirms all five views exist (two maps, three reference tabs)
 - `get_workbook_image` — fetches a rendered PNG of a named view, proving it draws
 
 This is the step that catches a viz that uploaded but renders empty.

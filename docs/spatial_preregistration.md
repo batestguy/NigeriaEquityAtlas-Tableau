@@ -185,3 +185,38 @@ both are deliberate:
 
 The added surface does not touch the decision rule above, and it was not used to
 justify any change to the statistics.
+
+## Amendment 2 (2026-10-18): the scatter is no longer published
+
+**Nothing the test consists of has changed either.** Same statistic, same weights, same
+permutation count and seed, same corrections, same decision rule, same sensitivities,
+same frozen reading lines. Stage 9 still runs the test, still verifies the R result in
+Python to 1e-06, and still writes every number to `docs/spatial_analysis.md` §3 and to
+the four CSVs listed under *Declared outputs*.
+
+What changed is again presentation, and — as with Amendment 1 — it changed after the
+result was seen. The user's instruction on 2026-10-18 was that the workbook carry two
+maps and the reference table, and no more. The scatter worksheet is therefore not
+published. Of the two spatial surfaces Amendment 1 declared, one remains: the cluster
+map, whose hover carries the same four frozen lines and the same technical footer it
+shared with the scatter. A reader who wants the numbers themselves has §3; a reader who
+wants the comparison drawn has the neighbourhood types on the map. What is gone is one
+way of drawing them.
+
+Two knock-on effects, recorded because the paragraphs above name things that no longer
+exist:
+
+- The stage-5 visual gate for the scatter is deleted with the sheet. A gate for a sheet
+  the workbook does not contain cannot gate anything. The cluster map's gate survives
+  and is renamed by tab order: it is `docs/preview/2_where_poverty_clusters.png`, not
+  the `7_spatial_clusters_map.png` Amendment 1 named, because previews are now numbered
+  in tab order and the withdrawn sheets' previews are gone. The rename changes no
+  content: it is the same rings, the same four colours from `atlas_text.SPATIAL_QUADRANTS`
+  and the same reading.
+- The words in the four lines, the legend caption and the type labels are unchanged.
+  `atlas_text.SPATIAL_QUADRANTS` still names the four types and assigns the four
+  colours, and stage 6 still writes that palette into the workbook, so the frozen
+  wording is carried by the surviving surface exactly as registered.
+
+The withdrawal does not touch the decision rule above, and it was not used to justify
+any change to the statistics.

@@ -4,6 +4,13 @@ Written 2026-10-06, after the decision work and after opening the workbook in
 Tableau Public and looking at it. This is the routing sheet: what was decided, on
 what evidence, what it cost, and what is deliberately left undone.
 
+> **Superseded in part, 2026-10-18.** The five route decisions (D1–D5) stand, and so do
+> the claims limits and the GUI list. What has changed is scope: the workbook now carries
+> **two maps and three reference tabs**, and the five spec sheets, the party sheet, the
+> Moran scatter and the `Equity Atlas` dashboard are withdrawn (`docs/FIX_LEDGER.md` W1).
+> Where this file says "six sheets" or "the dashboard", read
+> `docs/SESSION_HANDOFF.md` (2026-10-18, fourth session) and `docs/PUBLISH.md` instead.
+
 Supporting documents:
 `docs/CLAIMS.md` (permission table) · `docs/CAUSAL_DECISION.md` (why no causal
 claim) · `docs/FIX_LEDGER.md` (defect list) · `docs/SESSION_HANDOFF.md` (state)

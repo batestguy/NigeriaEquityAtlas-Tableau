@@ -1,55 +1,42 @@
 """Stage 5 -- render the workbook's visuals as PNGs before Tableau is involved.
 
-This is the QA gate. If a stacked bar looks wrong or a scatter shows an
-implausible relationship, the bug is in Python where it is cheap to fix, not
-buried in hand-authored Tableau XML. It also serves as the visual reference for
-what each Tableau sheet is meant to show.
+This is the QA gate. A colour that drifts, a state whose type changes, or a table row
+with a missing cell is caught here, in Python, before the workbook is opened -- which
+is what a gate is for.
 
-The visuals follow the project spec, section 1.4, plus the sheets added later:
+Five previews, in tab order, one per published view:
 
-1. Geographic plot        state capitals positioned by lat/lon, banded MPI
-  2. Dimension breakdown     the three dimension contributions, three panels
-  3. Conflict overlay        scatter, MPI vs Conflict Exposure Index
-  4. Geographic gradient     MPI vs latitude, NOT vs climate -- see visual 4
-  5. State comparison        radar, one state against the 37-state mean
-  6. Party alignment         MPI change vs federal alignment (stage 8), not a spec visual
-  7. Spatial clusters        the map again, coloured by neighbourhood type (stage 9)
-  8. Spatial diagnostic      each state against the average of its neighbours (stage 9)
+1. Where poverty sits            filled choropleth, the five MPI bands the
+                                 workbook draws, in the colours it draws them
+2. Where poverty clusters        the same rings filled by neighbourhood type
+                                 (stage 9), in the four colours the sheet uses
+3. What the words mean           reference tab 1 of 3, as a monospace grid
+4. The list of basic needs       reference tab 2 of 3, same gate
+5. How we did it                 reference tab 3 of 3 -- the gate for a table
+                                 is missing cells and misfiled rows
 
-Previews 7 and 8 are a pair and are numbered in the order their sheets appear: the
-cluster map sits immediately after sheet 1, the scatter after it. They are appended
-rather than renumbering 1-6, which are the spec visuals in sheet order.
+The reference table is one table shipped as three tabs, cut on the three groups it
+already had: as a single dashboard it measured 2000 x 8720 px (docs/FIX_LEDGER.md W2).
+The gate follows the tabs, so the numbering is per-part and not per-table.
 
-Three of these depart from the spec, deliberately and for documented reasons.
+Previews 2-6 and 8 used to exist: the dimension breakdown, the conflict overlay, the
+gradient plot, the radar, the party panel and the Moran scatter. Their sheets were
+withdrawn on 2026-10-18 (docs/FIX_LEDGER.md W1) and the previews went with them --
+a gate for a sheet that is not in the workbook cannot gate anything. The analyses
+themselves still run: stage 8's party test is pre-registered and its result is
+reported in docs/party_alignment.md, and the spatial test behind preview 2 is
+reported in docs/spatial_analysis.md.
 
-Visual 1 IS a filled choropleth, and as of 2026-10-18 this gate draws the same
-thing the workbook does. It colours the five `mpi_band` bands on the MPI value, in
-the colours from `atlas_text.MPI_BANDS`, exactly as sheet 1 and the HTML map do.
-It used to draw a continuous `YlOrRd` ramp of H, the headcount ratio -- a different
-measure from the one both maps colour by -- which meant the gate could not catch a
-regression in the sheet it exists to gate. (The sheet itself was a scatter of 37
-capitals for most of the workbook's life: hand-written Tableau XML does not produce
-the generated-geographic-field pairing a filled map needs. Since 2026-10-17 the
-sheet draws shipped ADM1 rings as a Polygon mark with a Path field instead.)
-
-Visual 2 is NOT a stacked bar. Three measures on Rows give three aligned panes.
-The Measure Names/Values pair that stacks them also needs a measure-values filter,
-and hand-authoring that produced one 18,000-tall bar per state. The title says
-"three panels" rather than pretending otherwise.
-
-Visual 4 plots MPI against LATITUDE, not precipitation. The spec asked for a
-climate-poverty nexus. Baseline precipitation correlates with MPI at rho -0.80,
-which looks like a finding, but precipitation correlates with latitude at -0.903
-and latitude correlates with MPI at +0.821 -- latitude predicts MPI BETTER than
-precipitation does. The predictor is the outcome's twin. The chart now shows the
-gradient honestly. See docs/CAUSAL_DECISION.md.
+One departure from the spec survives, deliberately: there is no radar chart. The
+polygon-mark grammar it needs is the most fragile part of the Tableau schema to
+hand-write, docs/PUBLISH.md records it as a GUI step, and the spec's remaining
+visuals have been withdrawn anyway.
 """
-
 from __future__ import annotations
 
 import csv
 import json
-import math
+import re
 import textwrap
 from pathlib import Path
 from typing import Any
@@ -66,18 +53,12 @@ from common import (  # noqa: E402
     DOCS,
     PROCESSED,
     RAW,
-    alignment_context_line,
     spatial_context_line,
 )
 
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
-PANEL = PROCESSED / "mpi_trends_panel.csv"
-ALIGN_PANEL = PROCESSED / "party_alignment_panel.csv"
-ALIGN_RESULT = PROCESSED / "party_alignment_result.csv"
 
-HEALTH, EDUCATION, LIVING = "#b2182b", "#2166ac", "#1b7837"
-GRID = "#d9d9d9"
 INK = "#22252a"
 
 plt.rcParams.update({
@@ -96,10 +77,6 @@ plt.rcParams.update({
 def read(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8-sig") as fh:
         return list(csv.DictReader(fh))
-
-
-def seq(value: str) -> list[float]:
-    return [float(v) for v in value.split()]
 
 
 def titles(ax: Axes, main: str, sub: str, *, width: int = 96) -> None:
@@ -189,12 +166,12 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
     """The QA gate for sheet 1: the same measure, the same bands, the same colours.
 
     It used to draw a continuous ramp of H, the *headcount ratio*, which is not the
-    measure either map colours by -- both colour the MPI value in five bands. A gate
+    measure the map colours by -- the map colours the MPI value in five bands. A gate
     that previews a chart the workbook does not contain cannot catch a regression in
-    the workbook, so this now draws what sheet 1 and the HTML map draw: mpi_band, in
-    the five colours from atlas_text. The two measures must never be swapped on the
-    reader: H is the share of people who are poor, the MPI value is that share
-    multiplied by how deprived they are on average, and it is the second one here.
+    the workbook, so this now draws what sheet 1 draws: mpi_band, in the five colours
+    from atlas_text. The two measures must never be swapped on the reader: H is the
+    share of people who are poor, the MPI value is that share multiplied by how
+    deprived they are on average, and it is the second one here.
     """
     gj = json.loads((RAW / "nga_adm1.geojson").read_text(encoding="utf-8"))
     band = {r["pcode"]: r["mpi_band"] for r in rows}
@@ -251,316 +228,6 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
     fig.savefig(PREVIEW / "1_where_poverty_sits.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
     print("  1_where_poverty_sits.png")
-
-
-# ---------------------------------------------------------------- visual 2
-def visual_dimensions(rows: list[dict[str, str]]) -> None:
-    data = sorted(rows, key=lambda r: float(r["mpi"]), reverse=True)
-    names = [r["state"] for r in data]
-    h = [float(r["contrib_health_pct"]) for r in data]
-    e = [float(r["contrib_education_pct"]) for r in data]
-    ls = [float(r["contrib_living_standards_pct"]) for r in data]
-    y = list(range(len(data)))
-
-    fig, ax = plt.subplots(figsize=(8.2, 9.6))
-    ax.barh(y, h, color=HEALTH, label="Health", height=0.72)
-    ax.barh(y, e, left=h, color=EDUCATION, label="Education", height=0.72)
-    ax.barh(y, ls, left=[a + b for a, b in zip(h, e)], color=LIVING, label="Living standards", height=0.72)
-
-    ax.set_yticks(y, names, fontsize=7.6)
-    ax.invert_yaxis()
-    ax.set_xlim(0, 100)
-    ax.set_xlabel("Contribution to the Multidimensional Poverty Index (%)", fontsize=9)
-    ax.xaxis.grid(True, color=GRID, linewidth=0.6)
-    ax.set_axisbelow(True)
-    for side in ("top", "right", "left"):
-        ax.spines[side].set_visible(False)
-
-    for i, r in enumerate(data):
-        ax.text(
-            101.5, i, f"MPI {float(r['mpi']):.3f}",
-            va="center", fontsize=6.9, color="#555555", fontfamily="monospace",
-        )
-    ax.legend(
-        loc="upper center", bbox_to_anchor=(0.5, -0.075), ncol=3, frameon=False, fontsize=8.6,
-    )
-    titles(
-        ax,
-        "Which dimension drives poverty?",
-        "Percentage contribution of each dimension to the MPI, summing to 100% within "
-        "each state · states ordered by MPI, highest first · MICS 2021 · Nigeria excludes "
-        "the nutrition indicator in every state. The north-west is driven by education and "
-        "living standards; the south-east by health.",
-        width=104,
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "2_dimension_breakdown_three_panels.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  2_dimension_breakdown_three_panels.png")
-
-
-# ---------------------------------------------------------------- visual 3
-def visual_conflict(rows: list[dict[str, str]]) -> None:
-    fig, ax = plt.subplots(figsize=(8.4, 6.6))
-    zero = [r for r in rows if int(r["events"]) == 0]
-    live = [r for r in rows if int(r["events"]) > 0]
-
-    ax.scatter(
-        [float(r["mpi"]) for r in zero], [float(r["conflict_exposure_index"]) for r in zero],
-        s=70, facecolor="white", edgecolor="#9aa0a6", linewidth=1.3, zorder=3,
-        label=f"no recorded events ({len(zero)} states)",
-    )
-    ax.scatter(
-        [float(r["mpi"]) for r in live], [float(r["conflict_exposure_index"]) for r in live],
-        s=70, color="#c1272d", alpha=0.85, edgecolor="white", linewidth=0.8, zorder=4,
-        label=f"events recorded ({len(live)} states)",
-    )
-    for r in live:
-        if r["state"] in {"Borno", "Benue", "Yobe", "Plateau", "Kaduna", "Nasarawa", "Taraba"}:
-            ax.annotate(
-                r["state"], (float(r["mpi"]), float(r["conflict_exposure_index"])),
-                textcoords="offset points", xytext=(7, 5), fontsize=7.8, color=INK,
-            )
-
-    ax.set_xlabel("Multidimensional Poverty Index, 2021 (range 0-1)", fontsize=9)
-    ax.set_ylabel("Conflict Exposure Index, 2021 (0-100, relative within 37 states)", fontsize=9)
-    ax.grid(True, color=GRID, linewidth=0.6)
-    ax.set_axisbelow(True)
-    for side in ("top", "right"):
-        ax.spines[side].set_visible(False)
-    ax.legend(frameon=False, fontsize=8.6, loc="upper left")
-
-    titles(
-        ax,
-        "Conflict exposure against poverty: none detectable, and none excluded",
-        "Spearman rho = -0.06 in 2021, range +0.34 to -0.20 across four rounds; nothing "
-        "survives multiple comparisons. At n=37 the design has power 0.75 at rho=0.4, so a "
-        "moderate effect would be invisible. The null also holds across UCDP's full "
-        "low-to-high fatality band, so it is not an artefact of the casualty estimate. "
-        "But 10 of 37 states recorded no event in 2021, including five of the poorest 12 — "
-        "a coverage statement, not evidence of peace.",
-        width=104,
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "3_conflict_overlay.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  3_conflict_overlay.png")
-
-
-# ---------------------------------------------------------------- visual 4
-def visual_climate(rows: list[dict[str, str]], panel: list[dict[str, str]]) -> None:
-    """Geographic gradient and persistence -- NOT a climate-poverty nexus.
-
-    The spec asked for the climate nexus. This panel plots latitude instead, and
-    the reason is the whole point of the left panel: baseline precipitation does
-    correlate with MPI (rho = -0.80), but precipitation is 90% latitude, and
-    latitude predicts MPI BETTER than precipitation does (+0.821). Showing the
-    precipitation relationship would present a geographic gradient wearing a
-    climate finding's clothes. The two series are drawn together so the reader
-    can see that they are the same gradient twice.
-    """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.6, 6.0))
-
-    lats = [float(r["lat"]) for r in rows]
-    ys = [float(r["mpi"]) for r in rows]
-    ax1.scatter(lats, ys, s=64, color="#2166ac", alpha=0.8, edgecolor="white", linewidth=0.8, zorder=3)
-    for r in rows:
-        offsets = {
-            "Bauchi": (7, 4), "Borno": (7, 4), "Ogun": (7, 4), "Cross River": (-58, 4),
-            "Sokoto": (-46, 4), "Jigawa": (7, 4), "Kebbi": (7, -10), "Lagos": (7, -10),
-        }
-        dx, dy = offsets.get(r["state"], (7, 4))
-        ax1.annotate(
-            r["state"], (float(r["lat"]), float(r["mpi"])),
-            textcoords="offset points", xytext=(dx, dy), fontsize=7.8,
-        )
-    ax1.set_xlabel("Latitude of the state capital (degrees north)", fontsize=9)
-    ax1.set_ylabel("MPI, 2021", fontsize=9)
-    ax1.set_title(
-        "Poverty tracks a north-south gradient, not climate",
-        fontsize=10.5, fontweight="700", loc="left", pad=48,
-    )
-    ax1.text(
-        0, 1.055,
-        "Latitude vs MPI: rho = +0.82  ·  baseline precipitation vs MPI: rho = -0.80\n"
-        "but precipitation vs latitude: rho = -0.90. The predictor is the outcome's twin.",
-        transform=ax1.transAxes, fontsize=8.3, color="#555555", linespacing=1.35,
-    )
-    ax1.grid(True, color=GRID, linewidth=0.6)
-    ax1.set_axisbelow(True)
-    for side in ("top", "right"):
-        ax1.spines[side].set_visible(False)
-
-    rounds = sorted({int(r["survey_year"]) for r in panel})
-    for pcode in sorted({r["pcode"] for r in panel}):
-        state = next(r["state"] for r in panel if r["pcode"] == pcode)
-        series = {int(r["survey_year"]): float(r["mpi"]) for r in panel if r["pcode"] == pcode}
-        if state in {"Bauchi", "Borno", "Kano", "Lagos"}:
-            ax2.plot(rounds, [series[y] for y in rounds], marker="o", linewidth=2.0,
-                     markersize=4.5, label=state)
-        else:
-            ax2.plot(rounds, [series[y] for y in rounds], color="#c8ccd1", linewidth=0.8, alpha=0.6)
-    ax2.set_xticks(rounds, [f"{y}\n{s}" for y, s in
-                            zip(rounds, ["DHS", "MICS", "DHS", "MICS"])], fontsize=8)
-    ax2.set_ylabel("MPI", fontsize=9)
-    ax2.set_xlabel("Survey round", fontsize=9)
-    ax2.set_title("Poverty structure is stable across four survey rounds", fontsize=10.5,
-                  fontweight="700", loc="left", pad=48)
-    ax2.text(
-        0, 1.055,
-        "Rank persistence rho = 0.87-0.92 between consecutive rounds.\n"
-        "Harmonised series: 41 of 111 state-period changes are statistically significant.",
-        transform=ax2.transAxes, fontsize=8.3, color="#555555", linespacing=1.35,
-    )
-    ax2.grid(True, color=GRID, linewidth=0.6)
-    ax2.set_axisbelow(True)
-    for side in ("top", "right"):
-        ax2.spines[side].set_visible(False)
-    ax2.legend(frameon=False, fontsize=8.4, ncol=2, loc="upper center", bbox_to_anchor=(0.5, 0.93))
-
-    fig.suptitle(
-        "Geographic gradient, and what does not change",
-        fontsize=13, fontweight="700", x=0.007, ha="left", y=1.10,
-    )
-    fig.text(
-        0.007, 1.035,
-        "The left panel deliberately does NOT plot climate. Annual temperature anomaly flips "
-        "sign against MPI between rounds (+0.81 in 2013, -0.43 in 2021), and baseline rainfall "
-        "is 90% latitude. Both would have shown a striking chart that means geography.",
-        fontsize=8.5, color="#555555", va="bottom",
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "4_gradient_and_trend.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  4_gradient_and_trend.png")
-
-
-# ---------------------------------------------------------------- visual 5
-def visual_radar(rows: list[dict[str, str]]) -> None:
-    focus = "Bauchi"
-    others = ["Kano", "Borno", "Lagos", "FCT"]
-    dims = ["Health", "Education", "Living standards"]
-    keys = ["contrib_health_pct", "contrib_education_pct", "contrib_living_standards_pct"]
-    by_state = {r["state"]: r for r in rows}
-    mean = [sum(float(r[k]) for r in rows) / len(rows) for k in keys]
-
-    n = len(dims)
-    angles = [i / n * 2 * math.pi for i in range(n)] + [0.0]
-
-    def close(vals: list[float]) -> list[float]:
-        return vals + vals[:1]
-
-    fig, ax = plt.subplots(figsize=(7.6, 7.6), subplot_kw={"polar": True})
-    ax.plot(angles, close(mean), color="#555555", linewidth=2.0, linestyle="--", label="37-state mean")
-    ax.fill(angles, close(mean), color="#555555", alpha=0.07)
-    palette = ["#b2182b", "#2166ac", "#1b7837", "#7b3294", "#e08214"]
-    for colour, state in zip(palette, others + [focus]):
-        vals = [float(by_state[state][k]) for k in keys]
-        lw, alpha = (2.8, 0.22) if state == focus else (1.4, 0.0)
-        ax.plot(angles, close(vals), color=colour, linewidth=lw, label=f"{state} (MPI {float(by_state[state]['mpi']):.3f})")
-        ax.fill(angles, close(vals), color=colour, alpha=alpha)
-
-    ax.set_xticks(angles[:-1], dims, fontsize=10.5, fontweight="600")
-    ax.set_ylim(0, 80)
-    ax.set_yticks([20, 40, 60, 80], ["20%", "40%", "60%", "80%"], fontsize=8, color="#777777")
-    ax.grid(color=GRID, linewidth=0.7)
-    ax.spines["polar"].set_color("#c8ccd1")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.06), ncol=3, frameon=False, fontsize=8.4)
-    fig.suptitle(
-        "Dimension profile: Bauchi against selected comparators",
-        fontsize=13, fontweight="700", x=0.02, ha="left", y=1.10,
-    )
-    fig.text(
-        0.02, 1.035,
-        "Percentage contribution of each dimension to the MPI, MICS 2021. Bauchi has the "
-        "highest MPI of the 37 states,\nbut its poverty is driven by education and living "
-        "standards rather than health — Lagos shows the opposite profile.",
-        fontsize=8.5, color="#555555", va="bottom", linespacing=1.4,
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "5_state_radar.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  5_state_radar.png")
-
-
-# ---------------------------------------------------------------- visual 6
-
-
-def visual_party_alignment() -> None:
-    """dmpi_annual against aligned_share, one facet per interval (stage 8 outputs).
-
-    Neutral greys only: party is never a colour in this atlas. The subtitle is the
-    section 4 sentence chosen by stage 8 from the pre-registered templates, so this
-    chart makes no claim of its own.
-    """
-    align = read(ALIGN_PANEL)
-    result = read(ALIGN_RESULT)
-    assert len(align) == 108, f"expected 108 state-intervals, got {len(align)}"
-    primary = result[0]
-    assert primary["kind"] == "primary", "party_alignment_result.csv row 0 must be primary"
-
-    intervals = sorted({r["interval"] for r in align})
-    ys = [float(r["dmpi_annual"]) for r in align]
-    pad = 0.08 * (max(ys) - min(ys))
-    fig, axes = plt.subplots(1, len(intervals), figsize=(11.5, 4.6), sharey=True)
-    for ax, interval in zip(axes, intervals, strict=True):
-        sub = [r for r in align if r["interval"] == interval]
-        ax.scatter(
-            [float(r["aligned_share"]) for r in sub], [float(r["dmpi_annual"]) for r in sub],
-            s=34, color="#6b6f76", alpha=0.75, edgecolor="white", linewidth=0.6, zorder=3,
-        )
-        ax.axhline(0, color="#8a8a8a", linewidth=0.8, zorder=2)
-        ax.set_xlim(-0.05, 1.05)
-        ax.set_ylim(min(ys) - pad, max(ys) + pad)
-        ax.set_title(f"{interval}  (n = {len(sub)})", fontsize=10, loc="left")
-        ax.set_xlabel("Share of interval aligned with federal ruling party", fontsize=8.6)
-        ax.grid(True, color=GRID, linewidth=0.6)
-        ax.set_axisbelow(True)
-        for side in ("top", "right"):
-            ax.spines[side].set_visible(False)
-    axes[0].set_ylabel("MPI change per year (negative = poverty fell)", fontsize=8.6)
-
-    note = (
-        f"Primary β = {float(primary['beta']):+.4f} MPI per year "
-        f"(95% CI {float(primary['ci_lo']):+.4f} to {float(primary['ci_hi']):+.4f}, "
-        f"permutation p = {primary['p_perm']}); model has interval FE and MPI at t0. "
-        f"MDE {primary['mde']}. n = {primary['n']}, FCT excluded (no elected governor)."
-    )
-    fig.text(0.01, -0.02, note, fontsize=8.4, color=INK, ha="left", va="top")
-    # Robustness and leave-one-interval-out rows, compactly, plus the context line --
-    # all read from stage 8's result file, none composed here.
-    checks = [r for r in result if r["kind"] in {"robustness", "loio"}]
-    lines = [
-        f"{r['short']:<32}β {float(r['beta']):+.4f}  "
-        f"CI {float(r['ci_lo']):+.4f} to {float(r['ci_hi']):+.4f}  p {r['p_perm']}  n {r['n']}"
-        for r in checks
-    ]
-    fig.text(0.01, -0.08, "\n".join(lines), fontsize=8.0, color=INK, ha="left", va="top",
-             family="monospace", linespacing=1.4)
-    context = alignment_context_line(result)
-    y_ctx = -0.08 - 0.034 * (len(lines) + 0.6)
-    if context:
-        fig.text(0.01, y_ctx, context, fontsize=8.6, color=INK,
-                 ha="left", va="top", fontweight="700")
-    fig.text(
-        0.01, y_ctx - 0.05,
-        "Check (d) and the interval rows were added after the primary result was known. "
-        "Per-interval estimates: docs/party_alignment.md §4.",
-        fontsize=8.0, color="#555555", ha="left", va="top",
-    )
-    sentence = primary["sentence"].replace("*", "")
-    fig.suptitle(
-        "Federal alignment and the pace of MPI change, 2013–2021",
-        x=0.01, y=1.10, ha="left", fontsize=13, fontweight="700",
-    )
-    fig.text(
-        0.01, 1.04, "\n".join(textwrap.wrap(sentence, width=150)),
-        fontsize=8.6, color="#555555", ha="left", va="top", linespacing=1.35,
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "6_party_alignment.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  6_party_alignment.png")
 
 
 # ------------------------------------------------- the spatial clustering map
@@ -634,110 +301,103 @@ def visual_spatial_clusters() -> None:
     ax.set_aspect(1.0)
     ax.axis("off")
     fig.tight_layout()
-    fig.savefig(PREVIEW / "7_spatial_clusters_map.png", dpi=170, bbox_inches="tight")
+    fig.savefig(PREVIEW / "2_where_poverty_clusters.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
-    print("  7_spatial_clusters_map.png")
+    print("  2_where_poverty_clusters.png")
 
 
-# ------------------------------------------------- the spatial diagnostic sheet
-def visual_spatial() -> None:
-    """The QA gate for the spatial sheet: the same numbers, the same words.
+# ------------------------------------------------- the reference tab (sheet 3)
+def visual_reference_table() -> list[str]:
+    """The QA gate for the reference tabs: every cell present, columns still aligned.
 
-    The sheet draws each state's poverty score against the average of the states it
-    borders, and the slope of that cloud is Moran's I. The gate draws the same cloud
-    from the same file, in the same four colours, and prints the four frozen reader
-    lines and the technical line that the workbook's tooltip carries -- so a
-    regression in the sheet, in the palette or in the wording is caught before
-    Tableau is opened, which is what a gate is for.
+    The tabs are text, not charts, so this is not a pixel-for-pixel preview of the
+    Tableau dashboards -- it is the same rows, the same three columns and the same
+    wrapping width, one PNG per part, named in tab order. What it catches is what the
+    tab can actually get wrong: a missing cell, an empty group, or a cell so long that
+    its row grows past its neighbours and the columns stop lining up. Rendering it as
+    a monospace grid is deliberate: the question this gate answers is "is anything
+    missing or misfiled", and a grid shows that at a glance where a chart of the same
+    words would not.
+
+    Returns the file names it wrote, so the caller does not keep a second copy of the
+    naming rule.
     """
-    rows = read(PROCESSED / "spatial_diagnostics.csv")
-    global_rows = read(PROCESSED / "spatial_global.csv")
-    assert len(rows) == 37, f"expected 37 states, got {len(rows)}"
+    column_chars = [34, 42, 42]
+    written: list[str] = []
 
-    order = [words for _, words, _ in atlas_text.SPATIAL_QUADRANTS]
-    colour_of = {words: colour for _, words, colour in atlas_text.SPATIAL_QUADRANTS}
-    unexpected = sorted({r["spatial_group"] for r in rows} - set(colour_of))
-    assert not unexpected, f"neighbourhood types with no colour: {unexpected}"
+    def wrapped(text: str, width: int) -> list[str]:
+        return textwrap.wrap(text, width=width) or [""]
 
-    own = {r["state"]: float(r["mpi_pct"]) for r in rows}
-    lagged = {r["state"]: float(r["spatial_lag_mpi_pct"]) for r in rows}
-    group = {r["state"]: r["spatial_group"] for r in rows}
-    mean_own = sum(own.values()) / len(own)
-    mean_lag = sum(lagged.values()) / len(lagged)
+    groups = atlas_text.table_rows()
+    assert len(groups) == 3, f"expected three reference tabs, got {len(groups)}"
+    seen = 0
+    for part, (heading, intro, rows) in enumerate(groups, 1):
+        assert rows, f"the reference tab {heading!r} has no rows"
+        lines: list[str] = []
 
-    fig, ax = plt.subplots(figsize=(8.4, 7.0))
+        def row_of(cells: list[list[str]], _lines: list[str] = lines) -> None:
+            height = max(len(cell) for cell in cells)
+            for index in range(height):
+                _lines.append("  ".join(
+                    (cells[column][index] if index < len(cells[column]) else "")
+                    .ljust(column_chars[column])
+                    for column in range(len(column_chars))
+                ))
 
-    # The two means cut the cloud into the four neighbourhood types the legend names.
-    ax.axvline(mean_lag, color=GRID, linewidth=1.0, linestyle="--", zorder=1)
-    ax.axhline(mean_own, color=GRID, linewidth=1.0, linestyle="--", zorder=1)
+        lines.extend(wrapped(atlas_text.TABLE_INTRO, sum(column_chars) + 4))
+        lines.append("")
+        lines.append(f"PART {part} OF {len(groups)} \u00b7 {heading.upper()}")
+        lines.extend(wrapped(intro, sum(column_chars) + 4))
+        lines.append("")
+        row_of([wrapped(header, column_chars[i])
+                for i, header in enumerate(atlas_text.TABLE_HEADERS)])
+        for row in rows:
+            for column, text in row.items():
+                assert text.strip(), f"{heading}: empty {column!r} in {row['word']!r}"
+            row_of([
+                [row["word"].upper()] + wrapped(row["formula"], column_chars[0]),
+                wrapped(row["meaning"], column_chars[1]),
+                wrapped(row["method"], column_chars[2]),
+            ])
+            seen += 1
+            lines.append("")
 
-    for words in order:
-        states = [s for s in own if group[s] == words]
-        if not states:
-            continue
-        ax.scatter(
-            [lagged[s] for s in states], [own[s] for s in states],
-            s=46, c=colour_of[words], edgecolor="white", linewidth=0.7,
-            label=f"{words} ({len(states)})", zorder=3,
-        )
-    for state in own:
-        ax.annotate(
-            state, (lagged[state], own[state]), textcoords="offset points",
-            xytext=(4.5, 2.5), fontsize=6.2, color=INK, zorder=4,
-        )
+        slug = re.sub(r"[^a-z0-9]+", "_", heading.lower()).strip("_")
+        name = f"{2 + part}_{slug}.png"
+        figure = plt.figure(figsize=(13.5, max(4.0, len(lines) * 0.135)))
+        figure.text(0.005, 1.0, "\n".join(lines), family="monospace", fontsize=7.2,
+                    va="top", ha="left")
+        figure.savefig(PREVIEW / name, dpi=130, bbox_inches="tight")
+        plt.close(figure)
+        print(f"  {name}")
+        written.append(name)
 
-    # Corner labels in words, not letters: the reader is told what each corner
-    # means without having to hold a convention in their head.
-    corner = dict(fontsize=7.2, color="#8a8a8a", style="italic", zorder=0)
-    x0, x1 = ax.get_xlim()
-    y0, y1 = ax.get_ylim()
-    ax.text(x1, y1, "high, beside high", ha="right", va="top", **corner)
-    ax.text(x0, y1, "high, beside low", ha="left", va="top", **corner)
-    ax.text(x1, y0, "low, beside high", ha="right", va="bottom", **corner)
-    ax.text(x0, y0, "low, beside low", ha="left", va="bottom", **corner)
-
-    ax.set_xlabel(atlas_text.SPATIAL_AXIS_NEIGHBOURS, fontsize=8.6)
-    ax.set_ylabel(atlas_text.SPATIAL_AXIS_OWN, fontsize=8.6)
-    ax.legend(title=atlas_text.SPATIAL_LEGEND_TITLE, loc="center left",
-              bbox_to_anchor=(1.005, 0.72), frameon=False, fontsize=7.6,
-              title_fontsize=8, labelspacing=0.7)
-    ax.grid(color=GRID, linewidth=0.6, alpha=0.7)
-    ax.set_axisbelow(True)
-
-    titles(
-        ax,
-        atlas_text.SPATIAL_TITLE,
-        " ".join(atlas_text.SPATIAL_READER_LINES),
-        width=104,
-    )
-    technical = spatial_context_line(global_rows)
-    ax.text(
-        0, -0.14, "\n".join(textwrap.wrap(technical, 104)),
-        transform=ax.transAxes, fontsize=7.4, color="#555555", va="top",
-    )
-    fig.tight_layout()
-    fig.savefig(PREVIEW / "8_spatial_scatter.png", dpi=170, bbox_inches="tight")
-    plt.close(fig)
-    print("  8_spatial_scatter.png")
+    assert seen == 44, f"the reference tabs carry {seen} rows, expected 44"
+    return written
 
 
 def main() -> int:
     PREVIEW.mkdir(parents=True, exist_ok=True)
     rows = read(ATLAS)
-    panel = read(PANEL)
     assert len(rows) == 37, f"expected 37 states, got {len(rows)}"
-    assert len(panel) == 148, f"expected 148 panel rows, got {len(panel)}"
+    atlas_text.table_rows()  # asserts every reference-tab cell is present
 
     print("rendering previews:")
     visual_choropleth(rows)
-    visual_dimensions(rows)
-    visual_conflict(rows)
-    visual_climate(rows, panel)
-    visual_radar(rows)
-    visual_party_alignment()
     visual_spatial_clusters()
-    visual_spatial()
-    print(f"\nwrote 8 previews to {PREVIEW}")
+    # The kept set is what this run wrote, not a second list that can drift from it.
+    kept = {"1_where_poverty_sits.png", "2_where_poverty_clusters.png"}
+    kept.update(visual_reference_table())
+
+    # The directory holds this stage's output and nothing else, so a preview that a
+    # withdrawn sheet used to produce is removed here rather than left to look like
+    # current output. The naming rule (N_name.png, in tab order) is this stage's.
+    for stale in sorted(PREVIEW.glob("*.png")):
+        if stale.name not in kept:
+            stale.unlink()
+            print(f"  removed withdrawn preview {stale.name}")
+
+    print(f"\nwrote {len(kept)} previews to {PREVIEW}")
     return 0
 
 

@@ -1,8 +1,76 @@
-# Handoff — sessions 2026-10-09/10 (party test, map fit, plain-language sheets)
+# Handoff — sessions 2026-10-18 (reference table) and 2026-10-09/10 (party test, map fit)
 
-**Start here.** Pipeline is 10 stages, all green (`.\scripts\run_all.ps1`, exit 0,
-~115 s). Everything below is committed and pushed. The atlas is still **not
+**Start here.** Pipeline is **9 stages**, all green (`.\scripts\run_all.ps1`, exit 0,
+~160 s). Everything below is committed and pushed. The atlas is still **not
 published** — that remains the one manual step (your Tableau Public login).
+
+## 2026-10-18 (fourth session) — five views: two maps and one reference table
+
+The instruction for this pass: keep **tab 1** (`Where poverty sits`) and **tab 2**
+(`Where poverty clusters`), merge the two plain-language tabs into **one table** whose
+columns are the formula, what the words mean and how we did it, delete everything else,
+and colour tab 1 on a red ramp.
+
+- **Seven views were withdrawn** — `Dimension breakdown`, `Poverty vs conflict`,
+  `Poverty over time`, `Incidence vs intensity`, `Party alignment and MPI change`, the
+  Moran scatter and the `Equity Atlas` dashboard — and with them the offline HTML map,
+  so `scripts/07_build_interactive_map.py` is deleted and `run_all.ps1` runs nine
+  stages. They are recoverable from git. `docs/FIX_LEDGER.md` **W1** records what each
+  withdrawal cost and did not cost; the short version is that no claim was lost, the
+  four defects that made three of those sheets wrong (D1–D5) are moot rather than
+  fixed, and the analyses behind the rest still run.
+- **The merged table ships as three tabs, not one.** Merged, it measured
+  **2000 x 8720 px** — thirteen screens on the 687 px window it was reviewed in, and the
+  user asked for it split if it was too big. It is cut on the groups it already had:
+  `What the words mean` (24 rows, 2000 x 4406), `The list of basic needs` (11 rows,
+  2000 x 1821) and `How we did it` (9 rows, 2000 x 2858). Each part repeats the intro and
+  the column headers so it stands alone. `docs/FIX_LEDGER.md` **W2**.
+- **The height model was one line short, and that was a real defect.** `_estimate_height`
+  counted the wrapped text and not the zone's own padding, so Tableau — which ellipsizes
+  a text zone's last line rather than growing the zone — cut off the end of every row
+  that wrapped. The width model had been right all along (a 480 px cell held the 41
+  characters predicted, a 760 px cell the predicted 68). Padding is now part of the
+  estimate; before the fix the first row read "a household is poor at 33.3% or more of
+  t…".
+- **A literal `\n` in the XML fails the load with a useless log.** An over-escaped Python
+  escape reached `<dashboards>` as two characters instead of a newline. It is still
+  well-formed XML, so the parser accepted it and Tableau's only complaint was
+  `D2E8DA72`, "the load was not able to complete successfully", naming nothing.
+  `validate()` now fails the build on a literal `\n`, `\t` or `\u` in the XML text.
+- **The band ramp is red, and the deepest red is the poorest band.** `#ffe5e5` (under 5%)
+  through `#ffb8b8`, `#ff8a8a`, `#f45555` to `#d80000` (30% and above) — one hue, five
+  steps, monotone in lightness, so the order is legible without the legend and no
+  red–green pair exists anywhere. This is the interpretation of "from bright red to light
+  red": attention goes to the poorest band. Flipping it is a one-line change to
+  `atlas_text.MPI_BANDS` (stage 5 draws the gate from the same list, so the two cannot
+  disagree).
+- **The cluster map's legend wording is now specific.**
+  `SPATIAL_QUADRANTS` labels each type by both its ingredients —
+  `Poorer than average, neighbours poorer too` (grey `#969696`),
+  `Poorer than average, neighbours better off` (purple `#54278f`, Nasarawa alone),
+  `Better off than average, neighbours poorer` (pale teal `#80cdc1`, no state in 2021),
+  `Better off than average, neighbours better off` (deep teal `#01665e`) — and the card is
+  captioned `Neighbourhood type (this state's poverty, beside the states it borders')`.
+- **Verified by opening the workbook in Tableau Public 2026.2 and looking at it.** The
+  tab bar shows exactly five views in the intended order; `Where poverty sits` draws the
+  red ramp under white state strokes; `Where poverty clusters` draws the grey north block,
+  the deep teal south and purple Nasarawa with its colour card; and all three reference
+  parts render with **no ellipsis** in any cell. Getting a specific tab into a capture
+  needs care — Tableau's choice of view on load is not dependable (it follows the first
+  `<window>` most of the time; the same generated workbook once opened on its second), the
+  padded `PrintWindow` capture's pixels are not window coordinates under DPI
+  virtualization, and two tab clicks computed the same way landed on different tabs.
+  `%TEMP%\opencode\review_tab.py` rebuilds the package with a single `<window>`, and with
+  `right` as a second argument keeps only the third column and moves it to x=0 — which is
+  how the "How we did it" column, 760 px wide in a canvas that shows ~1340 px of a 2000 px
+  dashboard, was read end to end and its longest cell (`Where the numbers come from`,
+  which grew when the licence sentence was added) confirmed to render whole.
+- **Still GUI clicks, both documented in `docs/PUBLISH.md`:** `Fit → Entire View` on each
+  map (a geographic sheet crops at a fixed scale, and the dashboard that used to fit
+  sheet 1 is withdrawn), axis headers off on both maps, sheet 1's colour legend, and alt
+  text per view. Note the cluster map's colour card **does** draw, from the same
+  declaration sheet 1 uses — so the sheet-1 legend item should be re-checked with the same
+  capture method before it is treated as settled.
 
 ## 2026-10-18 (third session) — the spatial sheets: a cluster map beside the poverty map
 
@@ -42,6 +110,10 @@ states?`) immediately after it.
 - **Renames:** the scatter's QA-gate PNG is `docs/preview/8_spatial_scatter.png`; the
   map's is `docs/preview/7_spatial_clusters_map.png`. Previews 1–6 are unchanged; the
   two spatial previews are appended and numbered in sheet order.
+  *Superseded later the same day by the fourth session, which withdrew the scatter, made
+  the map the only spatial surface and renumbered previews in tab order — so the cluster
+  map's gate is now `docs/preview/2_where_poverty_clusters.png` and the two names above
+  no longer exist.*
 - **Verified by rendering** (`Tableau Public - render_test`, log line
   `Finished rendering sheet: Where poverty clusters`, no error line): the workbook opens,
   the `Spatial polygons` datasource is in the Data pane, the map draws deep purple north /
@@ -53,8 +125,10 @@ states?`) immediately after it.
   contradicts the open sheet-1 item at least once — re-check `Where poverty sits` with
   the same padded `PrintWindow` before treating that defect as settled. Neither is
   silently broken: both sheets declare the same card.
-- **The `Equity Atlas` dashboard still carries the five spec sheets only.** The two
-  spatial sheets are standalone tabs, like the party sheet.
+- **The `Equity Atlas` dashboard carried the five spec sheets only** — the two spatial
+  sheets were standalone tabs, like the party sheet. *All of it was withdrawn the same
+  day: the dashboard, the five spec sheets and the scatter (fourth session, below,
+  `docs/FIX_LEDGER.md` W1).*
 
 
 ## 2026-10-18 (second session) — sheet 1: the bands have colours, and the gate matches

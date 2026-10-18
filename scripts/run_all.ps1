@@ -43,13 +43,12 @@ $Stages = @(
     '04_merge',
     '08_party_alignment',
     '09_spatial_diagnostics',
-    '06_build_twb',
-    '07_build_interactive_map'
+    '06_build_twb'
 )
 if (-not $SkipPreviews) {
     # Keep the preview between the merge and the workbook so the visual QA gate always
     # sees freshly merged data. Stage 8 (party alignment) and stage 9 (spatial
-    # diagnostics) run straight after the merge because stages 5, 6 and 7 all read
+    # diagnostics) run straight after the merge because stages 5 and 6 both read
     # their outputs.
     $Stages = @(
         '00_validate_reference',
@@ -60,8 +59,7 @@ if (-not $SkipPreviews) {
         '08_party_alignment',
         '09_spatial_diagnostics',
         '05_preview',
-        '06_build_twb',
-        '07_build_interactive_map'
+        '06_build_twb'
     )
 }
 

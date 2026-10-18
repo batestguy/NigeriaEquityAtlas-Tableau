@@ -471,3 +471,74 @@ a significance map would be a single state and would re-import the per-state ord
 withdrew), and its four colours encode only the quadrant — which side of the national
 average the state is on, and whether its neighbours are on that same side — and never
 the poverty ramp. The count is stated in the hover and beside the sheet, not coloured.
+
+**Amendment 2, same date:** the Moran scatter (`Each state against its neighbours`,
+sheet 2 until then) is **no longer published as a worksheet**. The registration fixed
+the statistical test, the correction and the wording; it did not fix a rendering, and
+the user's instruction was to keep two sheets. The amendment is recorded inside
+`docs/spatial_preregistration.md` and changes nothing about the decision rule: the
+values, the p-values, the corrections and the four frozen reader lines are unchanged
+and are still computed by stage 9, still carried in the hover of the surviving map,
+and still written out in full in `docs/spatial_analysis.md` §3. What is gone is one
+way of drawing them.
+
+---
+
+## G. Withdrawals — 2026-10-18
+
+Not defects either. Recorded because both were decisions about *what the workbook is*,
+both were taken on the user's instruction, and both are the reason a reader of an
+older note will not find the sheet it names.
+
+### W1. Five chart sheets, the Moran scatter, the "Equity Atlas" dashboard and the HTML map
+**Severity n/a — withdrawn · status done**
+
+The workbook carries **two maps and three reference tabs**. Gone, with the user's
+instruction ("I only care about MPI bands we built and the [spatial] sheet"):
+`Dimension breakdown`, `Poverty vs conflict`, `Poverty over time`,
+`Incidence vs intensity`, `Party alignment and MPI change`, the Moran scatter, the
+`Equity Atlas` dashboard, and `scripts/07_build_interactive_map.py` with the
+`docs/preview/interactive_map.html` it wrote. Recoverable from git; the last commit
+that carries them is the parent of this change.
+
+No claim was lost. Every sentence a reader needed from those sheets is a row of the
+reference tabs: the four defects D1–D5 that made three of them wrong are moot rather
+than fixed, and the analyses behind the other two still run. Stage 2 (conflict), stage
+3 (climate) and stage 8 (the pre-registered party test) still execute in
+`scripts/run_all.ps1` and still write their outputs — the party result is quoted in
+`docs/party_alignment.md`, which is where a claim that fragile belongs.
+
+The pipeline lost a stage and gained nothing: `07_build_interactive_map.py` is deleted
+and `run_all.ps1` runs nine stages. The two reader prose dashboards
+(`What the words mean`, `How we did it`) were merged into the reference table below.
+
+### W2. The reference table ships as three tabbed parts, not one dashboard
+**Severity n/a — split · status done**
+
+The merged table (one row per word, need and worked step; three columns) was built as
+a single dashboard and **measured 2000 x 8720 px** when the workbook was opened in
+Tableau Public 2026.2 on 2026-10-18 and looked at. The window it was reviewed in is
+687 px tall, so that tab was thirteen screens: not a tab anyone reads top to bottom,
+and the user's instruction was to split it if it was too big.
+
+It is now parts 1–3 of one table, cut on the groups the table already had — the words
+(24 rows, 2000 x 4406), the list of basic needs (11 rows, 2000 x 1821), the method
+(9 rows, 2000 x 2858). Each part repeats the intro and the column headers, because
+each tab has to stand alone for a reader who arrives on it from the tab bar. The
+columns do not change between parts and no row was re-cut: this is pagination, not a
+return to the two prose pages the merge replaced.
+
+Two things were learned in the render that fixed a real defect rather than a size
+one, and both are recorded where they belong in the code:
+
+- **The height model was one line short.** `_estimate_height` counted the text and not
+  the zone's own vertical margin, so every row that wrapped was ellipsized by Tableau
+  — which truncates the last line instead of growing the zone. The width model was
+  already right (a 480 px cell held 41 characters, a 760 px cell 68, exactly as
+  predicted), so the fix was to make the padding part of the estimate. Before the fix,
+  the first row of the table read "a household is poor at 33.3% or more of t…".
+- **A literal `\n` in the XML is a load failure with no useful log line.** A Python
+  escape that reached the file instead of being interpreted is still well-formed XML,
+  so the parser accepts it and Tableau's only complaint is `D2E8DA72`, "the load was
+  not able to complete successfully", with nothing naming the element. `validate()`
+  now fails the build on a literal `\n`, `\t` or `\u` in the XML text.

@@ -28,7 +28,9 @@ from typing import TypedDict
 
 class Term(TypedDict):
     term: str
+    formula: str
     meaning: str
+    method: str
 
 
 class Indicator(TypedDict):
@@ -43,105 +45,218 @@ class Section(TypedDict):
     paragraphs: list[str]
 
 
+class TableRow(TypedDict):
+    """One row of the merged reference tab: a word, its formula, its meaning, its making."""
+
+    word: str
+    formula: str
+    meaning: str
+    method: str
+
+
 WORDS_TITLE = "What the words mean"
 WORDS_INTRO = (
     "This atlas measures poverty as missing basic needs in daily life, not as low "
     "income. Here is what each word on the map means."
 )
 
+# Every entry carries four things, because the reference tab is one table and not two
+# pages of prose: the word, its formula or rule (the column a reader scans first), the
+# plain-language meaning, and how it was made -- the source, the computation and the
+# caveat that would otherwise go unread. `meaning` is the sentence the old glossary
+# carried; `formula` and `method` are what the tabular form adds.
 TERMS: list[Term] = [
     {"term": "Poor",
+     "formula": "a household is poor at 33.3% or more of the weighted list",
      "meaning": "A person counts as poor if their household is missing at least one third "
                 "of the weighted list of basic needs below. Everyone in a household gets "
-                "the same result."},
+                "the same result.",
+     "method": "OPHI's global rule. Because everyone in a household shares the result, a "
+               "state's figure is a share of people, not of households."},
     {"term": "Missing a need (deprived)",
+     "formula": "one item off the list, for example no electricity",
      "meaning": "The household lacks one item on the list, for example it has no "
-                "electricity, or nobody old enough has finished six years of school."},
+                "electricity, or nobody old enough has finished six years of school.",
+     "method": "Nine items in three areas. The list, each item's weight and what counts "
+               "as missing are in the next section of this table."},
     {"term": "Deprivation score",
+     "formula": "0% (nothing missing) to 100% (everything missing)",
      "meaning": "How much of the weighted list a household is missing, from 0% (nothing "
-                "missing) to 100% (everything missing). 33.3% or more means poor."},
+                "missing) to 100% (everything missing). 33.3% or more means poor.",
+     "method": "Summed for each household from its survey answers. 33.3% is the line. The "
+               "map's hover shows the state's average score among poor people under a "
+               "different name (intensity)."},
     {"term": "Close to poverty (vulnerable)",
+     "formula": "20% to 33.3% of the list",
      "meaning": "Missing between 20% and 33.3% of the list. Not counted as poor, but near "
-                "the line."},
+                "the line.",
+     "method": "OPHI's cut-off, carried through the pipeline as vulnerable_pct. It is not "
+               "shown on the map."},
     {"term": "Severe poverty",
-     "meaning": "Missing 50% or more of the list."},
+     "formula": "50% or more of the list",
+     "meaning": "Missing 50% or more of the list.",
+     "method": "OPHI's cut-off, carried through the pipeline as severe_pct. It is not "
+               "shown on the map."},
     {"term": "Share of people who are poor (H)",
+     "formula": "H = poor people \u00f7 all people",
      "meaning": "Out of every 100 people, how many count as poor. Nigeria in 2021: "
-                "33.0%, about 1 in 3."},
+                "33.0%, about 1 in 3.",
+     "method": "Published for each state by OPHI and UNDP. We use their figure as "
+               "published and do not recalculate it. This is the headcount, and it is not "
+               "the number the map's colour carries."},
     {"term": "How much poor people miss (A)",
+     "formula": "A = the average score of the people who are poor",
      "meaning": "Among poor people only, the average deprivation score. Nigeria in 2021: "
-                "52.9%, so a typical poor person was missing about half of the list."},
+                "52.9%, so a typical poor person was missing about half of the list.",
+     "method": "Same source as H, published separately from it. The map's hover calls it "
+               "the average deprivation among them."},
     {"term": "Poverty score (MPI)",
+     "formula": "MPI = H \u00d7 A",
      "meaning": "The share of people who are poor multiplied by how much they miss "
-                "(H × A). It runs from 0 (nobody poor) to 1 (everybody poor and missing "
+                "(H \u00d7 A). It runs from 0 (nobody poor) to 1 (everybody poor and missing "
                 "everything). Nigeria's global MPI in 2021 (MICS 2021 survey): "
-                "0.330 × 0.529 = 0.175."},
+                "0.330 \u00d7 0.529 = 0.175.",
+     "method": "Our state figures are OPHI's harmonised series (Data Table 6, MN 63), "
+               "checked numerically against Table 6.4 to 4 decimal places on all 148 "
+               "admin-1 rows and against UNDP's published state figures. Earlier OPHI "
+               "publications of the same years used un-harmonised estimates and differ by "
+               "up to 0.17, so never compare these with an older release."},
     {"term": "Likely range",
+     "formula": "the 95% confidence interval (the statisticians' term for it)",
      "meaning": "Surveys talk to a sample of households, not everyone, so every figure "
                 "has some uncertainty. The likely range is where the true value probably "
                 "lies (statisticians call it a 95% confidence interval). When two states' "
-                "ranges overlap, we cannot be sure which one is poorer."},
+                "ranges overlap, we cannot be sure which one is poorer.",
+     "method": "OPHI's design-based standard errors, published in the same UNDP workbook "
+               "(table 5.4) and extracted to data/interim/mpi_se_ci.csv. The median "
+               "relative standard error is 15%, and all 36 pairs of states adjacent in "
+               "the ranking overlap at 95% -- which is why this atlas shows bands and "
+               "never names a poorest state."},
     {"term": "Poverty band",
-     "meaning": "One of the five colour groups on the map: under 5%, 5%–10%, "
-                "10%–20%, 20%–30%, and 30% or more. The score is a 0-to-1 index, so "
+     "formula": "under 5% \u00b7 5\u201310% \u00b7 10\u201320% \u00b7 20\u201330% \u00b7 30% and above",
+     "meaning": "One of the five colour groups on the map: under 5%, 5%\u201310%, "
+                "10%\u201320%, 20%\u201330%, and 30% or more. The score is a 0-to-1 index, so "
                 "these read as percentages of the index, not as the share of people "
                 "who are poor (that share is shown separately and is much higher). The "
                 "map uses bands rather than a 1-to-37 ranking because the likely "
-                "ranges of states next to each other in the ranking overlap."},
+                "ranges of states next to each other in the ranking overlap.",
+     "method": "Cut from the MPI value, not from H. The five colours are the map's fill, "
+               "and the band is the only place this atlas puts states in order."},
     {"term": "Poorest 12 and Other 25",
+     "formula": "MPI above 0.20 \u2014 12 states",
      "meaning": "The 12 states with a poverty score above 0.20, and the remaining 25 "
-                "(including FCT)."},
+                "(including FCT).",
+     "method": "Written into the extract by stage 4 and used in the map's hover. It is "
+               "also one of the robustness re-tests of the party question."},
     {"term": "Area of life (dimension)",
+     "formula": "health + education + living standards, one third each",
      "meaning": "The list is grouped into three areas: health, education and living "
-                "standards. Each area counts for one third."},
+                "standards. Each area counts for one third.",
+     "method": "OPHI's three dimensions. In Nigeria health rests on child deaths alone "
+               "and takes the whole third, which is why cross-country comparison is not "
+               "available (see the next section)."},
     {"term": "Share from each area (contribution)",
+     "formula": "the three shares add to 100%",
      "meaning": "How much of a state's poverty score comes from health, from education "
-                "and from living standards. The three add up to 100%."},
+                "and from living standards. The three add up to 100%.",
+     "method": "Published for each state by OPHI, carried as contrib_health_pct, "
+               "contrib_education_pct and contrib_living_standards_pct. Among the "
+               "poorest 12 states the education share is about 40%, against 22% "
+               "elsewhere."},
     {"term": "Survey round",
+     "formula": "2013 DHS \u00b7 2016\u201317 MICS \u00b7 2018 DHS \u00b7 2021 MICS",
      "meaning": "One of the four large national household surveys used: 2013 (DHS), "
-                "2016–17 (MICS), 2018 (DHS) and 2021 (MICS). DHS is the Demographic and "
+                "2016\u201317 (MICS), 2018 (DHS) and 2021 (MICS). DHS is the Demographic and "
                 "Health Survey; MICS is the Multiple Indicator Cluster Survey. The map "
-                "shows 2021."},
+                "shows 2021.",
+     "method": "Four rounds, taken from OPHI's published tables. The map shows 2021 only; "
+               "the other three appear in the comparable-over-time series."},
     {"term": "Comparable over time (harmonised)",
+     "formula": "one definition applied to all four rounds",
      "meaning": "A version of the four rounds prepared by Oxford University's poverty "
-                "team (OPHI) so that changes between rounds can be compared fairly."},
-    {"term": "Conflict exposure (0–100)",
+                "team (OPHI) so that changes between rounds can be compared fairly.",
+     "method": "The harmonised series is the one this pipeline downloads and the one it "
+               "verified against OPHI's own Table 6.4. Between rounds, states kept their "
+               "positions relative to each other (rank persistence 0.87\u20130.92) even where "
+               "levels fell."},
+    {"term": "Conflict exposure (0\u2013100)",
+     "formula": "events and deaths per 100,000 people, rescaled 0\u2013100 within each year",
      "meaning": "How many recorded violent events and deaths a state had per 100,000 "
                 "people in a survey year, compared with the other states that same year. "
                 "100 is the most of the 37 that year and 0 the fewest. It is relative, so "
-                "50 in 2013 and 50 in 2021 are not the same amount."},
+                "50 in 2013 and 50 in 2021 are not the same amount.",
+     "method": "UCDP GED 24.1 (CC BY-IGO), attributed to a state by the coordinates of "
+               "each event, with the method recorded per event. Scaled within year by "
+               "min-max; the anchors are in data/processed/atlas_vintages.csv. Borno "
+               "takes 100 in 2021 and the other 36 states cluster near zero."},
     {"term": "Recorded conflict event",
+     "formula": "one incident, at least one reported death",
      "meaning": "An incident of organised violence in which at least one person is reported "
                 "to have died, "
                 "logged by the Uppsala Conflict Data Program from news and other reports. "
-                "Violence that is never reported is missed."},
+                "Violence that is never reported is missed.",
+     "method": "UCDP GED 24.1. In 2021, 10 of the 37 states recorded no event at all, "
+               "including five of the poorest 12 (Bauchi, Jigawa, Kebbi, Katsina and "
+               "Kano), so the variable undercounts most where poverty is highest."},
     {"term": "Climate baseline",
+     "formula": "mean of 1991\u20132020, at the state capital",
      "meaning": "A state capital's average yearly temperature and rainfall over "
-                "1991–2020."},
+                "1991\u20132020.",
+     "method": "Open-Meteo daily archive, 1990\u20132024, for the 37 capitals (GeoNames). Days "
+               "with missing records are excluded and each state's contributing-day count "
+               "is checked before use."},
     {"term": "Governor from the President's party",
+     "formula": "PDP until 29 May 2015, APC after that",
      "meaning": "The state governor belonged to the same party as the President: the "
                 "PDP (People's Democratic Party) until 29 May 2015, the APC (All "
-                "Progressives Congress) after that."},
+                "Progressives Congress) after that.",
+     "method": "From a sourced event table of every seating and every defection "
+               "(data/reference/governorship_events.csv and governor_defections.csv), "
+               "which stage 0 checks recomputes the state labels. Hover context only: "
+               "party is never a colour anywhere in this atlas."},
     {"term": "Party that won most often",
+     "formula": "the mode of the 1999\u20132021 elections",
      "meaning": "The party that won the most governorship elections in the state from "
-                "1999 to 2021. Ties are shown. It appears in the map's hover text only."},
+                "1999 to 2021. Ties are shown. It appears in the map's hover text only.",
+     "method": "Six states are ties and the FCT has no governor. 26 of the 36 states with "
+               "a governor are PDP, so this label cannot test anything; the question that "
+               "can is in the last section of this table."},
     {"term": "FCT",
+     "formula": "no elected governor",
      "meaning": "The Federal Capital Territory (Abuja). It is shown like a state, but it "
-                "has no elected governor, so it is left out of the party question."},
+                "has no elected governor, so it is left out of the party question.",
+     "method": "Kept in every aggregate as if it were a state, because it is the most "
+               "poverty-dense unit and dropping it is a classic silent error. Its "
+               "exclusion from the party question is why that test has 108 "
+               "state-intervals from 36 states."},
     {"term": "Neighbouring states",
+     "formula": "two states that share a border on the map",
      "meaning": "Two states that share a border on the map. Nothing more is meant by it: "
                 "it is a fact about the map, not about people or traffic moving between "
-                "the states."},
+                "the states.",
+     "method": "Queen contiguity, computed from the ADM1 boundaries in the same pipeline "
+               "stage. Queen and rook give the same answer here, and the conclusion "
+               "survives four nearest neighbours instead of shared borders and survives "
+               "dropping the FCT."},
     {"term": "States that resemble each other (clustering)",
+     "formula": "Moran's I",
      "meaning": "When states that share a border tend to have similar poverty scores, "
                 "more often than if the scores were scattered about at random. It "
                 "describes the pattern on the map. It does not say that one state's "
-                "poverty makes its neighbour poorer."},
+                "poverty makes its neighbour poorer.",
+     "method": "A pre-registered test, frozen in docs/spatial_preregistration.md before "
+               "the code existed. Moran's I is 0.80 (p \u2264 0.0001), but 0.24 once latitude "
+               "is taken out, and 0.11 once latitude, conflict and climate are. The full "
+               "numbers are in docs/spatial_analysis.md."},
     {"term": "Explained by how far north a state is",
+     "formula": "latitude against MPI, R\u00b2 = 0.77",
      "meaning": "Because poverty rises steadily from south to north, a lot of states "
                 "looking like their neighbours is just that steady slope. Once the slope "
                 "is taken out, we can see how much resemblance is left over and above "
-                "it."},
+                "it.",
+     "method": "How far north a state sits correlates with its MPI at +0.82, which is "
+               "closer than rainfall does it (0.80). The atlas uses OPHI's word for it "
+               "\u2014 overlap \u2014 and does not call climate a driver."},
 ]
 
 INDICATORS_TITLE = "The list of basic needs"
@@ -220,21 +335,29 @@ MPI_LEGEND_MEANING = (
 # The five MPI bands in the order they run, each with the colour it draws.
 # One list, three surfaces: stage 6 writes it into the workbook (a discrete field
 # given a palette -- the grammar lives inside the <datasource>, between <layout/>
-# and <semantic-values>), stage 5 draws the matplotlib QA gate from it, and stage
-# 7 draws the offline HTML map from it. Two maps that colour the same field
+# and <semantic-values>), stage 5 draws the matplotlib QA gate from it, and the
+# workbook's colour legend reads it back. Two surfaces that colour the same field
 # differently would read as two different findings.
 #
-# ColorBrewer YlOrBr, 5-class sequential: no red-green pair, so it survives
-# colour-vision deficiency, and it darkens monotonically, so the band order is
-# legible from the colour alone. The leading "N. " in each label is a sort key
-# (the Tableau legend sorts alphabetically), not part of what the reader is meant
-# to read -- stage 5 and stage 7 strip it.
+# A single-hue red ramp, pale at the low end and a bright red at the high end,
+# stepping up in saturation so the band order is legible from the colour alone.
+# It replaced the ColorBrewer YlOrBr ramp on 2026-10-18 at the user's direction
+# ("bright red to light red"). The red is the *high* end of the scale: band 5,
+# the poorest states, is the bright red, and the least poor are nearly white --
+# the ramp's light end, where a reader's eye already expects "little of this".
+# Colour-vision note: this ramp is one hue, so it carries no red/green contrast
+# to lose; the ordering survives deuteranopia and protanopia through lightness
+# alone, which is the channel every band is separated on.
+#
+# The leading "N. " in each label is a sort key (the Tableau legend sorts
+# alphabetically), not part of what the reader is meant to read -- stage 5
+# strips it for its own legend.
 MPI_BANDS: list[tuple[str, str]] = [
-    ("1. under 5%", "#ffffd4"),
-    ("2. 5% to 10%", "#fed98e"),
-    ("3. 10% to 20%", "#fe9929"),
-    ("4. 20% to 30%", "#d95f0e"),
-    ("5. 30% and above", "#993404"),
+    ("1. under 5%", "#ffe5e5"),
+    ("2. 5% to 10%", "#ffb8b8"),
+    ("3. 10% to 20%", "#ff8a8a"),
+    ("4. 20% to 30%", "#f45555"),
+    ("5. 30% and above", "#d80000"),
 ]
 # --- The spatial sheet: do poor states sit next to poor states? ---------------
 # A diagnostic on sheet 1's map, not a second poverty map. Every word here is
@@ -244,9 +367,9 @@ MPI_BANDS: list[tuple[str, str]] = [
 # committed before the analysis code existed; 09_spatial_diagnostics.py asserts
 # that the figures these words state are still the figures in the data.
 # The cluster map: sheet 1's own geometry, drawn a second time with the
-# neighbourhood type as the fill. It is the "where" of the same question the scatter
-# answers "how much" of, and it sits immediately after the poverty map in the tab
-# order. The colours are descriptive and are never a significance map: only one
+# neighbourhood type as the fill. It is the map form of the question the Moran
+# scatter used to draw as a two-axis plot (withdrawn 2026-10-18, docs/FIX_LEDGER.md
+# W1), and it sits immediately after the poverty map in the tab order. The colours are descriptive and are never a significance map: only one
 # state survives the correction (SPATIAL_READER_LINES line 4), so a map of what is
 # statistically significant would be a single state and would re-import the
 # per-state ordering the atlas withdrew (docs/FIX_LEDGER.md A1).
@@ -256,33 +379,23 @@ SPATIAL_MAP_SUBTITLE = (
     "not a significance test"
 )
 SPATIAL_MAP_READING = (
-    "The colour says two things at once. Purple means this state is poorer than the "
-    "average state, teal means it is better off than average. Deep means the states "
-    "it borders are on the same side as it is, pale means they are not. Read it as a "
-    "description of where poverty sits, not as a list of places that stand out: the "
-    "lines below give the one number that says how much of this is more than the "
-    "north being poorer than the south."
+    "The colour says two things at once. Grey is the poor block: this state is poorer "
+    "than the average state, and so are the states it borders. Deep teal is the mirror "
+    "image \u2014 better off than average, among better-off neighbours. Purple marks a "
+    "state that does not fit its surroundings: poorer than average, with neighbours "
+    "that are not. Read it as a description of where poverty sits, not as a list of "
+    "places that stand out: the lines below give the one number that says how much of "
+    "this is more than the north being poorer than the south."
 )
-SPATIAL_TITLE = "Do poor states sit next to poor states?"
-SPATIAL_SUBTITLE = (
-    "States with similar poverty scores do tend to share a border \u2014 but most of that "
-    "is simply that the north is poorer than the south"
-)
-SPATIAL_AXIS_OWN = "This state's poverty score (MPI, % of index)"
-SPATIAL_AXIS_NEIGHBOURS = "Average poverty score of the states it borders (MPI, % of index)"
+SPATIAL_FIELD_OWN = "This state's poverty score (MPI, % of index)"
+SPATIAL_FIELD_NEIGHBOURS = "Average poverty score of the states it borders (MPI, % of index)"
 SPATIAL_LEGEND_TITLE = "Neighbourhood type"
-SPATIAL_LEGEND_MEANING = "this state's poverty, beside its neighbours'"
+# The caption is the legend's title text and the field's name in the data pane, so it
+# has to say what is being compared, in words a reader can act on: a state against
+# the states it borders. "Neighbourhood" alone invites a reading about people moving.
+SPATIAL_LEGEND_MEANING = "this state's poverty, beside the states it borders'"
 SPATIAL_READING_HEADING = "The reading, in plain words"
-# The scatter's own "how to read this surface" sentence: on the map the reading is
-# colours, on the scatter it is two axes. Both surfaces carry the same four lines
-# below and the same technical footer.
-SPATIAL_AXIS_READING = (
-    "A state above the middle line is poorer than the average state; one to the right "
-    "of the upright line has poorer neighbours than average. So \u201chigh, beside "
-    "high\u201d means poor among poor neighbours, and \u201clow, beside low\u201d means "
-    "better off among better-off neighbours."
-)
-# The caveat that has to survive on both surfaces, because "neighbourhood type" is
+# The caveat that has to survive on the surface, because "neighbourhood type" is
 # vocabulary that invites a spillover reading.
 SPATIAL_NO_CAUSE = (
     "Nothing here shows that one state's poverty affects its neighbour's \u2014 "
@@ -305,27 +418,34 @@ SPATIAL_READER_LINES: list[str] = [
 ]
 
 # The four neighbourhood types: (code, words for the reader, colour).
-# Hue says how poor *this* state is, shade says whether its neighbours are like it
-# (verified against the hexes rather than asserted, 2026-10-18: the two pale tints
-# were the wrong way round, which made the hue encode the neighbours instead):
-# deep purple = poor among poor neighbours, pale purple = poor among better-off
-# neighbours, pale teal = better off among poorer neighbours, deep teal = better off
-# among better-off neighbours. That is the reading the map's own legend words need,
-# and it is the one a reader can check against a map by eye -- purple states are the
-# poor ones.
-# Deliberately not the poverty ramp and not the dimension colours, so neither spatial
-# sheet can be read as a second poverty map. Nominal fields otherwise draw in
-# Tableau's default categorical palette.
+# The words name both ingredients, because that is what the classification is: a
+# comparative ("poorer than average") and whether the states it borders agree. They
+# are deliberately not "poor states" -- above-average is not the atlas's "poorest 12"
+# (MPI above 0.20), and a legend that read "poor" would blur the two thresholds.
+#
+# The colours changed on 2026-10-18 at the user's direction: the poor-beside-poor
+# block is now grey (it is the largest block, and grey recedes), and the state that
+# does not fit its surroundings -- poorer than average among better-off neighbours --
+# took the purple that block used to hold, so the one-off carries. Teal still marks
+# better-off states: pale where the neighbours disagree, deep where they agree. The
+# fourth pairing, better off beside poorer neighbours, does not occur in this data;
+# its colour is only ever a legend entry.
+# Deliberately not the poverty ramp, so the sheet cannot be read as a second poverty
+# map. Nominal fields otherwise draw in Tableau's default categorical palette.
 SPATIAL_QUADRANTS: list[tuple[str, str, str]] = [
-    ("HH", "high, beside high", "#54278f"),
-    ("HL", "high, beside low", "#b3a2c7"),
-    ("LH", "low, beside high", "#80cdc1"),
-    ("LL", "low, beside low", "#01665e"),
+    ("HH", "Poorer than average, neighbours poorer too", "#969696"),
+    ("HL", "Poorer than average, neighbours better off", "#54278f"),
+    ("LH", "Better off than average, neighbours poorer", "#80cdc1"),
+    ("LL", "Better off than average, neighbours better off", "#01665e"),
 ]
 
-# The two deep fills. A property of the hexes above, not of the data: a map label is
-# drawn white over these and in ink over the two pale tints, in both maps' previews.
-SPATIAL_DEEP_TYPES: list[str] = ["high, beside high", "low, beside low"]
+# The fills that take white state labels. A property of the hexes above, not of the
+# data: white over the purple and the deep teal, ink over the grey and the pale teal,
+# in the stage 5 preview. Mid grey takes ink -- white on #969696 sits at about 2.8:1.
+SPATIAL_DEEP_TYPES: list[str] = [
+    "Poorer than average, neighbours better off",
+    "Better off than average, neighbours better off",
+]
 
 METHOD_INTRO = (
     "In plain terms: where the numbers come from, how they are put together, how sure "
@@ -344,6 +464,10 @@ METHOD: list[Section] = [
          "records for each state capital from Open-Meteo, state borders from "
          "geoBoundaries, capital locations from GeoNames, and governorship election "
          "results checked against cited sources. Every download is logged with its date."),
+         ("Licences, as their publishers state them: the poverty figures are CC0 / CC BY "
+         "(OPHI and UNDP); the violent-event data is CC BY-IGO (UCDP); the weather "
+         "records are CC BY 4.0 (Open-Meteo); and the state borders and capital "
+         "coordinates are CC BY 4.0 (geoBoundaries, GeoNames)."),
      ]},
     {"heading": "2. How a state's poverty score is built",
      "paragraphs": [
@@ -426,3 +550,141 @@ METHOD: list[Section] = [
          "including work and shocks."),
      ]},
 ]
+
+
+# --- The reference tab: one table where two prose pages used to be --------------
+# "What the words mean" and "How we did it" are the same material seen from two sides
+# -- a word, and how the thing behind it was made -- so they are one tabular sheet:
+# one row per word, need and worked step, in three columns. The words are never
+# retyped here: every meaning is the string above, so the table cannot drift from the
+# prose it replaced.
+#
+# The table ships as three tabbed parts, one per group it already had (see
+# docs/FIX_LEDGER.md W2): rendered as one dashboard it measured 2000 x 8720 px, which
+# is thirteen screens on a 687 px window and not a tab anyone reads. The columns do
+# not change between parts -- only the rows do -- so this is pagination, not a split
+# back into two pages.
+TABLE_TITLE = "Words, formulas and method"
+TABLE_INTRO = (
+    "The reference, in three parts: the words, the list of basic needs, and the "
+    "method. Every row carries the same three columns: the term with its formula or "
+    "weight, what it means in everyday language, and how it was made and where it "
+    "comes from. No figure here is new: each one is the same number the map and its "
+    "hover carry."
+)
+TABLE_HEADERS: list[str] = [
+    "Word, and its formula or weight",
+    "What the words mean",
+    "How we did it",
+]
+
+# The left column for the nine worked steps, keyed by the section heading. A section
+# with no formula of its own still gets the notation or the count that identifies it,
+# and the guard in table_rows() fails loudly if a heading is ever added without one.
+METHOD_FORMULA: dict[str, str] = {
+    "1. Where the numbers come from": "survey answers \u2192 OPHI's published state figures",
+    "2. How a state's poverty score is built": "missing weights \u2265 1/3 \u2192 poor; MPI = H \u00d7 A",
+    "3. How sure we can be": "\u00b1 about 30% of the score (median relative SE 15%)",
+    "4. Comparing over time": "four rounds, one harmonised definition",
+    "5. The conflict layer": "events and deaths per 100,000, rescaled 0\u2013100 within each year",
+    "6. The climate layer": "1991\u20132020 baseline at the state capital",
+    "7. The party question": "\u0394MPI per year on aligned share \u2014 108 state-intervals",
+    "8. Do poor states sit next to poor states?": "Moran's I on shared borders (queen weights)",
+    "9. What this atlas cannot tell you": "37 states, one country",
+}
+# Only for the sections that are a single paragraph: the others carry their making in
+# their second and later paragraphs, which is where that text already lives.
+METHOD_NOTE: dict[str, str] = {
+    "3. How sure we can be": (
+        "The standard errors are OPHI's design-based ones (UNDP table 5.4), extracted "
+        "to data/interim/mpi_se_ci.csv."
+    ),
+    "4. Comparing over time": (
+        "The four rounds and their values are in data/processed/atlas_vintages.csv, and "
+        "the round-by-round panel is data/processed/mpi_trends_panel.csv."
+    ),
+    "9. What this atlas cannot tell you": (
+        "Sources and licences are listed in docs/CLAIMS.md, and every download is logged "
+        "with its date under data/raw/."
+    ),
+}
+
+# The two rows that belong to the needs section but are not needs themselves.
+HEALTH_ROW: TableRow = {
+    "word": "Why health is a single item",
+    "formula": "health = child deaths alone, weight 1/3",
+    "meaning": INDICATORS_NOTE,
+    "method": (
+        "The UNDP subnational table flags Nutrition as missing for all 37 states: a "
+        "country-wide exclusion, not a per-state gap. Comparing states with each other "
+        "inside Nigeria therefore holds; comparing Nigeria with another country does not."
+    ),
+}
+EXAMPLE_ROW: TableRow = {
+    "word": "An example household",
+    "formula": "16.7 + 5.6 + 5.6 + 5.6 + 5.6 = 38.9%",
+    "meaning": EXAMPLE_VERDICT,
+    "method": (
+        "The five items: nobody old enough finished six years of school; cooks with "
+        "wood; no electricity; safe water a 30-minute walk away; shares its toilet. The "
+        "exact sum is 3/18 + 4/18 = 7/18 and the percentages are rounded."
+    ),
+}
+
+
+def table_rows() -> list[tuple[str, str, list[TableRow]]]:
+    """The reference tab in row order: (group heading, group intro, rows).
+
+    Three groups, because the tab has three kinds of row: the words the atlas uses,
+    the nine needs that produce them, and the nine steps of the making. Every string
+    is taken from the structures above -- this function arranges, it does not author.
+    """
+    missing = [s["heading"] for s in METHOD if s["heading"] not in METHOD_FORMULA]
+    assert not missing, f"method sections with no formula for the table: {missing}"
+
+    words: list[TableRow] = [
+        {
+            "word": t["term"],
+            "formula": t["formula"],
+            "meaning": t["meaning"],
+            "method": t["method"],
+        }
+        for t in TERMS
+    ]
+    needs: list[TableRow] = [
+        {
+            "word": i["need"],
+            "formula": f"weight {i['weight']}",
+            "meaning": i["missing_if"],
+            "method": (
+                f"Area: {i['area']}. The cut-off is OPHI's, the same for every state and "
+                "every survey round."
+            ),
+        }
+        for i in INDICATORS
+    ]
+    needs += [HEALTH_ROW, EXAMPLE_ROW]
+    steps: list[TableRow] = [
+        {
+            "word": s["heading"].split(". ", 1)[1],
+            "formula": METHOD_FORMULA[s["heading"]],
+            "meaning": s["paragraphs"][0],
+            "method": " ".join(s["paragraphs"][1:]) or METHOD_NOTE[s["heading"]],
+        }
+        for s in METHOD
+    ]
+
+    groups = [
+        (WORDS_TITLE, WORDS_INTRO, words),
+        (INDICATORS_TITLE, INDICATORS_INTRO, needs),
+        (METHOD_TITLE, METHOD_INTRO, steps),
+    ]
+    # A row with an empty cell would render as a hole in the table, and nothing
+    # downstream would complain -- so it is checked here, where the table is built.
+    for heading, intro, rows in groups:
+        assert intro.strip(), f"empty intro for the table group {heading!r}"
+        for row in rows:
+            for column, text in row.items():
+                assert text.strip(), f"empty {column!r} in the table row {row['word']!r}"
+    return groups
+

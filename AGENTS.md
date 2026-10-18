@@ -32,10 +32,9 @@ themselves are green. Adding a config that states the intended rule set is an op
 | 2 | `02_acquire_conflict.py` | UCDP GED attributed to 37 states, method recorded per event |
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
 | 4 | `04_merge.py` | the three processed tables + `mpi_polygons.csv` (simplified ADM1 ring vertices for the map, area-checked) + `docs/normalisation.md`, `docs/data_quality.md` |
-| 5 | `05_preview.py` | the spec visuals as PNGs — the pre-Tableau QA gate (8 now: the five spec visuals, party alignment, the cluster map and the spatial scatter) |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — six Hyper extracts (the map's polygon vertices, the spatial diagnostic, and the same polygons joined to the neighbourhood types); `Where poverty sits` and `Where poverty clusters` are **real filled choropleths** (Polygon mark + Path) with **thick white state strokes**, both open and render in Tableau Public 2026.2 |
-| 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party, 1999–2021 aligned-years tally), party-alignment result panel, All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
-| 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05–07 read its outputs |
+| 5 | `05_preview.py` | the workbook's visuals as PNGs — the pre-Tableau QA gate (5 now, one per published view: the two maps and the three reference tabs) |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — **five views and two Hyper extracts** (`mpi_polygons.hyper`, `spatial_polygons.hyper`); `Where poverty sits` and `Where poverty clusters` are **real filled choropleths** (Polygon mark + Path) with **thick white state strokes**, the first banded on the five-step red ramp; `What the words mean` / `The list of basic needs` / `How we did it` are one reference table shipped as three text-zone tabs. All five open and render in Tableau Public 2026.2 |
+| 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05 reads its outputs |
 | 9 | `09_spatial_diagnostics.py` | pre-registered spatial diagnostic (`docs/spatial_analysis.md`, freeze in `docs/spatial_preregistration.md`): shells to `scripts/spatial_diagnostics.R` (sf/spdep/spatialreg), verifies Moran's I, the lag and the neighbourhood types independently in Python, writes `spatial_global.csv` + `spatial_diagnostics.csv` + `spatial_polygons.csv` (the map's rings joined to the types, for the cluster map), fills §3. Runs after 08; 05–06 read its outputs |
 
 Stage 4 also writes `poverty_group` (Poorest 12 vs Other 25) into
@@ -78,23 +77,33 @@ support, and OPHI's standard errors — published in a file the pipeline already
 downloads — show that **all 36 adjacent state rank pairs overlap at 95%**. So
 "Bauchi has the highest MPI" is not available, and neither is a causal claim.
 
-Top of the defect list, all resolved: the map was never a map (it drew 74 bar charts)
-and is now a real filled choropleth called `Where poverty sits` — drawn with a Polygon
-mark + Path field from `mpi_polygons.csv`, because Tableau's generated geographic fields
-cannot be hand-authored at all (error `9CA7205B`, or a hard load failure); the SEs are
-wired through and the map is banded; `Poverty over time` is a real trend with `state` on
-Colour. Its state outlines are strokes, not borders: `has-stroke` / `stroke-color` /
-`stroke-size` on the worksheet-level mark style rule. `border-color` / `border-width` look
-right and validate, but are **inert** on a mark (rendered pixel-identically with and
-without). Still open and documented step by step in `docs/PUBLISH.md`: the **colour
-legend does not draw** even though its right-edge card is declared exactly as a working
-Public workbook declares it (window cards *are* honoured — removing the Marks card from
-the same block removes it from the UI; `<simple-id>` and the reference's manifest are
-rejected by this schema, `D2E8DA72`, and the `rows` strip and mark class are ruled out) —
-the one click is Analysis → Legends → Colour Legend, then Save; and `Dimension
-breakdown` is three panels, not a stacked bar — that one also needs the GUI. Note the
-`contrib_*_pct` percent-formatting item is **not** a bug — those columns already sum to
-100.
+**The workbook is five views, as of 2026-10-18** — the two maps and the three reference
+tabs (`docs/FIX_LEDGER.md` W1, W2). Where the old defect list stands:
+
+- The map was never a map (it drew 74 bar charts) and is now a real filled choropleth
+  called `Where poverty sits` — drawn with a Polygon mark + Path field from
+  `mpi_polygons.csv`, because Tableau's generated geographic fields cannot be
+  hand-authored at all (error `9CA7205B`, or a hard load failure). Its state outlines are
+  strokes, not borders: `has-stroke` / `stroke-color` / `stroke-size` on the
+  worksheet-level mark style rule. `border-color` / `border-width` look right and
+  validate, but are **inert** on a mark (rendered pixel-identically with and without).
+- The five bands carry assigned colours rather than Tableau's categorical default, and the
+  ramp is red — `#ffe5e5` under 5% to `#d80000` 30% and above, deepest = poorest. The QA
+  gate draws the same bands from the same list, so the two cannot disagree.
+- `Poverty over time`'s unsupportable trend, `Dimension breakdown`'s three panes instead of
+  a stacked bar and the two scatter defects are **moot rather than fixed** — those sheets
+  are withdrawn, and every sentence a reader needed from them is a row of the reference
+  table. The `contrib_*_pct` percent-formatting item was never a bug: those columns already
+  sum to 100.
+- Still open, and documented step by step in `docs/PUBLISH.md`: the **colour legend does
+  not draw** on `Where poverty sits` even though its right-edge card is declared exactly as
+  a working Public workbook declares it (window cards *are* honoured — removing the Marks
+  card from the same block removes it from the UI; `<simple-id>` and the reference's
+  manifest are rejected by this schema, `D2E8DA72`; the `rows` strip and the mark class are
+  ruled out). The one click is Analysis → Legends → Colour Legend, then Save. The cluster
+  map's colour card **does** draw from the same declaration, so re-check sheet 1 before
+  treating that as settled. Axis headers off and `Fit → Entire View` on both maps, and alt
+  text per view, are also GUI clicks.
 
 ## Corrections to the original spec
 
@@ -111,10 +120,11 @@ The spec was written before the sources were checked. These are settled now:
 4. **The Google Sheets intermediary is unnecessary.** The workbook ships a packaged
    Hyper extract; there is no live connection to break, and the survey updates
    annually, so a 24-hour refresh would buy nothing.
-5. **The radar chart is not generated.** Its `Angle`/`Wedge Size` polar encodings are
-   still unverified from XML. The Polygon-mark half of that grammar is no longer the
-   blocker: `Where poverty sits` is a Polygon mark with a Path field, generated from
-   XML (2026-10-17). Still a documented GUI step.
+5. **The radar chart is not generated, and is withdrawn.** Its `Angle`/`Wedge Size` polar
+   encodings were never verified from XML; the Polygon-mark half is no longer the blocker
+   (`Where poverty sits` is a Polygon mark with a Path field, generated from XML,
+   2026-10-17). It went with the other spec sheets on 2026-10-18 (`docs/FIX_LEDGER.md`
+   W1), so no radar is planned.
 6. **The packaged data must be a Hyper extract, not a CSV.** Tableau Public refuses
    any workbook whose datasource is not an extract (`3C242D89`) and does *not* convert
    one on save — this project assumed it did, for its whole life. Stage 6 writes the
@@ -130,11 +140,11 @@ The spec was written before the sources were checked. These are settled now:
    (median CI width 0.075 against a median MPI of 0.092); and it is not a statistical
    choice either way, because **both** measures are equally unorderable — 0 of 36
    adjacent state pairs separate at 95% on H (median relative SE 14.3%) exactly as on
-   the MPI value (15.1%). **Every surface now draws the same chart**: sheet 1 and the
-   HTML map colour `mpi_band` in the five colours of `atlas_text.MPI_BANDS`, and since
-   2026-10-18 the pre-Tableau QA gate (`docs/preview/1_where_poverty_sits.png`, stage 5)
-   does too — it used to render a continuous `YlOrRd` ramp of H, a different measure from
-   the one the maps colour by, which meant the gate could not catch a sheet-1 regression.
+   the MPI value (15.1%). **Every surface draws the same chart**: sheet 1 colours
+   `mpi_band` in the five colours of `atlas_text.MPI_BANDS`, and since 2026-10-18 the
+   pre-Tableau QA gate (`docs/preview/1_where_poverty_sits.png`, stage 5) does too — it
+   used to render a continuous `YlOrRd` ramp of H, a different measure from the one the
+   map colours by, which meant the gate could not catch a sheet-1 regression.
    Stage 6 writes those five colours into the workbook's own palette block, because a
    nominal field on Colour otherwise draws in Tableau's default categorical palette —
    five unrelated hues on a scale whose meaning is its order. The grammar is not
@@ -152,8 +162,8 @@ The spec was written before the sources were checked. These are settled now:
    The legend expands the acronym: the Tableau colour card's title **is** the colour
    field's caption, so `mpi_band` is captioned
    `MPI band (Multidimensional Poverty Index)` rather than the internal column name. A
-   caption is plain text — the italic form of the full meaning lives in the tooltip's MPI
-   line and on the HTML map's colour-bar title / narrow-screen legend, all sourced from
+   caption is plain text — the expanded form of the full meaning lives in the tooltip's
+   MPI line and in the QA-gate PNG's colour-bar title and subtitle, all sourced from
    `MPI_LEGEND_*` in `scripts/atlas_text.py`.
 
 ## Findings that constrain what may be claimed
@@ -188,12 +198,11 @@ The spec was written before the sources were checked. These are settled now:
   states' MPI fell *slower*, permutation p = 0.036, but the 95% CI crosses 0 and
   |β| < MDE 0.0115. It rests on 2013–16 alone and fails the sitting-party
   (defection) check (p ≈ 0.08), relative change, binary exposure and dropping any
-  interval; it holds only with poverty group × interval. Display the §3 sentence
-  verbatim *with* the robustness context line beside it (the map panel leads with a
-  plain-language reading generated from the same CSV, and keeps the exact sentence
-  under "Technical details") — never alone, never as
-  "party affects poverty". The dominant-party (mode) label cannot test anything:
-  26 of 36 states are PDP.
+  interval; it holds only with poverty group × interval. **No sheet has drawn it since
+  2026-10-18** (`docs/FIX_LEDGER.md` W1) — the result lives in
+  `docs/party_alignment.md`, where the §3 sentence appears verbatim *with* the robustness
+  context line beside it — never alone, never as "party affects poverty". The
+  dominant-party (mode) label cannot test anything: 26 of 36 states are PDP.
 
 ## Environment rules that matter here
 
@@ -262,11 +271,13 @@ docs/         short notes; the spec lives at the root, not here
 
 ## Build order
 
-Already implemented as numbered scripts. To rebuild from scratch, run them in order:
+Already implemented as numbered scripts. `scripts\run_all.ps1` is the canonical order
+(9 stages); to run them by hand:
 
 ```powershell
 foreach ($s in '00_validate_reference','01_acquire_mpi','02_acquire_conflict',
-               '03_acquire_climate','04_merge','05_preview','06_build_twb') {
+               '03_acquire_climate','04_merge','08_party_alignment',
+               '09_spatial_diagnostics','05_preview','06_build_twb') {
   & C:\Users\TOSHIBA\ds-general\python.exe "scripts\$s.py"
 }
 ```

@@ -4,12 +4,16 @@ A diagnostic on the map, not a second poverty map. It asks whether the pattern o
 *Where poverty sits* is more than the north–south gradient the atlas already
 documents, and it is deliberately unable to say anything about causes.
 
-The reader-facing version of this analysis is two worksheets in the workbook — the
-cluster map (`Where poverty clusters`), which sits immediately after the poverty map,
-and the diagnostic scatter (`Do poor states sit next to poor states?`) — plus section 8
-of *How we did it*. The words there are frozen in `docs/spatial_preregistration.md`,
-which records in Amendment 1 why a second surface was added after the result was seen
-and why its colours are descriptive rather than a significance map.
+The reader-facing version of this analysis is **one worksheet** in the workbook — the
+cluster map (`Where poverty clusters`), which sits immediately after the poverty map —
+plus the rows of the reference tabs that explain it. That is a reduction: a second
+surface, the diagnostic scatter (`Do poor states sit next to poor states?`), shipped
+until 2026-10-18 and is no longer published (`docs/spatial_preregistration.md`,
+Amendment 2; `docs/FIX_LEDGER.md` W1). The test, the numbers and the reading are
+unchanged, and the map's hover carries the same four frozen lines the scatter carried.
+Those words are frozen in `docs/spatial_preregistration.md`, which records in Amendment 1
+why a second surface was added after the result was seen and why its colours are
+descriptive rather than a significance map.
 
 ## 1. The question
 
@@ -128,5 +132,4 @@ Seed 20261018, 9,999 permutations, weights row-standardised from `data/raw/nga_a
 | `data/processed/spatial_global.csv` | the global statistics, keyed; the source of every figure |
 | `data/processed/spatial_polygons.csv` | the map's ring vertices + the three spatial fields (7,089 rows) |
 | `data/interim/spatial_weights_meta.csv` | the weight-matrix checks and run settings |
-| `docs/preview/7_spatial_clusters_map.png` | the stage-5 visual gate for the cluster map |
-| `docs/preview/8_spatial_scatter.png` | the stage-5 visual gate for the scatter |
+| `docs/preview/2_where_poverty_clusters.png` | the stage-5 visual gate for the cluster map (the scatter, and its `8_spatial_scatter.png` gate, were withdrawn on 2026-10-18) |

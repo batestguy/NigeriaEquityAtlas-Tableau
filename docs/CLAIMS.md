@@ -113,7 +113,9 @@ the same people whose index we use is an unavoidable comparison; pre-empt it.
 ## 5. Wording rules for the viz
 
 - **Lead with the negative result.** "Conflict and poverty are not associated"
-  lives only in `AGENTS.md` today. A viewer of the published scatter will assume
+  lives only in `AGENTS.md` today. Nothing draws the conflict layer since 2026-10-18
+  (`docs/FIX_LEDGER.md` W1), so the caveat is carried by the reference table's conflict
+  rows — where it has to stay: a reader who sees a conflict figure without it will assume
   a relationship was found.
 - **Never quote one round.** State the range and the sign flip.
 - **Every correlation carries n and the power floor.**
