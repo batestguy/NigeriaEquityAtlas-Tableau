@@ -429,3 +429,28 @@ Confirmed clean. Each was a likely criticism; none applies.
 **Then, and only then:** C1–C5 aesthetics.
 
 **Never verified:** that the map draws Nigeria's 37 polygons. Still first.
+
+---
+
+## F. Registered before code
+
+Not defects. Listed so a reader can find what was fixed in advance, and check
+`git log` that it was.
+
+### F1. Spatial autocorrelation of state MPI (Moran's I)
+**Severity n/a — a registered test · status frozen 2026-10-18, not yet built**
+
+The full specification is `docs/spatial_preregistration.md`, committed as a
+docs-only change before `scripts/09_spatial_diagnostics.py` or
+`scripts/spatial_diagnostics.R` existed. It fixes the statistic (Moran's I of
+`mpi`, and of the residuals of `mpi ~ lat`), the weights (queen contiguity on the
+raw ADM1 file, row-standardised), the permutation count and seed, the correction
+(Bonferroni across 37 local tests) and the decision rule, together with the
+sensitivity set and the reader-facing wording.
+
+Two things it pre-declares that bear on everything else in this ledger: the raw
+global statistic is expected to be dominated by the north–south gradient already
+documented in A2, so **the report leads with the latitude-controlled value**; and
+no per-state hotspot claim is permitted, because A1 withdrew orderings.
+Exploratory computation preceded the registration and is disclosed inside it —
+it is a specification freeze, not a blind test.
