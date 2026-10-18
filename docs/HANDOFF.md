@@ -1,5 +1,11 @@
 # Handoff
 
+> **Historical record — session 2026-10-06.** Current state lives in
+> `docs/SESSION_HANDOFF.md` (newest session first) and `docs/PUBLISH.md`. Two
+> claims below are superseded: `Where poverty sits` **is** a filled choropleth as of
+> 2026-10-17 (it was a georeferenced scatter), and the "filled choropleth, 5 min by
+> hand" instruction under §"not done" no longer applies — there is nothing to do.
+
 State of the project as of this session, for whoever picks it up next — a new agent, a
 collaborator, or future me after context is lost.
 

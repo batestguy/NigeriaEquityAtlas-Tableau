@@ -112,12 +112,17 @@ PANEL_MEASURES = ["mpi", "headcount_ratio_pct", "intensity_pct", "events", "fata
 PANEL_DIMS = ["pcode", "state", "survey_year", "survey", "mpi_change_significant"]
 
 
-def ref(column: str, kind: str) -> str:
+def ref(column: str, kind: str, ds: str = DS_NAME) -> str:
     """Build a Tableau field reference such as [ds].[sum:mpi:qk]."""
     if kind == "dim":
-        return f"[{DS_NAME}].[none:{column}:nk]"
+        return f"[{ds}].[none:{column}:nk]"
+    if kind == "ord":
+        # An integer dimension is declared type='ordinal', so its reference must
+        # carry :ok. Referencing one as :nk makes Tableau report that the field
+        # does not exist (9CA7205B) -- verified 2026-10-17.
+        return f"[{ds}].[none:{column}:ok]"
     agg = "sum" if kind == "sum" else "avg"
-    return f"[{DS_NAME}].[{agg}:{column}:qk]"
+    return f"[{ds}].[{agg}:{column}:qk]"
 
 
 
@@ -170,6 +175,7 @@ HYPER_CATALOG_TYPE = {"string": "TEXT", "integer": "BIG_INT", "real": "DOUBLE"}
 ATLAS_HYPER = "mpi_atlas_2021.hyper"
 PANEL_HYPER = "mpi_trends_panel.hyper"
 ALIGN_HYPER = "party_alignment_panel.hyper"
+POLY_HYPER = "mpi_polygons.hyper"
 
 
 def build_hyper(csv_path: Path, out_path: Path,
@@ -181,8 +187,9 @@ def build_hyper(csv_path: Path, out_path: Path,
     Extract -- the same layout Tableau itself writes.
 
     This build of the Hyper API has no parameter binding, so values go into the
-    INSERT as literals. That is fine at 37 and 148 rows; it is not the shape to
-    use if this ever runs over a table large enough for statement limits to bite.
+    INSERT as literals. Rows go in batches: one INSERT per statement, 500 rows at
+    a time. A statement per row is fine at 37 and 148 rows but the polygon extract
+    is ~53k vertices, and one INSERT each takes quarter of an hour.
     """
     from tableauhyperapi import (
         Connection,
@@ -217,9 +224,13 @@ def build_hyper(csv_path: Path, out_path: Path,
         ) as conn:
             conn.execute_command('CREATE SCHEMA IF NOT EXISTS "Extract"')
             conn.execute_command(f'CREATE TABLE "Extract"."Extract" ({definition})')
-            for row in rows:
-                values = ", ".join(literal(row[name], datatype) for name, datatype, _ in columns)
-                conn.execute_command(f'INSERT INTO "Extract"."Extract" VALUES ({values})')
+            for start in range(0, len(rows), 500):
+                batch = rows[start:start + 500]
+                values = ", ".join(
+                    "(" + ", ".join(literal(row[name], datatype) for name, datatype, _ in columns) + ")"
+                    for row in batch
+                )
+                conn.execute_command(f'INSERT INTO "Extract"."Extract" VALUES {values}')
     return len(rows)
 
 
@@ -327,7 +338,36 @@ def deps_xml(columns: list[tuple[str, str, str]]) -> str:
 def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
                   encodings: str = "", ds_name: str = DS_NAME,
                   ds_caption: str = DS_CAPTION,
-                  deps: str = "", subtitle: str = "") -> str:
+                  deps: str = "", subtitle: str = "", tooltip: str = "",
+                  mark_formats: tuple[tuple[str, str], ...] = ()) -> str:
+    """A tooltip, when given, is Tableau's "customized tooltip": it replaces the
+    default field list entirely, so fields that exist only to draw the mark stop
+    appearing to the reader. Grammar taken from a real Tableau-authored workbook
+    -- field references live in CDATA, wrapped in angle brackets.
+
+    Position matters, and is not guessable: the element belongs *after*
+    </encodings>, not between <mark> and <encodings>. Placed before the encodings
+    it parses but fails the whole workbook load ("Errors occurred while trying to
+    load the workbook"), with nothing in the log naming the element. Bisected
+    2026-10-17 against Tableau Public 2026.2: identical workbooks differing only
+    in this position load or fail. The reference workbook was no help -- its
+    panes carry <encodings> or a tooltip, never both.
+
+    ``mark_formats`` adds further <format> lines to the worksheet's mark style
+    rule -- used by the map to thicken its white state borders. It goes in the
+    worksheet-level <style>, after </view>, where a real Tableau-authored workbook
+    puts mark formats; the pane has its own <style> too, but nothing there has been
+    observed to take effect.
+    """
+    tooltip_block = (
+        "          <customized-tooltip show-buttons='false'>\n"
+        "            <formatted-text>\n"
+        f"{tooltip}"
+        "            </formatted-text>\n"
+        "          </customized-tooltip>\n"
+        if tooltip
+        else ""
+    )
     pane = f"""      <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -336,7 +376,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
           <mark class='{mark}' />
           <encodings>
 {encodings}          </encodings>
-          <style>
+{tooltip_block}          <style>
             <style-rule element='mark'>
               <format attr='mark-labels-show' value='true' />
             </style-rule>
@@ -344,7 +384,11 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
         </pane>
       </panes>
 """
-    instances = column_instances(rows, cols, encodings)
+    style_block = ""
+    if mark_formats:
+        body = "".join(f"<format attr='{attr}' value='{value}' />" for attr, value in mark_formats)
+        style_block = f"\n          <style-rule element='mark'>{body}</style-rule>\n        "
+    instances = column_instances(rows, cols, encodings, tooltip)
     if instances:
         closing = "          </datasource-dependencies>"
         if closing in deps:
@@ -369,7 +413,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
           </datasources>
 {deps}          <aggregation value='true' />
         </view>
-        <style />
+        <style>{style_block}</style>
 {pane}        <rows>{rows}</rows>
         <cols>{cols}</cols>
       </table>
@@ -387,6 +431,40 @@ ALIGN_CONN = "hyper.0partyalignment"
 ALIGN_MEASURES = ["aligned_share", "aligned_binary", "aligned_share_sitting", "mpi_t0", "mpi_t1",
                   "dmpi_annual", "dlogmpi_annual"]
 ALIGN_SHEET = "Party alignment and MPI change"
+
+# --- The filled map's geometry (stage 4, mpi_polygons.csv) ---------------------
+# Tableau's generated geographic fields cannot be hand-authored (see sheet 1), so
+# the ADM1 rings ship as rows. Column order here must match POLY_FIELDS in
+# 04_merge.py: build_hyper writes them in this order and stage 6 reads the schema
+# back out of the .hyper to check.
+POLY_DS_NAME = "federated.0mpipolygons"
+POLY_DS_CAPTION = "Nigeria MPI polygons"
+POLY_CONN = "hyper.0mpipolygons"
+POLY_COLUMNS: list[tuple[str, str, str]] = [
+    ("state", "string", "dimension"),
+    ("pcode", "string", "dimension"),
+    ("ring", "integer", "dimension"),
+    ("point_order", "integer", "dimension"),
+    ("lon", "real", "measure"),
+    ("lat", "real", "measure"),
+    ("mpi_band", "string", "dimension"),
+    ("poverty_group", "string", "dimension"),
+    ("mpi", "real", "measure"),
+    ("mpi_se", "real", "measure"),
+    ("mpi_ci_lo", "real", "measure"),
+    ("mpi_ci_hi", "real", "measure"),
+    ("headcount_ratio_pct", "real", "measure"),
+    ("intensity_pct", "real", "measure"),
+    ("mpi_poor_thousands", "real", "measure"),
+    # The tooltip renders the MPI as a percentage of the index and cannot do
+    # arithmetic, so the scaled values are columns (stage 4 writes mpi * 100), and
+    # the governorship line is pre-composed there too -- domain and tie rules live
+    # in one place, next to the checks that verify them.
+    ("mpi_pct", "real", "measure"),
+    ("mpi_ci_lo_pct", "real", "measure"),
+    ("mpi_ci_hi_pct", "real", "measure"),
+    ("gov_party", "string", "dimension"),
+]
 
 
 # --- Reader dashboards: plain-language text from scripts/atlas_text.py ---------
@@ -528,63 +606,151 @@ READER_DASHBOARDS = [atlas_text.WORDS_TITLE, atlas_text.METHOD_TITLE]
 
 def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
                    panel_columns: list[tuple[str, str, str]], panel_rows: int,
-                   align_columns: list[tuple[str, str, str]], align_rows: int) -> str:
+                   align_columns: list[tuple[str, str, str]], align_rows: int,
+                   poly_rows: int) -> str:
     atlas_deps = deps_xml(atlas_columns)
     panel_deps = deps_xml(panel_columns)
     align_deps = deps_xml(align_columns)
+    poly_deps = deps_xml(POLY_COLUMNS)
 
-    # ---- sheet 1: geographic view -------------------------------------------
-    # Verified 2026-10-06 by opening the workbook in Tableau Public and LOOKING at
-    # it -- the first time this has been done. Four attempts, recorded because the
-    # next person will otherwise repeat them:
+    # ---- sheet 1: the filled map -------------------------------------------
+    # A genuine filled choropleth, drawn from shipped geometry rather than from
+    # Tableau's geography engine. What was tried, in order:
     #
     #   1. cols = state / SUM(lat) + SUM(lon)  ->  74 small lat/lon BAR CHARTS.
-    #      The old handoff called this "opens and renders"; the workbook loaded,
-    #      the map did not exist. This is the defect nobody checked.
-    #   2. Hand-written [Latitude (generated)] / [Longitude (generated)] on the
-    #      shelves, WITH matching <column> declarations -> red unresolved pill on
-    #      Columns, blank canvas. Those fields are synthesised by Tableau; declaring
-    #      them by hand conflicts with the real definition.
-    #   3. No coordinates on the shelves at all, geographic role on `state` alone
-    #      -> renders 37 coloured numbers as a text table. The role is not enough
-    #      on its own; Tableau needs the coordinate fields present too.
-    #   4. This: raw lat/lon as AVG on Rows/Columns. state on Detail carries the
-    #      [State].[Name] role and the raw lat/lon carry [Geographical] roles, so
-    #      Tableau treats the two measures as a coordinate pair and draws the map.
+    #      This shipped for the workbook's whole life; the handoff called it
+    #      "renders". Verified in the application 2026-10-06.
+    #   2. [Latitude (generated)] / [Longitude (generated)] on the shelves with
+    #      matching <column> declarations -> red unresolved pill, blank canvas.
+    #   3. Geographic role on `state` alone, no coordinates -> 37 coloured numbers
+    #      as a text table.
+    #   4. Raw lat/lon as AVG on Rows/Columns with [Geographical] roles -> a
+    #      correctly georeferenced SCATTER of the 37 capitals. Not a filled map.
     #
-    # Colour is the *band*, not the continuous MPI: with a median 95% CI width of
+    # The generated-field route is closed, and was re-verified against Tableau
+    # Public 2026.2 on 2026-10-17:
+    #   * referencing [none:Latitude (generated):qk] without a <column> loads as
+    #     "The field '[none:Latitude (generated):qk]' in the datasource ... does
+    #     not exist in your database" (9CA7205B);
+    #   * declaring it as a <column> in the datasource fails the workbook open
+    #     entirely ("Errors occurred while trying to load the workbook").
+    # Those fields are synthesised by the application, and only when the
+    # application itself performs the geography action. The reference viz in this
+    # file's docstring turned out to draw its "map" as a background image, so it
+    # was no help as a schema source either.
+    #
+    # Hence: the ADM1 rings ship as rows (stage 4 -> mpi_polygons.csv) and the
+    # sheet draws them with a Polygon mark plus a Path field. `ring` keeps a
+    # state's disjoint parts from being joined; `point_order` closes each ring.
+    #
+    # Colour is the *band*, not a continuous ramp: with a median 95% CI width of
     # 0.075 against a median MPI of 0.092, a ramp invites the reader to resolve
-    # differences the data cannot support. All 36 adjacent rank pairs overlap at
-    # 95%, so there is no ordering to show.
+    # differences the data cannot support, and all 36 adjacent rank pairs overlap
+    # at 95%.
     #
-    # Explorer upgrade: label with the state NAME (fun to read), and carry the
-    # numbers on Detail so hover shows MPI + 95% CI + H + intensity + poor
-    # thousands + group. Detail fields surface in the tooltip by default, so no
-    # fragile <tooltip> tag is needed -- <lod> is the proven-safe encoding here.
-    # poverty_group drives the Poorest-12-vs-rest toggle (filter in GUI).
+    # The tooltip is customized rather than default, because the default lists
+    # every field on the view and ten of those fifteen fields exist only to draw
+    # the polygon (pcode, ring, point_order, mpi_se, and the two coordinate axes).
+    # A customized tooltip replaces the default list outright, so those stop
+    # reaching the reader while staying on the shelves where the drawing needs
+    # them. The MPI line carries a one-sentence definition instead of the band
+    # name, because the legend beside the sheet already keys the colours.
+    #
+    # Tableau drops a <run> whose content is only whitespace, so every run below
+    # carries at least one character of text: a line break belongs to the run that
+    # starts the next line, never to a run of its own. (Learned the hard way: with
+    # the breaks in their own runs, "Other 25" rendered hard against "17.38%".)
+    #
+    # "Poorest 12" and "Other 25" are labels the extract carries, not sentences, so
+    # the tooltip has to finish them: alone they say 12 and 25 *what*. The suffix
+    # fits both values unchanged ("Poorest 12 of the 37 states, by MPI" / "Other 25
+    # of the 37 states, by MPI"), which is why it is a static run rather than a
+    # second column in the extract.
+    def map_tooltip_runs() -> str:
+        """The runs inside sheet 1's customized tooltip."""
+        def fld(column: str, kind: str = "sum", attrs: str = "") -> str:
+            return f"              <run{attrs}><![CDATA[<{ref(column, kind, POLY_DS_NAME)}>]]></run>\n"
+
+        def txt(body: str, attrs: str = "") -> str:
+            return f"              <run{attrs}>{body}</run>\n"
+
+        return (
+            fld("state", "dim", " bold='true' fontsize='13'")
+            + txt(" &#183; ")
+            + fld("poverty_group", "dim")
+            + txt(" of the 37 states, by MPI&#10;Of the population, ")
+            + fld("headcount_ratio_pct")
+            + txt("% are multidimensionally poor&#10;")
+            + txt("Average deprivation among them: ")
+            + fld("intensity_pct")
+            + txt("% of the things counted&#10;")
+            + txt("Poor people: ")
+            + fld("mpi_poor_thousands")
+            + txt(" thousand&#10;")
+            + txt("Governorship 1999&#8211;2021: ")
+            + fld("gov_party", "dim")
+            + txt("&#10;&#10;MPI ", " bold='true'")
+            + fld("mpi_pct", "sum", " bold='true'")
+            + txt("%", " bold='true'")
+            + txt("  (95% interval ")
+            + fld("mpi_ci_lo_pct")
+            + txt("% to ")
+            + fld("mpi_ci_hi_pct")
+            + txt("%)&#10;")
+            + txt(
+                "MPI is the share of people who are poor multiplied by how deprived "
+                "they are, as a percentage of the index.&#10;&#10;"
+            )
+            + txt(
+                "Neighbouring states' intervals overlap, so the map groups states "
+                "into bands instead of ranking them.",
+                " italic='true'",
+            )
+        )
+
     sheet_map = worksheet_xml(
         "Where poverty sits",
         subtitle="MICS 2021 · 5 bands, not 37 ranks · hover for MPI + 95% CI",
-        rows=ref("lat", "avg"),
-        cols=ref("lon", "avg"),
-        # A filled map is not its own mark class -- it is an Automatic mark over a
-        # geographic field. 'Map' is not in Tableau's mark enumeration and is
-        # rejected on load with "value 'Map' not in enumeration".
-        mark="Automatic",
+        rows=ref("lat", "avg", POLY_DS_NAME),
+        cols=ref("lon", "avg", POLY_DS_NAME),
+        mark="Polygon",
         encodings=(
-            f"            <lod column='{ref('state', 'dim')}' />\n"
-            f"            <color column='{ref('mpi_band', 'dim')}' />\n"
-            f"            <text column='{ref('state', 'dim')}' />\n"
-            f"            <lod column='{ref('mpi', 'sum')}' />\n"
-            f"            <lod column='{ref('mpi_se', 'sum')}' />\n"
-            f"            <lod column='{ref('mpi_ci_lo', 'sum')}' />\n"
-            f"            <lod column='{ref('mpi_ci_hi', 'sum')}' />\n"
-            f"            <lod column='{ref('headcount_ratio_pct', 'sum')}' />\n"
-            f"            <lod column='{ref('intensity_pct', 'sum')}' />\n"
-            f"            <lod column='{ref('mpi_poor_thousands', 'sum')}' />\n"
-            f"            <lod column='{ref('poverty_group', 'dim')}' />\n"
+            f"            <lod column='{ref('state', 'dim', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('pcode', 'dim', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('ring', 'ord', POLY_DS_NAME)}' />\n"
+            f"            <path column='{ref('point_order', 'ord', POLY_DS_NAME)}' />\n"
+            f"            <color column='{ref('mpi_band', 'dim', POLY_DS_NAME)}' />\n"
+            f"            <text column='{ref('state', 'dim', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_se', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_ci_lo', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_ci_hi', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('headcount_ratio_pct', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('intensity_pct', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_poor_thousands', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('poverty_group', 'dim', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_pct', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_ci_lo_pct', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_ci_hi_pct', 'sum', POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('gov_party', 'dim', POLY_DS_NAME)}' />\n"
         ),
-        deps=atlas_deps,
+        ds_name=POLY_DS_NAME,
+        ds_caption=POLY_DS_CAPTION,
+        deps=poly_deps,
+        tooltip=map_tooltip_runs(),
+        # Tableau's default polygon border is a hairline, and at the map's size the
+        # states read as one field of colour: you cannot see which state the cursor
+        # is over. 3px of white is what makes a choropleth readable at this scale.
+        #
+        # `has-stroke` turns the border on and `stroke-color`/`stroke-size` set it.
+        # The obvious-looking `border-color`/`border-width` pair is *inert* here:
+        # the workbook loads and renders identically with and without it, at both
+        # worksheet and pane scope (checked pixel-for-pixel against a 4x crop,
+        # 2026-10-18). `border-*` styles the borders of table cells and headers;
+        # a polygon mark's outline is a stroke. Both names are in the published
+        # schema's StyleAttribute vocabulary, so the XML validates either way --
+        # only rendering tells them apart.
+        mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
     )
 
     # ---- sheet 2: dimension breakdown ---------------------------------------
@@ -752,7 +918,12 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
       <size maxheight='1500' maxwidth='1600' minheight='1500' minwidth='1600' />
       <zones>
         <zone h='150000' id='3' type-v2='layout-basic' w='160000' x='0' y='0'>
-{text_zone}{kpi_zone}          <zone h='51000' id='4' name='Where poverty sits' w='160000' x='0' y='57000' />
+{text_zone}{kpi_zone}          <zone h='51000' id='4' name='Where poverty sits' w='141000' x='0' y='57000' />
+          <!-- The map's colour legend, beside the map rather than inside it. A
+               dashboard needs its own legend zone: a worksheet's legend card does
+               not carry over into the dashboard by itself. Grammar (the attribute
+               set and the param shape) is from a real Tableau-authored workbook. -->
+          <zone h='51000' id='9' name='Where poverty sits' pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' show-title='false' type-v2='color' w='19000' x='141000' y='57000' />
           <zone h='51000' id='5' name='Dimension breakdown (three panels, not stacked)' w='58000' x='0' y='16000' />
           <zone h='51000' id='6' name='Poverty vs conflict' w='52000' x='58000' y='16000' />
           <zone h='51000' id='7' name='Incidence vs intensity' w='50000' x='110000' y='16000' />
@@ -776,6 +947,11 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         <edge name='top'>
           <strip size='2147483647'>
             <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type='color' />
           </strip>
         </edge>
       </cards>
@@ -837,7 +1013,15 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     </window>
     <window class='dashboard' name='Equity Atlas'>
       <viewpoints>
-        <viewpoint name='Where poverty sits' />
+        <!-- The map is a geographic sheet, so Tableau draws it at a fixed map
+             scale and a small pane crops it. `entire-view` is the dashboard's
+             Fit menu stored as data; it is legal grammar (taken from a real
+             Tableau-authored workbook) and makes the whole country fit whatever
+             size the zone ends up. It is NOT legal on a worksheet window: the
+             loader rejects the whole workbook if it is put there. -->
+        <viewpoint name='Where poverty sits'>
+          <zoom type='entire-view' />
+        </viewpoint>
         <viewpoint name='Dimension breakdown (three panels, not stacked)' />
         <viewpoint name='Poverty vs conflict' />
         <viewpoint name='Poverty over time' />
@@ -855,8 +1039,12 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     ) + """  </windows>
 """
 
-    atlas_sheets = " ".join([sheet_map, sheet_bar, sheet_scatter, sheet_quadrant])
+    # Sheet 1 draws the polygon extract, not the atlas one, so it is kept out of
+    # the atlas instance list: a datasource must not declare instances for fields
+    # that live in another extract.
+    atlas_sheets = " ".join([sheet_bar, sheet_scatter, sheet_quadrant])
     panel_sheets = " ".join([sheet_trend])
+    poly_sheets = sheet_map
     atlas_instances = column_instances(atlas_sheets)
     atlas_ds = datasource_xml(
         atlas_columns, ATLAS_HYPER, atlas_rows, atlas_instances,
@@ -877,6 +1065,12 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         .replace(CONN_NAME, ALIGN_CONN)
         .replace(f"caption='{DS_CAPTION}'", f"caption='{ALIGN_DS_CAPTION}'", 1)
     )
+    poly_ds = (
+        datasource_xml(POLY_COLUMNS, POLY_HYPER, poly_rows, column_instances(poly_sheets))
+        .replace(DS_NAME, POLY_DS_NAME)
+        .replace(CONN_NAME, POLY_CONN)
+        .replace(f"caption='{DS_CAPTION}'", f"caption='{POLY_DS_CAPTION}'", 1)
+    )
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -885,7 +1079,7 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{atlas_ds}{panel_ds}{align_ds}  </datasources>
+{atlas_ds}{panel_ds}{align_ds}{poly_ds}  </datasources>
   <worksheets>
 {sheet_map}{sheet_bar}{sheet_scatter}{sheet_trend}{sheet_quadrant}{sheet_align}  </worksheets>
 {dashboards}{windows}</workbook>
@@ -930,7 +1124,7 @@ def validate(xml: str, declared: set[str]) -> list[str]:
         if name not in declared:
             problems.append(f"field reference to undeclared column {name!r} in {token}")
     for ds in ("[federated.0mpiatlas2021]", "[federated.0mpipanel2021]",
-               "[federated.0partyalignment]"):
+               "[federated.0partyalignment]", "[federated.0mpipolygons]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
     return problems
@@ -993,7 +1187,8 @@ def main() -> int:
     atlas_path = PROCESSED / "mpi_atlas_2021.csv"
     panel_path = PROCESSED / "mpi_trends_panel.csv"
     align_path = PROCESSED / "party_alignment_panel.csv"
-    for p in (atlas_path, panel_path, align_path):
+    poly_path = PROCESSED / "mpi_polygons.csv"
+    for p in (atlas_path, panel_path, align_path, poly_path):
         if not p.exists():
             raise SystemExit(f"missing {p}; run scripts/04_merge.py and 08_party_alignment.py first")
 
@@ -1003,7 +1198,14 @@ def main() -> int:
         panel_reader = list(csv.DictReader(fh))
     with align_path.open(newline="", encoding="utf-8-sig") as fh:
         align_reader = list(csv.DictReader(fh))
+    with poly_path.open(newline="", encoding="utf-8-sig") as fh:
+        poly_reader = list(csv.DictReader(fh))
     assert len(align_reader) == 108, f"party alignment panel has {len(align_reader)} rows, expected 108"
+    # 37 states, one ring each, 53k vertices: a drift here means the geometry or
+    # the pcode join changed, and the map would silently lose a state.
+    assert {r["pcode"] for r in poly_reader} == {r["pcode"] for r in atlas_reader}, (
+        "polygon extract does not cover the same 37 states as the atlas"
+    )
 
     def infer(rows: list[dict[str, str]], numeric: list[str], dims: list[str]):
         cols: list[tuple[str, str, str]] = []
@@ -1029,15 +1231,20 @@ def main() -> int:
     ]
 
     align_columns = infer(align_reader, ALIGN_MEASURES, [])
+    # The polygon extract is not inferred: `ring` and `point_order` must be
+    # integer dimensions (type='ordinal'), not measures, or the Path field
+    # resolves to a nonexistent :ok/:nk instance. Types are pinned in POLY_COLUMNS.
+    poly_columns = POLY_COLUMNS
 
     declared = (
         {n for n, _, _ in atlas_columns}
         | {n for n, _, _ in panel_columns}
         | {n for n, _, _ in align_columns}
+        | {n for n, _, _ in poly_columns}
     )
     xml = build_workbook(
         atlas_columns, len(atlas_reader), panel_columns, len(panel_reader),
-        align_columns, len(align_reader),
+        align_columns, len(align_reader), len(poly_reader),
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1047,6 +1254,8 @@ def main() -> int:
     panel_n = build_hyper(panel_path, panel_hyper, panel_columns)
     align_hyper = OUT_DIR / ALIGN_HYPER
     align_n = build_hyper(align_path, align_hyper, align_columns)
+    poly_hyper = OUT_DIR / POLY_HYPER
+    poly_n = build_hyper(poly_path, poly_hyper, poly_columns)
 
     problems = validate(xml, declared)
     problems += check_hyper_schema(
@@ -1054,8 +1263,14 @@ def main() -> int:
             (ATLAS_HYPER, atlas_hyper, atlas_columns),
             (PANEL_HYPER, panel_hyper, panel_columns),
             (ALIGN_HYPER, align_hyper, align_columns),
+            (POLY_HYPER, poly_hyper, poly_columns),
         ],
-        {ATLAS_HYPER: atlas_n, PANEL_HYPER: panel_n, ALIGN_HYPER: align_n},
+        {
+            ATLAS_HYPER: atlas_n,
+            PANEL_HYPER: panel_n,
+            ALIGN_HYPER: align_n,
+            POLY_HYPER: poly_n,
+        },
     )
     if problems:
         print("WORKBOOK VALIDATION FAILED")
@@ -1073,12 +1288,13 @@ def main() -> int:
         zf.write(atlas_hyper, f"Data/{ATLAS_HYPER}")
         zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
         zf.write(align_hyper, f"Data/{ALIGN_HYPER}")
+        zf.write(poly_hyper, f"Data/{POLY_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(
         f"Extracts validated: {ATLAS_HYPER} ({atlas_n} rows), "
-        f"{PANEL_HYPER} ({panel_n} rows), {ALIGN_HYPER} ({align_n} rows) "
-        "match the declared columns"
+        f"{PANEL_HYPER} ({panel_n} rows), {ALIGN_HYPER} ({align_n} rows), "
+        f"{POLY_HYPER} ({poly_n} rows) match the declared columns"
     )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")

@@ -96,21 +96,38 @@ document.
 
 **Opening the workbook and looking at it was worth more than every schema check.**
 The map sheet had never been a map. It drew **74 small lat/lon bar charts** and the
-handoff recorded it as "renders". Four approaches, all now documented in
-`docs/PUBLISH.md`:
+handoff recorded it as "renders". Every approach is documented in `docs/PUBLISH.md`:
 
 | Attempt | Result |
 |---|---|
 | `state / SUM(lat) + SUM(lon)` | 74 bar charts — what shipped for the workbook's whole life |
-| Hand-written `[Latitude (generated)]` | Red unresolved pill, blank canvas |
+| `[Latitude (generated)]` on the shelves | Red unresolved pill, blank canvas |
+| The same fields declared as `<column>` | **Workbook will not load at all** |
 | Geographic role alone, no coordinates | 37 numbers as a text table |
-| **`AVG(lat)`/`AVG(lon)` + `[Geographical]` semantic roles** | **Works.** Correctly georeferenced |
+| `AVG(lat)`/`AVG(lon)` + `[Geographical]` semantic roles | Works, but a **scatter of 37 capital points** |
 
-The shipped sheet is therefore a **georeferenced scatter, not filled polygons**, and
-is titled `Where poverty sits` rather than pretending. A filled choropleth is a
-one-minute GUI step, documented with the target image
-(`docs/preview/1_where_poverty_sits.png` is a true filled map drawn in matplotlib
-from the same rows — the geometry was never the problem, only the XML).
+**Resolved 2026-10-17: it is now a real filled choropleth.** Tableau's generated
+geographic fields are synthesised by the application and are rejected from hand-written
+XML (error `9CA7205B`, and a hard load failure if declared as a column), so the sheet no
+longer uses Tableau's geography at all for its shape. Stage 4 writes the ADM1 ring
+vertices — simplified by `shapely` to 7,089, with a per-state area check — to
+`data/processed/mpi_polygons.csv`, stage 6 packages them, and the sheet draws them with a
+**Polygon mark and an integer Path field** grouped by `state` and `ring`. The lat/lon
+columns keep their `[Geographical]` roles, so it is still a map rather than an XY plot.
+Verified by opening the workbook and looking at it. Colour stays on the MPI value in five
+bands rather than the incidence (H) the spec's visual table names — see correction #7 in
+`AGENTS.md`.
+
+**Reader-facing refinements, 2026-10-18** (all from the generator, all render-verified):
+the MPI value now prints as a **percentage of the index** — bands `1. under 5%` …
+`5. 30% and above`, hover `MPI 39.1% (95% interval 34% to 45%)` — with H still shown
+separately so the two percentages cannot be confused; the hover gained a governorship
+line (`Governorship 1999–2021: PDP (14 of 22 years)`, ties `PDP/APC (tied)`) and a
+definition for `poverty_group` (`Poorest 12 of the 37 states, by MPI`); and the state
+outlines became thick white **strokes** — `has-stroke` / `stroke-color` / `stroke-size`,
+because `border-color` / `border-width` validate and then do nothing on a mark. Still left
+to the GUI, with the exact click recorded in `docs/PUBLISH.md`: the **colour legend**, and
+`Dimension breakdown` as a stacked bar.
 
 `Dimension breakdown` had the same class of problem: the Measure Names/Values pair
 drawn from XML produced one 18,000-tall bar per state, because it also needs the
@@ -149,9 +166,10 @@ framing.
 
 ## 4. Cost, stated plainly
 
-- **Two of the spec's five visuals are not what the spec asked for.** One is a
-  georeferenced scatter rather than a filled choropleth; one is three panels rather
-  than a stacked bar. Both are titled honestly. Both are a GUI fix away.
+- **One of the spec's five visuals is not what the spec asked for.** `Dimension
+  breakdown` is three panels rather than a stacked bar; it is titled honestly and is
+  a GUI fix away. The filled choropleth was resolved on 2026-10-17 — it is a real
+  filled map now, drawn from shipped geometry rather than from Tableau's geography.
 - **No causal claim.** The spec never promised identification, so nothing was lost
   that was on offer.
 - **The climate layer is now a gradient chart**, which is less interesting and more
@@ -165,9 +183,8 @@ framing.
 
 | Item | Why not |
 |---|---|
-| Filled choropleth | Needs GUI-generated geographic fields. One minute by hand; documented with the target image |
 | Stacked bar | Needs the Measure Names/Values pair *and* its filter. Five clicks by hand; documented |
-| Radar chart | Polygon marks driven by computed path fields — the most fragile part of the grammar to hand-write. Same reason as the previous session |
+| Radar chart | Angle/Wedge-size polar encodings are still unverified from XML. The Polygon+Path half of the grammar is now proven by the map |
 | LGA-level conflict | `adm_2` is already populated for 88.1% of events across 445 LGAs, but the state-level count is unchanged by it and all 10 zero-event states are zero at LGA level too. A future-design asset, not a present rescue |
 | ACLED | Still unobtainable, and UCDP's full fatality band already removes the sensitivity concern |
 | Re-running harmonisation | Not needed — it was already the file we had |
@@ -178,12 +195,14 @@ framing.
 ## 6. Next session, in order
 
 1. **Publish.** Everything that can be verified has been. Open the workbook, confirm
-   the five sheets and the two text zones, File → Save to Tableau Public, then verify
-   the live URL with the `tableau` MCP `get_workbook_image`.
+   the six sheets, the three dashboards and the two text zones, File → Save to Tableau
+   Public, then verify the live URL with the `tableau` MCP `get_workbook_image`.
 2. **Paste the attribution** into the viz description — it is already on the canvas,
    but the description is where people look.
-3. **GUI fix, five minutes:** the filled choropleth and the stacked bar. Both are
-   written up step by step in `docs/PUBLISH.md`.
+3. **GUI fix, five minutes:** the stacked bar. Written up step by step in
+   `docs/PUBLISH.md`. (The filled choropleth was done on 2026-10-17; only the
+   standalone map sheet still opens at Tableau's default map scale — click
+   **Fit > Entire View** on it, or leave it, since the dashboard's view is fitted.)
 4. **Alt text** on each sheet: descriptive, objective, no interpretation.
 5. **Switch both scatters to the Color Blind palette** to pair with the Shape
    encoding already on `quadrant`.

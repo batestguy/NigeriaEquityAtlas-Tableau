@@ -292,7 +292,8 @@ palette. Four members, well inside the ~5 CVD-safe colours available.
 ---
 
 ### D7. No legend zones, no KPI tiles, no methodology text on the dashboard
-**Severity BLOCKER · status todo**
+**Severity BLOCKER · status PARTLY FIXED — text zones and the KPI strip ship; the colour
+legend still does not draw**
 
 The `<zones>` block contains five worksheet zones and one empty layout
 container. No legend, no text object. The map's colour encoding is unlabelled
@@ -306,6 +307,16 @@ third; CEI is cross-sectionally relative and not comparable across years; 10 of
 violence; state population denominators come from an unstated UNDP vintage
 ~2% above the 2023 national total; state-level is the finest resolution the
 survey supports. Plus 4–5 KPI text tiles.
+
+**Still open (2026-10-18): the colour legend.** Sheet 1 declares the right-edge
+`type='color'` card exactly as a Tableau-authored Public workbook declares its working
+one, and window `<cards>` **are** honoured — deleting the Marks card from the same block
+removes it from the UI — yet no legend renders. Ruled out by experiment: `<simple-id>`
+(rejected by this schema, `D2E8DA72`) with and without the reference's
+`<document-format-change-manifest>`, the reference's second `rows` strip, and the mark
+class (a Circle version of the sheet shows no legend either). The one click that settles
+it is **Analysis → Legends → Colour Legend**, then Save; the full account is in
+`docs/PUBLISH.md`.
 
 ---
 

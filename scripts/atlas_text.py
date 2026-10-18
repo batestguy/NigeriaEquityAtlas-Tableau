@@ -82,10 +82,12 @@ TERMS: list[Term] = [
                 "lies (statisticians call it a 95% confidence interval). When two states' "
                 "ranges overlap, we cannot be sure which one is poorer."},
     {"term": "Poverty band",
-     "meaning": "One of the five colour groups on the map: under 0.05, 0.05–0.10, "
-                "0.10–0.20, 0.20–0.30, and 0.30 or more. The map uses bands rather than "
-                "a 1-to-37 ranking because the likely ranges of states next to each other "
-                "in the ranking overlap."},
+     "meaning": "One of the five colour groups on the map: under 5%, 5%–10%, "
+                "10%–20%, 20%–30%, and 30% or more. The score is a 0-to-1 index, so "
+                "these read as percentages of the index, not as the share of people "
+                "who are poor (that share is shown separately and is much higher). The "
+                "map uses bands rather than a 1-to-37 ranking because the likely "
+                "ranges of states next to each other in the ranking overlap."},
     {"term": "Poorest 12 and Other 25",
      "meaning": "The 12 states with a poverty score above 0.20, and the remaining 25 "
                 "(including FCT)."},

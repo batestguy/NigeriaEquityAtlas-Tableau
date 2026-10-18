@@ -57,7 +57,7 @@ every source. Nothing in the pipeline needs a registration, an API key, or a log
   what is verified versus assumed, and the traps already paid for. **Read this first
   when picking this up cold.**
 - **[docs/PUBLISH.md](docs/PUBLISH.md)** — the one manual step: publishing to Tableau
-  Public, plus the two chart fragments deliberately left to the GUI.
+  Public, plus the one chart fragment still deliberately left to the GUI.
 - **[docs/normalisation.md](docs/normalisation.md)** / **[docs/data_quality.md](docs/data_quality.md)**
   — metric definitions and caveats. Both are required reading before quoting a number.
 

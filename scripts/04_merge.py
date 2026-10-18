@@ -3,6 +3,7 @@
 Produces:
   data/processed/mpi_atlas_2021.csv    37 rows, one per state, the 2021 baseline
   data/processed/mpi_trends_panel.csv  148 rows, 37 states x 4 survey rounds
+  data/processed/mpi_polygons.csv      ADM1 ring vertices (simplified), for the Tableau filled map
   data/processed/atlas_vintages.csv    per-round scale anchors and headline stats
   docs/normalisation.md                how every derived index is defined and scaled
   docs/data_quality.md                 the caveats a reader has to be told about
@@ -19,17 +20,38 @@ atlas_vintages.csv to keep the scale reproducible.
 from __future__ import annotations
 
 import csv
+import json
 import sys
 from pathlib import Path
 from statistics import median
 from typing import Any, cast
 
 from scipy.stats import spearmanr
+from shapely.geometry import shape as shapely_shape
 
-from common import DOCS, INTERIM, PROCESSED, minmax, read_capitals, read_lookup, write_csv
+from common import (DOCS, INTERIM, PROCESSED, RAW, REFERENCE, minmax, read_capitals,
+                    read_lookup, write_csv)
 
 SURVEY_ROUNDS = (2013, 2016, 2018, 2021)
 BASELINE_YEAR = 2021
+
+# Ring simplification for the Tableau map's polygon extract, in degrees. See the
+# comment at the mpi_polygons.csv block for why 0.005 degrees is safe here.
+SIMPLIFY_TOLERANCE_DEG = 0.005
+
+# The governorship line carried into the map's tooltip. 1999 is the start of the
+# Fourth Republic, which is the window state_dominant_party.csv is built on; 2021
+# is the MPI survey year, so the two agree on where "now" is.
+PARTY_WINDOW_START = 1999
+PARTY_WINDOW_END = 2021
+PARTY_SPAN_YEARS = PARTY_WINDOW_END - PARTY_WINDOW_START
+
+# A seating holds office until the next seating, so the order *within* a year
+# decides who owns that year's tenure. Two seatings share a year in one case --
+# Anambra 2007, where the May swearing-in was annulled and the governor reinstated
+# in June -- so the event types are ranked rather than left to file order. A court
+# decision seats a governor after the election that year would have.
+SEATING_ORDER = {"cycle": 0, "off-cycle": 1, "rerun": 1, "court": 2}
 
 
 def read(path: Path) -> list[dict[str, str]]:
@@ -57,23 +79,56 @@ def quadrant(h: float, a: float, med_h: float, med_a: float) -> str:
 
 
 def mpi_band(mpi: float) -> str:
-    """Coarse MPI bands for the choropleth.
+    """Coarse MPI bands for the choropleth, labelled as percentages of the index.
 
     A continuous ramp invites reading differences the data cannot resolve: the
     median 95% CI width is 0.075 against a median MPI of 0.092. Five named bands
     match the resolution the standard errors actually support, and five classes is
     also the ceiling for accurate legend-matching (Mersey 1984: 96% at 3 classes,
     70% at 5, 26% at 9).
+
+    The MPI is a 0-1 index, so its value is already a share of the maximum and
+    "0.20 to 0.30" and "20% to 30%" are the same quantity -- the percent sign just
+    saves the reader the conversion. It is *not* the share of people who are poor:
+    that is H, carried separately (Zamfara 71.87% against an MPI of 0.391), and
+    docs/CLAIMS.md forbids reading the two as one number.
+
+    The leading "N. " is a sort key, not part of the label: the colour legend is
+    sorted alphabetically, so unlabelled bands would run "10% to 20%" before
+    "5% to 10%" and put "under 5%" last. Stage 7 strips the prefix for the HTML map.
     """
     if mpi < 0.05:
-        return "1. under 0.05"
+        return "1. under 5%"
     if mpi < 0.10:
-        return "2. 0.05 to 0.10"
+        return "2. 5% to 10%"
     if mpi < 0.20:
-        return "3. 0.10 to 0.20"
+        return "3. 10% to 20%"
     if mpi < 0.30:
-        return "4. 0.20 to 0.30"
-    return "5. 0.30 and above"
+        return "4. 20% to 30%"
+    return "5. 30% and above"
+
+
+def party_years(events: list[dict[str, str]],
+                span_end: int = PARTY_WINDOW_END) -> dict[str, int]:
+    """Years each party held a state's governorship, seating to seating.
+
+    A seating holds office from the year it was seated until the next seating, and
+    the last one is truncated at the end of the window -- so the totals sum to the
+    window length rather than to the length of each term. Zero-length tenures are
+    real (Anambra's annulled May 2007 swearing-in, and the seatings that fall after
+    the window closes) and are kept, so the years are a faithful reading of
+    governorship_events.csv rather than a tidy one.
+    """
+    ordered = sorted(
+        events,
+        key=lambda e: (int(e["seated_year"]), SEATING_ORDER.get(e["event_type"], 3)),
+    )
+    years: dict[str, int] = {}
+    for i, event in enumerate(ordered):
+        start = int(event["seated_year"])
+        end = int(ordered[i + 1]["seated_year"]) if i + 1 < len(ordered) else span_end
+        years[event["party"]] = years.get(event["party"], 0) + max(0, min(end, span_end) - start)
+    return years
 
 
 def spearman(x: list[float], y: list[float]) -> tuple[float, float]:
@@ -232,6 +287,136 @@ def main() -> int:
         "n_indicators", "indicators_missing", "survey", "survey_year",
     ]
     n_atlas = write_csv(PROCESSED / "mpi_atlas_2021.csv", atlas_rows, atlas_fields)
+
+    # ---- who governed, 1999-2021 (hover context, never a colour) ------------
+    # state_dominant_party.csv holds the mode governorship party per state with the
+    # 6 ties spelled "PDP/APC" and the FCT as an em dash; stage 0 recomputes that
+    # mode from governorship_events.csv and asserts it matches, so the *party* is
+    # already verified. The *years* are derived here, from the same events, and the
+    # two checks below make it impossible for an arithmetic slip to reach the
+    # tooltip: every state's tenures must fill the window exactly, and the party
+    # with the most years must be the mode (or, where the mode is a tie, one of the
+    # tied parties -- a seating tie need not also be a years tie).
+    party_rows = {r["pcode"]: r for r in read(REFERENCE / "state_dominant_party.csv")}
+    if set(party_rows) != set(lookup):
+        raise SystemExit("state_dominant_party.csv pcodes do not match the state lookup")
+    events_by_pcode: dict[str, list[dict[str, str]]] = {}
+    for event in read(REFERENCE / "governorship_events.csv"):
+        events_by_pcode.setdefault(event["pcode"], []).append(event)
+
+    gov_party: dict[str, str] = {}
+    for pcode in lookup:
+        dom = party_rows[pcode]["dom_party"]
+        years = party_years(events_by_pcode.get(pcode, []))
+        if not years:
+            if dom != "\u2014":
+                raise SystemExit(f"{pcode}: no seating events, but the mode is {dom!r}")
+            gov_party[pcode] = "no elected governor (minister-appointed)"
+            continue
+        if sum(years.values()) != PARTY_SPAN_YEARS:
+            raise SystemExit(
+                f"{pcode}: tenures total {sum(years.values())} years, "
+                f"expected {PARTY_SPAN_YEARS}"
+            )
+        longest = max(years.values())
+        longest_parties = {p for p, n in years.items() if n == longest}
+        if "/" in dom:
+            if not longest_parties <= set(dom.split("/")):
+                raise SystemExit(
+                    f"{pcode}: most years go to {sorted(longest_parties)}, "
+                    f"but the tie is {dom}"
+                )
+            gov_party[pcode] = f"{dom} (tied)"
+        else:
+            if longest_parties != {dom}:
+                raise SystemExit(
+                    f"{pcode}: most years go to {sorted(longest_parties)}, "
+                    f"but the mode is {dom}"
+                )
+            gov_party[pcode] = f"{dom} ({years[dom]} of {PARTY_SPAN_YEARS} years)"
+
+    # ---- ADM1 ring vertices for the Tableau filled map ----------------------
+    # Sheet 1 cannot be a filled map from hand-written XML. Tableau's geographic
+    # fields ([Latitude (generated)] / [Longitude (generated)]) are synthesised by
+    # the application, not columns in the extract: declaring them is rejected on
+    # load with "The field '[none:Latitude (generated):qk]' ... does not exist in
+    # your database" (9CA7205B), and declaring them as <column> in the datasource
+    # fails the workbook open outright. Both verified against Tableau Public 2026.2
+    # on 2026-10-17. So the geometry ships as data and the workbook draws it with a
+    # Polygon mark plus a Path field, which needs no geographic role at all.
+    #
+    # One row per vertex. `ring` keeps disjoint parts of a state from being joined
+    # into one polygon, and `point_order` is the Path field that orders the ring.
+    #
+    # The rings are simplified. The raw ADM1 file carries 53,489 vertices, which is
+    # an order of magnitude more than a state-level choropleth can show: at the map
+    # zone's ~1600px across 12 degrees of longitude, one pixel is 0.0075 degrees, so
+    # a 0.005-degree tolerance is sub-pixel. preserve_topology keeps every ring a
+    # valid, non-self-intersecting polygon. The area check below is the guard -- if
+    # simplification ever starts eating real coastal detail, it fails the build.
+    geometry = json.loads((RAW / "nga_adm1.geojson").read_text(encoding="utf-8"))
+    by_pcode = {r["pcode"]: r for r in atlas_rows}
+    shapes = {feat["properties"]["shapeISO"] for feat in geometry["features"]}
+    missing = set(by_pcode) - shapes
+    assert not missing, f"no ADM1 geometry for {sorted(missing)}"
+
+    poly_rows: list[dict[str, Any]] = []
+    for feat in geometry["features"]:
+        pcode = feat["properties"]["shapeISO"]
+        a = by_pcode[pcode]
+        raw_geom = shapely_shape(feat["geometry"])
+        geom = raw_geom.simplify(SIMPLIFY_TOLERANCE_DEG, preserve_topology=True)
+        assert not geom.is_empty, f"{pcode}: simplification emptied the geometry"
+        area_drift = abs(geom.area - raw_geom.area) / raw_geom.area
+        assert area_drift < 0.02, (
+            f"{pcode}: simplification moved the area by {area_drift:.1%}; "
+            "the tolerance is too coarse"
+        )
+        parts = list(geom.geoms) if geom.geom_type == "MultiPolygon" else [geom]
+        ring_index = 0
+        for part in parts:
+            for ring in (part.exterior, *part.interiors):
+                coords = list(ring.coords)
+                if len(coords) < 4:
+                    continue  # not a ring any more
+                ring_index += 1
+                for order, (lon, lat) in enumerate(coords):
+                    poly_rows.append(
+                        {
+                            "state": a["state"],
+                            "pcode": pcode,
+                            "ring": ring_index,
+                            "point_order": order,
+                            "lon": round(lon, 5),
+                            "lat": round(lat, 5),
+                            # carried per vertex so the polygon keeps the same
+                            # tooltip the point map had
+                            "mpi_band": a["mpi_band"],
+                            "poverty_group": a["poverty_group"],
+                            "mpi": a["mpi"],
+                            "mpi_se": a["mpi_se"],
+                            "mpi_ci_lo": a["mpi_ci_lo"],
+                            "mpi_ci_hi": a["mpi_ci_hi"],
+                            "headcount_ratio_pct": a["headcount_ratio_pct"],
+                            "intensity_pct": a["intensity_pct"],
+                            "mpi_poor_thousands": a["mpi_poor_thousands"],
+                            # The tooltip shows the MPI as a percentage of the index
+                            # and cannot do arithmetic, so the scaled values ship as
+                            # data. Same number as `mpi`, times 100.
+                            "mpi_pct": round(f(a, "mpi") * 100, 1),
+                            "mpi_ci_lo_pct": round(f(a, "mpi_ci_lo") * 100, 1),
+                            "mpi_ci_hi_pct": round(f(a, "mpi_ci_hi") * 100, 1),
+                            "gov_party": gov_party[pcode],
+                        }
+                    )
+    poly_fields = [
+        "state", "pcode", "ring", "point_order", "lon", "lat",
+        "mpi_band", "poverty_group", "mpi", "mpi_se", "mpi_ci_lo", "mpi_ci_hi",
+        "headcount_ratio_pct", "intensity_pct", "mpi_poor_thousands",
+        "mpi_pct", "mpi_ci_lo_pct", "mpi_ci_hi_pct", "gov_party",
+    ]
+    n_poly = write_csv(PROCESSED / "mpi_polygons.csv", poly_rows, poly_fields)
+    assert {r["pcode"] for r in poly_rows} == set(by_pcode), "polygon pcodes drifted"
 
     # ---- trends panel ------------------------------------------------------
     # The four rounds are OPHI's HARMONISED series (Data Table 6 / MN 63), not the
@@ -420,6 +605,7 @@ def main() -> int:
     print(f"\nwrote {n_atlas} rows -> data/processed/mpi_atlas_2021.csv")
     print(f"wrote {n_panel} rows -> data/processed/mpi_trends_panel.csv")
     print(f"wrote {n_vint} rows -> data/processed/atlas_vintages.csv")
+    print(f"wrote {n_poly} rows -> data/processed/mpi_polygons.csv (ADM1 ring vertices)")
     write_docs()
     return 0
 

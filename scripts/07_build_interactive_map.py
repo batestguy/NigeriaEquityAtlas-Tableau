@@ -55,11 +55,11 @@ COVER_JPG = DOCS / "preview" / "cover.jpg"
 GREEN = "#008751"  # Nigerian flag green
 
 BAND_ORDER = [
-    "1. under 0.05",
-    "2. 0.05 to 0.10",
-    "3. 0.10 to 0.20",
-    "4. 0.20 to 0.30",
-    "5. 0.30 and above",
+    "1. under 5%",
+    "2. 5% to 10%",
+    "3. 10% to 20%",
+    "4. 20% to 30%",
+    "5. 30% and above",
 ]
 # ColorBrewer YlOrBr, 5-class sequential -- no red-green, readable by CVD.
 BAND_COLORS = ["#ffffd4", "#fed98e", "#fe9929", "#d95f0e", "#993404"]
@@ -403,7 +403,7 @@ def _add_fit_script(views: dict[str, list[float]]) -> None:
     page = OUT.read_text(encoding="utf-8")
     assert page.count("</body>") == 1
     narrow = {
-        "ticks": ["under 0.05", "0.05–0.10", "0.10–0.20", "0.20–0.30", "0.30 and above"],
+        "ticks": ["under 5%", "5%–10%", "10%–20%", "20%–30%", "30% and above"],
         "colors": BAND_COLORS,
         "title": (
             "🇳🇬 Nigeria MPI Equity Atlas<br><sup>Where poverty sits · MICS 2021<br>"

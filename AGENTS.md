@@ -18,8 +18,11 @@ precedence over recollection. If it is missing, the equivalent essentials are in
 
 ## Current state
 
-The pipeline is built and runs clean end to end (7 stages, exit 0, ruff clean).
-Four commits, one per stage. `git log` is the reliable history.
+The pipeline is built and runs clean end to end (9 stages via `scripts\run_all.ps1`,
+exit 0). `git log` is the reliable history. One caveat, verified 2026-10-18: the repo
+carries **no ruff config**, so `ruff check` under 0.16 defaults reports pre-existing style
+findings (import order, `dict()` literals) in scripts this work did not touch — the stages
+themselves are green. Adding a config that states the intended rule set is an open tidy-up.
 
 | Stage | Script | Output |
 |---|---|---|
@@ -28,9 +31,9 @@ Four commits, one per stage. `git log` is the reliable history.
 | 1 | `01_acquire_mpi.py` | OPHI + UNDP; **reconciles the two publications on MPI and aborts above 1e-3** |
 | 2 | `02_acquire_conflict.py` | UCDP GED attributed to 37 states, method recorded per event |
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
-| 4 | `04_merge.py` | the three processed tables + `docs/normalisation.md`, `docs/data_quality.md` |
+| 4 | `04_merge.py` | the three processed tables + `mpi_polygons.csv` (simplified ADM1 ring vertices for the map, area-checked) + `docs/normalisation.md`, `docs/data_quality.md` |
 | 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — Hyper extracts; opens and renders in Tableau Public 2026.2 |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — four Hyper extracts (one is the map's polygon vertices); `Where poverty sits` is a **real filled choropleth** (Polygon mark + Path) with **thick white state strokes**, opens and renders in Tableau Public 2026.2 |
 | 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party, 1999–2021 aligned-years tally), party-alignment result panel, All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
 | 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05–07 read its outputs |
 
@@ -43,6 +46,13 @@ only; whether party is associated with poverty is the stage 8 test (see Findings
 `governor_defections.csv` (sourced sitting-party changes) feed it; stage 0 asserts
 the events recompute `dom_party` exactly. Never colour by party. Cover framing decision (D6: "one country, two realities", never "two
 zones") is recorded in `docs/SESSION_HANDOFF.md` 2026-10-08.
+
+Stage 4 also builds the hover's governorship line (`gov_party`, e.g. `PDP (14 of 22
+years)`; ties `PDP/APC (tied)`; FCT `no elected governor (minister-appointed)`) and the
+`mpi_pct` / `mpi_ci_lo_pct` / `mpi_ci_hi_pct` columns the tooltip prints. Party is hover
+context only, never the fill. `poverty_group` stays a bare label in the extract, so the
+tooltip's first line carries the static suffix that completes it — `Bauchi · Poorest 12
+of the 37 states, by MPI`.
 
 **Remaining manual step:** publishing, and it needs your account login. Tableau Public
 2026.2 **is installed** at `C:\Program Files\Tableau\Tableau Public 2026.2\bin\tabpublic.exe`
@@ -67,14 +77,23 @@ support, and OPHI's standard errors — published in a file the pipeline already
 downloads — show that **all 36 adjacent state rank pairs overlap at 95%**. So
 "Bauchi has the highest MPI" is not available, and neither is a causal claim.
 
-Top of the defect list, all resolved this session except the last two: the map was
-never a map (it drew 74 bar charts) and is now a georeferenced scatter called
-`Where poverty sits`; the SEs are wired through and the map is banded;
-`Poverty over time` is a real trend with `state` on Colour. Still open, both
-documented step by step in `docs/PUBLISH.md`: turning the scatter into a filled
-choropleth, and `Dimension breakdown` into a stacked bar — both need the GUI.
-Note the `contrib_*_pct` percent-formatting item is **not** a bug — those columns
-already sum to 100.
+Top of the defect list, all resolved: the map was never a map (it drew 74 bar charts)
+and is now a real filled choropleth called `Where poverty sits` — drawn with a Polygon
+mark + Path field from `mpi_polygons.csv`, because Tableau's generated geographic fields
+cannot be hand-authored at all (error `9CA7205B`, or a hard load failure); the SEs are
+wired through and the map is banded; `Poverty over time` is a real trend with `state` on
+Colour. Its state outlines are strokes, not borders: `has-stroke` / `stroke-color` /
+`stroke-size` on the worksheet-level mark style rule. `border-color` / `border-width` look
+right and validate, but are **inert** on a mark (rendered pixel-identically with and
+without). Still open and documented step by step in `docs/PUBLISH.md`: the **colour
+legend does not draw** even though its right-edge card is declared exactly as a working
+Public workbook declares it (window cards *are* honoured — removing the Marks card from
+the same block removes it from the UI; `<simple-id>` and the reference's manifest are
+rejected by this schema, `D2E8DA72`, and the `rows` strip and mark class are ruled out) —
+the one click is Analysis → Legends → Colour Legend, then Save; and `Dimension
+breakdown` is three panels, not a stacked bar — that one also needs the GUI. Note the
+`contrib_*_pct` percent-formatting item is **not** a bug — those columns already sum to
+100.
 
 ## Corrections to the original spec
 
@@ -91,12 +110,36 @@ The spec was written before the sources were checked. These are settled now:
 4. **The Google Sheets intermediary is unnecessary.** The workbook ships a packaged
    Hyper extract; there is no live connection to break, and the survey updates
    annually, so a 24-hour refresh would buy nothing.
-5. **The radar chart is not generated.** A polygon mark driven by computed path
-   fields is too fragile to hand-author blind; it is a documented GUI step.
+5. **The radar chart is not generated.** Its `Angle`/`Wedge Size` polar encodings are
+   still unverified from XML. The Polygon-mark half of that grammar is no longer the
+   blocker: `Where poverty sits` is a Polygon mark with a Path field, generated from
+   XML (2026-10-17). Still a documented GUI step.
 6. **The packaged data must be a Hyper extract, not a CSV.** Tableau Public refuses
    any workbook whose datasource is not an extract (`3C242D89`) and does *not* convert
    one on save — this project assumed it did, for its whole life. Stage 6 writes the
    `.hyper` files itself with `tableauhyperapi`.
+7. **The choropleth is banded on the MPI value, not on MPI incidence (H).** The spec's
+   visual table says *"State choropleth | Filled map | State → MPI incidence"*. What
+   ships — and what shipped before the map was a real map — colours by the MPI value in
+   five bands, with H carried in the tooltip. Three reasons, decided 2026-10-17:
+   the MPI value is the atlas's headline metric, and `poverty_group` (Poorest 12),
+   `mpi_rank` and the rank-persistence figures are all built on it, so colouring by H
+   would key the fill to one measure and the hover's poverty group to another; the
+   five-band cut is justified by OPHI's *published* standard errors for the MPI value
+   (median CI width 0.075 against a median MPI of 0.092); and it is not a statistical
+   choice either way, because **both** measures are equally unorderable — 0 of 36
+   adjacent state pairs separate at 95% on H (median relative SE 14.3%) exactly as on
+   the MPI value (15.1%). Consequence to keep in mind: the pre-Tableau QA gate
+   (`docs/preview/1_where_poverty_sits.png`, stage 5) still renders a continuous H ramp,
+   so it previews a *different measure* from the two maps. That is a known, deliberate
+   divergence — the maps agree with each other, both on `mpi_band`.
+
+   Both the bands and the hover print that MPI value as a **percentage of the index**,
+   not as a decimal: bands `1. under 5%` … `5. 30% and above` (the `N. ` prefix is a sort
+   key — the colour legend sorts alphabetically) and `MPI 39.1% (95% interval 34% to
+   45%)`. The headcount is printed separately in the same hover as `Of the population,
+   19.2% are multidimensionally poor`, so the two percentages must never be swapped: the
+   first is the MPI value, the second is H.
 
 ## Findings that constrain what may be claimed
 

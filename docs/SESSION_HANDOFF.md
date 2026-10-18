@@ -1,8 +1,91 @@
 # Handoff — sessions 2026-10-09/10 (party test, map fit, plain-language sheets)
 
 **Start here.** Pipeline is 9 stages, all green (`.\scripts\run_all.ps1`, exit 0,
-~2 min). Everything below is committed and pushed. The atlas is still **not
+~90 s). Everything below is committed and pushed. The atlas is still **not
 published** — that remains the one manual step (your Tableau Public login).
+
+## 2026-10-18 — the hover, the band labels and the state outlines
+
+Four requested changes to sheet 1, all generated in `scripts/04_merge.py` and
+`scripts/06_build_twb.py` and verified by opening the rebuilt workbook in Tableau Public
+2026.2 (title `Tableau Public - Nigeria-MPI-Equity-Atlas`, no error dialog, map drawn
+with visible borders).
+
+- **MPI now reads as a percentage of the index**, in the hover and in the band labels:
+  `MPI 39.1% (95% interval 34% to 45%)`, bands `1. under 5%` … `5. 30% and above`. It is
+  **not** the headcount share H, which the same hover prints separately as
+  `Of the population, 19.2% are multidimensionally poor`. Stage 4 relabelled `mpi_band`;
+  the `N. ` prefix stays because the colour legend sorts alphabetically. Stage 7 and
+  `scripts/atlas_text.py` were updated to match, so the HTML map and the glossary still
+  agree with the workbook.
+- **The hover gained a governorship line** — `Governorship 1999–2021: PDP (14 of 22
+  years)`, ties as `PDP/APC (tied)`, FCT as `no elected governor (minister-appointed)`.
+  Stage 4's `party_years()` builds it from `data/reference/governorship_events.csv`,
+  truncating each tenure at the 1999–2021 window — Anambra's 2021 election seated in 2022,
+  which is what the "tenures total 22 years" assertion caught — and asserts the
+  years-mode party equals the vetted `dom_party`, or sits inside its tie set.
+- **`poverty_group` now says what it is**: `Bauchi · Poorest 12 of the 37 states, by MPI`.
+  "Poorest 12" alone does not say 12 of what.
+- **The state outlines are thick white strokes now.** The grammar that works is
+  `has-stroke` / `stroke-color` / `stroke-size` on the **worksheet-level** mark style
+  rule. The obvious-looking `border-color` / `border-width` on the same element is
+  **inert** — the workbook renders pixel-identically with and without it, at worksheet and
+  pane scope. Both names validate (both are in the published schema's `StyleAttribute`
+  vocabulary), so only rendering separates them; it took a 4× crop comparison to settle.
+- **`<simple-id>` is not available to this workbook.** The reference workbook carries one
+  on every worksheet and window and ours had none, which made it the leading explanation
+  for the missing colour legend. Adding it — the element alone, or together with the
+  reference's `<document-format-change-manifest>` — fails the load with *"no declaration
+  found for element 'simple-id'"* (`D2E8DA72`). The reference gets away with it only
+  because its manifest switches the newer grammar on, and adding the manifest does not
+  rescue us.
+- **Still open: the colour legend.** Sheet 1's right-edge `type='color'` card is declared
+  byte-for-byte as a working Public workbook declares it, and window cards **are**
+  honoured (deleting the Marks card from the same block removes it from the UI), yet no
+  legend draws. Ruled out by experiment: the worksheet grammar above, the reference's
+  second `rows` strip, and the mark class — a Circle version of the same sheet shows none
+  either, so it is not Polygon-specific. Remaining suspects are the extract-backed
+  datasource and the XY-polygon view. The one-click fix is **Analysis → Legends → Colour
+  Legend**, then Save; `docs/PUBLISH.md` carries the detail.
+
+## 2026-10-17 — `Where poverty sits` is a real filled choropleth
+
+The sheet that was a **scatter of 37 state capitals** is now filled polygons, verified
+by opening the rebuilt workbook in Tableau Public 2026.2 and looking at it.
+
+- **Tableau's generated geographic fields cannot be hand-authored.** Re-verified this
+  session: referencing `[none:Latitude (generated):qk]` with no `<column>` declaration
+  loads as *"does not exist in your database"* (`9CA7205B`); declaring it as a
+  `<column>` in the datasource makes the whole workbook fail to open. Both attempts are
+  recorded in `docs/PUBLISH.md`.
+- **So the geometry ships as data.** Stage 4 now writes
+  `data/processed/mpi_polygons.csv` — the ADM1 rings simplified by `shapely`
+  (0.005 degrees, topology preserved): 53,489 vertices down to 7,089, with an area
+  check per state so simplification cannot eat coastline. The table is
+  `state`/`pcode`/`ring`/`point_order`/`lon`/`lat` plus the state's MPI fields per
+  vertex. Stage 6 packages it as a fourth extract and the sheet uses mark **Polygon**,
+  `AVG(lat)`/`AVG(lon)` with their `[Geographical]` roles, `state`+`pcode`+`ring` on
+  Detail, **`point_order` on Path**, `mpi_band` on Colour. No geographic role drives
+  the shape at all.
+- `ring` and `point_order` must be integer **dimensions** and referenced as `:ok`.
+  Referencing an ordinal as `:nk` gives the same `9CA7205B` error — verified.
+- **Cosmetic:** a geographic sheet is drawn at a fixed map scale, so a short pane crops
+  it. The `Equity Atlas` dashboard carries `<zoom type='entire-view' />` on that
+  viewpoint (the Fit control as data, grammar taken from a real Tableau workbook) and
+  now shows the whole country. **`<zoom>` on a worksheet `<window>` fails the whole
+  workbook load** — do not put it there. The standalone sheet still opens at the default
+  map scale; **Fit > Entire View** fixes it by hand.
+- `build_hyper` now inserts 500 rows per statement. One INSERT per row was fine at
+  37/148 rows and took >15 min at 53k.
+- Also this session, unchanged in the workbook: `Party alignment and MPI change` is
+  still standalone with mark labels on; `Dimension breakdown` is still three panels.
+- **Measure decision (your call, 2026-10-17): the maps keep the MPI value, not H.** The
+  spec asks for MPI incidence on the choropleth; it stays on `mpi_band` because the
+  atlas's headline, `poverty_group`, `mpi_rank` and rank persistence are all MPI-value
+  based, and both measures are equally unorderable (0/36 adjacent pairs separable at 95%
+  on each). Recorded as spec correction #7 in `AGENTS.md`. Known divergence this leaves:
+  the stage-5 preview PNG still draws a continuous **H** ramp, so the QA gate previews a
+  different measure from both maps.
 
 ## State in one paragraph
 
@@ -45,10 +128,11 @@ can't really tell"**; and two plain-language reader sheets ("What the words mean
    go to *What the words mean* and *How we did it*, scroll to the bottom; if text
    is clipped, raise `READER_PAD` or the per-line factor in `_estimate_height`
    (`scripts/06_build_twb.py`) and rebuild stage 6.
-2. **GUI fixes before publishing** (`docs/PUBLISH.md`): `Where poverty sits` →
-   filled choropleth; `Dimension breakdown` → stacked bar. Optionally put the
-   party sheet on the `Equity Atlas` dashboard (it is standalone now) and turn its
-   mark labels off.
+2. **GUI fixes before publishing** (`docs/PUBLISH.md`): `Dimension breakdown` →
+   stacked bar. The filled choropleth was done on 2026-10-17 — only the *standalone*
+   map sheet still opens cropped (dashboard is fitted); **Fit > Entire View** on it.
+   Optionally put the party sheet on the `Equity Atlas` dashboard (it is standalone
+   now) and turn its mark labels off.
 3. **Publish**: File → Save to Tableau Public. Paste attribution into the
    description. Then verify with the `tableau` MCP `get_workbook_image`.
 4. **Host the HTML page** if wanted (it is self-contained, 8.5 MB, offline).
