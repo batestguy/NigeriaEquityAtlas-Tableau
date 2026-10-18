@@ -55,9 +55,16 @@ project could not make render from hand-written XML — the note is above
 **Verified by opening the workbook in Tableau Public 2026.2 and looking at it:** the
 poverty map and the five spec sheets on 2026-10-06; the party sheet and the reader
 dashboards on 2026-10-09/10; the cluster map and all three reference parts on
-2026-10-18. In each case what was checked is the top of the tab at a 1295x687 window —
-the reference parts have not been scrolled to the end on screen, and neither has the
-map been panned.
+2026-10-18, and then the **shipped** workbook of that date — window title
+`Tableau Public - Nigeria-MPI-Equity-Atlas` (not `Book1`), tab bar exactly
+`Where poverty sits` / `Where poverty clusters` / `What the words mean` /
+`The list of basic needs` / `How we did it`, no error dialog, the poverty map drawing the
+red ramp under white state strokes, and the cluster map drawing grey north / deep teal
+south / purple Nasarawa with its colour card. In each case what was checked is the top of
+the tab at a 1295x687 window — the reference parts have not been scrolled to the end on
+screen, and neither map has been panned. The third column of the reference table, which
+the window is too narrow to show, was read end to end in a review copy that keeps that
+column and drops the other two.
 
 **Tab order is the `<windows>` order**: `Where poverty sits`, then `Where poverty
 clusters`, then the three reference parts. **Which tab opens is not dependable, though:**
@@ -231,12 +238,15 @@ Since the caption is what the legend card keys on, hand-changing the caption in 
 would desync the workbook from the generator.
 
 **One cosmetic consequence, and its fix.** A geographic sheet is drawn at a fixed map
-scale, so a short pane crops it — `Where poverty sits` shows roughly the northern
-four-fifths at a 1295x687 window. This used to be fixed without the GUI: the withdrawn
-`Equity Atlas` dashboard carried `<zoom type='entire-view' />` on the `Where poverty
-sits` viewpoint, which is the Fit control stored as data (grammar taken from a real
-Tableau-authored workbook, and verified by rendering the dashboard zone). With that
-dashboard gone (`docs/FIX_LEDGER.md` W1) locating the map whole is a click, and it has
+scale, so a pane of the wrong shape crops it. At the 1295x687 window this was reviewed in
+(the shipped workbook, 2026-10-18) both maps render the whole country — an earlier note
+here said sheet 1 showed "roughly the northern four-fifths", which that capture does not
+support — but the scale is fixed and a shorter pane will cut the south coast, so `Fit →
+Entire View` is still the first GUI click. This used to be fixed without the GUI: the
+withdrawn `Equity Atlas` dashboard carried `<zoom type='entire-view' />` on the `Where
+poverty sits` viewpoint, which is the Fit control stored as data (grammar taken from a
+real Tableau-authored workbook, and verified by rendering the dashboard zone). With that
+dashboard gone (`docs/FIX_LEDGER.md` W1) locating the maps whole is a click, and it has
 moved to the GUI list below. **`<zoom>` is not legal on a worksheet `<window>`** —
 putting it there makes the whole workbook fail to load.
 
@@ -248,11 +258,13 @@ workbook.
 
 ## Open issues, all safe to fix in the GUI
 
-- **`Where poverty sits` opens cropped.** A geographic sheet is drawn at a fixed map
-  scale, so a short pane cuts off the south. Until 2026-10-18 the withdrawn `Equity
-  Atlas` dashboard fitted it (`<zoom type='entire-view' />` on that viewpoint); with the
-  dashboard gone (`docs/FIX_LEDGER.md` W1) this is a click. **To fix by hand:** open the
-  sheet, **Fit → Entire View**, then File → Save.
+- **The maps can open cropped.** A geographic sheet holds a fixed map scale, so a pane
+  whose shape differs from the map's cuts the south coast. In the 1295x687 window the
+  shipped workbook was reviewed in, both maps render whole (2026-10-18). Until the same
+  date the withdrawn `Equity Atlas` dashboard fitted sheet 1
+  (`<zoom type='entire-view' />` on that viewpoint); with the dashboard gone
+  (`docs/FIX_LEDGER.md` W1) this is a click. **To fix by hand:** open each map, **Fit →
+  Entire View**, then File → Save.
 - **The colour legend does not draw on `Where poverty sits`.** The card that should draw
   it is declared exactly as a Tableau-authored workbook declares one — the sheet's window
   carries
