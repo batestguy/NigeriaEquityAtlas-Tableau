@@ -12,12 +12,13 @@ Four requested changes to sheet 1, all generated in `scripts/04_merge.py` and
 with visible borders).
 
 - **MPI now reads as a percentage of the index**, in the hover and in the band labels:
-  `MPI 39.1% (95% interval 34% to 45%)`, bands `1. under 5%` … `5. 30% and above`. It is
-  **not** the headcount share H, which the same hover prints separately as
-  `Of the population, 19.2% are multidimensionally poor`. Stage 4 relabelled `mpi_band`;
-  the `N. ` prefix stays because the colour legend sorts alphabetically. Stage 7 and
-  `scripts/atlas_text.py` were updated to match, so the HTML map and the glossary still
-  agree with the workbook.
+  `MPI 44.10% (95% interval 37.90% to 50.50%)` for Bauchi, bands `1. under 5%` … `5. 30%
+  and above`. It is **not** the headcount share H, which the same hover prints separately
+  as `Of the population, 75.36% are multidimensionally poor`. Stage 4 relabelled
+  `mpi_band`; the `N. ` prefix stays because the colour legend sorts alphabetically. Stage
+  7 and `scripts/atlas_text.py` were updated to match, so the HTML map and the glossary
+  still agree with the workbook. The two decimals are Tableau's default for these percent
+  columns — `44.10%` is the data's `44.1`.
 - **The hover gained a governorship line** — `Governorship 1999–2021: PDP (14 of 22
   years)`, ties as `PDP/APC (tied)`, FCT as `no elected governor (minister-appointed)`.
   Stage 4's `party_years()` builds it from `data/reference/governorship_events.csv`,

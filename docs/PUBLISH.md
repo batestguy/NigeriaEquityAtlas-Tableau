@@ -144,9 +144,11 @@ two maps agree with each other; the PNG is the odd one out, deliberately.
 
 **Bands and hover read as percentages.** `mpi_band` labels are percentages *of the
 index* — `1. under 5%` through `5. 30% and above`; the `N. ` prefix is a sort key,
-because the colour legend sorts alphabetically. Per state the hover now says
-`MPI 39.1% (95% interval 34% to 45%)` and, for the headcount, `Of the population, 19.2%
-are multidimensionally poor`. The two percentages are different measures on purpose and
+because the colour legend sorts alphabetically. Per state the hover now says, for Bauchi,
+`MPI 44.10% (95% interval 37.90% to 50.50%)` and, for the headcount, `Of the population,
+75.36% are multidimensionally poor`. (Those are Tableau's default two decimals on the
+percent columns; say the word and they can be set to one decimal or whole numbers.)
+The two percentages are different measures on purpose and
 must not be swapped: the first is the MPI value, the second is H. `poverty_group` also
 carries its own definition there — `Bauchi · Poorest 12 of the 37 states, by MPI` — and
 the governorship line reads `Governorship 1999–2021: PDP (14 of 22 years)`, with ties as

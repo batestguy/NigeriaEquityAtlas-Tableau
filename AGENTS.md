@@ -136,10 +136,11 @@ The spec was written before the sources were checked. These are settled now:
 
    Both the bands and the hover print that MPI value as a **percentage of the index**,
    not as a decimal: bands `1. under 5%` … `5. 30% and above` (the `N. ` prefix is a sort
-   key — the colour legend sorts alphabetically) and `MPI 39.1% (95% interval 34% to
-   45%)`. The headcount is printed separately in the same hover as `Of the population,
-   19.2% are multidimensionally poor`, so the two percentages must never be swapped: the
-   first is the MPI value, the second is H.
+   key — the colour legend sorts alphabetically) and, for Bauchi, `MPI 44.10% (95%
+   interval 37.90% to 50.50%)`. The headcount is printed separately in the same hover as
+   `Of the population, 75.36% are multidimensionally poor`, so the two percentages must
+   never be swapped: the first is the MPI value, the second is H. (Percent fields render at
+   Tableau's default two decimals; `44.10%` is the same number as the data's `44.1`.)
 
 ## Findings that constrain what may be claimed
 
