@@ -32,10 +32,11 @@ themselves are green. Adding a config that states the intended rule set is an op
 | 2 | `02_acquire_conflict.py` | UCDP GED attributed to 37 states, method recorded per event |
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
 | 4 | `04_merge.py` | the three processed tables + `mpi_polygons.csv` (simplified ADM1 ring vertices for the map, area-checked) + `docs/normalisation.md`, `docs/data_quality.md` |
-| 5 | `05_preview.py` | the five spec visuals as PNGs — the pre-Tableau QA gate |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — four Hyper extracts (one is the map's polygon vertices); `Where poverty sits` is a **real filled choropleth** (Polygon mark + Path) with **thick white state strokes**, opens and renders in Tableau Public 2026.2 |
+| 5 | `05_preview.py` | the spec visuals as PNGs — the pre-Tableau QA gate (8 now: the five spec visuals, party alignment, the cluster map and the spatial scatter) |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — six Hyper extracts (the map's polygon vertices, the spatial diagnostic, and the same polygons joined to the neighbourhood types); `Where poverty sits` and `Where poverty clusters` are **real filled choropleths** (Polygon mark + Path) with **thick white state strokes**, both open and render in Tableau Public 2026.2 |
 | 7 | `07_build_interactive_map.py` | `docs/preview/interactive_map.html` — CLI-built filled choropleth (the no-GUI alternative to the Tableau map): 5 MPI bands, hover (MPI+CI, annotated H/A, dominant party, 1999–2021 aligned-years tally), party-alignment result panel, All-37/Poorest-12/Other-25 views, cover hero. Self-contained Plotly, works offline |
 | 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05–07 read its outputs |
+| 9 | `09_spatial_diagnostics.py` | pre-registered spatial diagnostic (`docs/spatial_analysis.md`, freeze in `docs/spatial_preregistration.md`): shells to `scripts/spatial_diagnostics.R` (sf/spdep/spatialreg), verifies Moran's I, the lag and the neighbourhood types independently in Python, writes `spatial_global.csv` + `spatial_diagnostics.csv` + `spatial_polygons.csv` (the map's rings joined to the types, for the cluster map), fills §3. Runs after 08; 05–06 read its outputs |
 
 Stage 4 also writes `poverty_group` (Poorest 12 vs Other 25) into
 `mpi_atlas_2021.csv`; `data/reference/state_dominant_party.csv` +

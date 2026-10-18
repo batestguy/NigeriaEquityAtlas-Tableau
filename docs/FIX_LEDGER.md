@@ -438,7 +438,7 @@ Not defects. Listed so a reader can find what was fixed in advance, and check
 `git log` that it was.
 
 ### F1. Spatial autocorrelation of state MPI (Moran's I)
-**Severity n/a — a registered test · status frozen 2026-10-18, not yet built**
+**Severity n/a — a registered test · status built 2026-10-18**
 
 The full specification is `docs/spatial_preregistration.md`, committed as a
 docs-only change before `scripts/09_spatial_diagnostics.py` or
@@ -454,3 +454,20 @@ documented in A2, so **the report leads with the latitude-controlled value**; an
 no per-state hotspot claim is permitted, because A1 withdrew orderings.
 Exploratory computation preceded the registration and is disclosed inside it —
 it is a specification freeze, not a blind test.
+
+Built as `scripts/spatial_diagnostics.R` (statistics, sf/spdep/spatialreg) driven by
+`scripts/09_spatial_diagnostics.py`, which recomputes the neighbours, the lag, the four
+types and Moran's I in Python and fails if the two implementations disagree. Result,
+wording and every sensitivity: `docs/spatial_analysis.md` §3.
+
+**One amendment, recorded in the registration rather than folded into it
+(`Amendment 1`, 2026-10-18):** a second worksheet — the cluster map `Where poverty
+clusters`, immediately after the poverty map — was added at the user's request *after*
+the result was seen. The test, the decision rule and the frozen wording are unchanged.
+Two things the amendment pins down, because they are consequences of the result rather
+than a revision of it: the map colours all 37 states by **neighbourhood type and never
+by significance** (one state survives Bonferroni, none survives Benjamini–Yekutieli, so
+a significance map would be a single state and would re-import the per-state ordering A1
+withdrew), and its four colours encode only the quadrant — which side of the national
+average the state is on, and whether its neighbours are on that same side — and never
+the poverty ramp. The count is stated in the hover and beside the sheet, not coloured.

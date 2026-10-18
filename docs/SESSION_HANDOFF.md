@@ -1,8 +1,61 @@
 # Handoff — sessions 2026-10-09/10 (party test, map fit, plain-language sheets)
 
-**Start here.** Pipeline is 9 stages, all green (`.\scripts\run_all.ps1`, exit 0,
-~90 s). Everything below is committed and pushed. The atlas is still **not
+**Start here.** Pipeline is 10 stages, all green (`.\scripts\run_all.ps1`, exit 0,
+~115 s). Everything below is committed and pushed. The atlas is still **not
 published** — that remains the one manual step (your Tableau Public login).
+
+## 2026-10-18 (third session) — the spatial sheets: a cluster map beside the poverty map
+
+Stage 9 was registered in the previous session and is now built, and the atlas has a
+**second map** at the user's request: `Where poverty clusters`, immediately after
+`Where poverty sits`, with the diagnostic scatter (`Do poor states sit next to poor
+states?`) immediately after it.
+
+- **The map is the same 37 rings, joined to the neighbourhood type.** Stage 9 now
+  writes `data/processed/spatial_polygons.csv` — the polygon table's own columns, in its
+  own order, plus `spatial_group`, `spatial_lag_mpi_pct`, `neighbours` — and stage 6
+  packages it as a sixth extract (`spatial_polygons.hyper`, 7,089 rows) with its own
+  datasource, `Spatial polygons`. It is a separate table rather than extra columns on
+  `mpi_polygons.csv` because stage 4 owns that file and runs before stage 9 exists.
+  Stage 6 asserts the joined table is the polygon table row for row (pcode, ring, lon,
+  lat, point_order) and that the two spatial surfaces agree on which types exist.
+- **Colour is descriptive, never significance.** Only one state survives the
+  Bonferroni correction and none survives Benjamini–Yekutieli, so a significance map
+  would be a single state — and it would invite naming it "the poorest cluster", the
+  per-state ordering the atlas withdrew (`docs/FIX_LEDGER.md` A1). All 37 states are
+  coloured by type and the count is carried in the hover instead. Recorded as
+  **Amendment 1** in `docs/spatial_preregistration.md`: the test, the decision rule and
+  the frozen wording are unchanged; the added surface was requested after the result was
+  seen, and the amendment is appended rather than folded in.
+- **The palette's two pale tints were the wrong way round.** `atlas_text` claimed
+  "hue says how poor *this* state is", but the hexes assigned to HL/LH made the hue
+  encode the *neighbours*: `high, beside low` drew pale teal and `low, beside high` pale
+  purple. Swapped, so the legend rule is now the one the comment states and the one a
+  reader can check by eye (purple states are the poor ones). Verified in the rebuilt
+  workbook.
+- **Both spatial surfaces share one tooltip and one set of words.** The four frozen
+  reader lines, the heading, the no-cause caveat and the technical footer are generated
+  once in stage 6 from `atlas_text`; only the "how to read this surface" sentence differs
+  (colours on the map, two axes on the scatter). The four lines previously lived only in
+  `docs/spatial_analysis.md` §3 despite §3 claiming they were "the wording on the sheet"
+  — they are now on both sheets.
+- **Renames:** the scatter's QA-gate PNG is `docs/preview/8_spatial_scatter.png`; the
+  map's is `docs/preview/7_spatial_clusters_map.png`. Previews 1–6 are unchanged; the
+  two spatial previews are appended and numbered in sheet order.
+- **Verified by rendering** (`Tableau Public - render_test`, log line
+  `Finished rendering sheet: Where poverty clusters`, no error line): the workbook opens,
+  the `Spatial polygons` datasource is in the Data pane, the map draws deep purple north /
+  deep teal south with Nasarawa the single pale "high, beside low" state, and the
+  right-hand colour card draws with the `Neighbourhood type` title and its swatches.
+- **Two things still needing a GUI click**, both on both maps: the axis titles read
+  `Avg. lat` / `Avg. lon` (right-click → uncheck **Show Header**), and sheet 1's colour
+  legend. The cluster map's own colour card **did** draw in the capture, which
+  contradicts the open sheet-1 item at least once — re-check `Where poverty sits` with
+  the same padded `PrintWindow` before treating that defect as settled. Neither is
+  silently broken: both sheets declare the same card.
+- **The `Equity Atlas` dashboard still carries the five spec sheets only.** The two
+  spatial sheets are standalone tabs, like the party sheet.
+
 
 ## 2026-10-18 (second session) — sheet 1: the bands have colours, and the gate matches
 

@@ -290,8 +290,12 @@ def main() -> int:
     )
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    # `div_id` is pinned because Plotly otherwise invents a fresh UUID for the graph
+    # div on every run: the 8.5 MB file is tracked, and a random id made every rebuild
+    # a three-line no-op diff that hid real changes. Nothing reads the id -- the fit
+    # script finds the div by its `.plotly-graph-div` class.
     fig.write_html(str(OUT), include_plotlyjs=True, full_html=True,
-                   default_height=f"{MAP_HEIGHT}px")
+                   div_id="mpi-atlas-map", default_height=f"{MAP_HEIGHT}px")
     _add_fit_script({
         "All 37": _bounds(gj_plot, set(by_pcode)),
         "Poorest 12": _bounds(gj_plot, set(poorest)),

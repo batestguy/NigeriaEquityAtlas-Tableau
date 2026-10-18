@@ -1,11 +1,11 @@
-"""Stage 5 -- render the five spec visuals as PNGs before Tableau is involved.
+"""Stage 5 -- render the workbook's visuals as PNGs before Tableau is involved.
 
 This is the QA gate. If a stacked bar looks wrong or a scatter shows an
 implausible relationship, the bug is in Python where it is cheap to fix, not
 buried in hand-authored Tableau XML. It also serves as the visual reference for
 what each Tableau sheet is meant to show.
 
-The five visuals follow the project spec, section 1.4:
+The visuals follow the project spec, section 1.4, plus the sheets added later:
 
 1. Geographic plot        state capitals positioned by lat/lon, banded MPI
   2. Dimension breakdown     the three dimension contributions, three panels
@@ -13,6 +13,12 @@ The five visuals follow the project spec, section 1.4:
   4. Geographic gradient     MPI vs latitude, NOT vs climate -- see visual 4
   5. State comparison        radar, one state against the 37-state mean
   6. Party alignment         MPI change vs federal alignment (stage 8), not a spec visual
+  7. Spatial clusters        the map again, coloured by neighbourhood type (stage 9)
+  8. Spatial diagnostic      each state against the average of its neighbours (stage 9)
+
+Previews 7 and 8 are a pair and are numbered in the order their sheets appear: the
+cluster map sits immediately after sheet 1, the scatter after it. They are appended
+rather than renumbering 1-6, which are the spec visuals in sheet order.
 
 Three of these depart from the spec, deliberately and for documented reasons.
 
@@ -56,7 +62,13 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Patch, Polygon as MplPolygon  # noqa: E402
 
 import atlas_text  # noqa: E402
-from common import DOCS, PROCESSED, RAW, alignment_context_line  # noqa: E402
+from common import (  # noqa: E402
+    DOCS,
+    PROCESSED,
+    RAW,
+    alignment_context_line,
+    spatial_context_line,
+)
 
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
@@ -125,6 +137,53 @@ def feature_rings(geom: dict[str, Any]) -> list[list[list[float]]]:
     return rings
 
 
+# Where each state's name is drawn, in degrees away from its capital. The south-east
+# is crowded, so those labels are nudged apart; shared by the two map previews so the
+# poverty map and the cluster map label the same country the same way.
+LABEL_NUDGES: dict[str, tuple[float, float]] = {
+    "NG-DE": (0.0, -0.42), "NG-AN": (0.0, 0.36), "NG-AK": (-0.34, -0.28),
+    "NG-CR": (0.14, 0.22), "NG-IM": (-0.34, -0.26), "NG-KN": (-0.30, -0.34),
+    "NG-JI": (0.12, 0.32), "NG-AB": (-0.30, 0.20), "NG-BE": (0.0, 0.30),
+    "NG-EN": (0.30, 0.18), "NG-RI": (-0.22, -0.30), "NG-BY": (-0.24, -0.24),
+    "NG-SO": (0.0, 0.16),
+}
+
+
+def draw_rings(
+    ax: Axes,
+    gj: dict[str, Any],
+    fill: dict[str, str],
+    colour_of: dict[str, str],
+    labels: dict[str, str],
+    centroids: dict[str, tuple[float, float]],
+    *,
+    ink_on: set[str] = frozenset(),
+) -> None:
+    """Draw the ADM1 polygons with one fill colour per pcode, and name the states.
+
+    Shared by the two map previews: sheet 1 colours the rings by poverty band, the
+    cluster map by neighbourhood type, and the country, the borders and the label
+    positions have to look identical either way. `ink_on` names the states whose label
+    is drawn in ink rather than white -- on a dark fill, ink is unreadable.
+    """
+    for feat in gj["features"]:
+        pcode = feat["properties"]["shapeISO"]
+        if pcode not in fill:
+            continue
+        for ring in feature_rings(feat["geometry"]):
+            ax.add_patch(
+                MplPolygon(ring, closed=True, facecolor=colour_of[fill[pcode]],
+                           edgecolor="white", linewidth=0.6)
+            )
+    for pcode, name in labels.items():
+        lat, lon = centroids[pcode]
+        dlat, dlon = LABEL_NUDGES.get(pcode, (0.0, 0.0))
+        ax.text(
+            lon + dlon, lat + dlat, name, fontsize=6.6, ha="center", va="center",
+            color=INK if pcode in ink_on else "white", fontweight="bold",
+        )
+
+
 # ---------------------------------------------------------------- visual 1
 def visual_choropleth(rows: list[dict[str, str]]) -> None:
     """The QA gate for sheet 1: the same measure, the same bands, the same colours.
@@ -148,34 +207,13 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
     assert not unexpected, f"mpi_band values not in atlas_text.MPI_BANDS: {unexpected}"
 
     fig, ax = plt.subplots(figsize=(8.6, 9.4))
-    for feat in gj["features"]:
-        pcode = feat["properties"]["shapeISO"]
-        if pcode not in band:
-            continue
-        for ring in feature_rings(feat["geometry"]):
-            ax.add_patch(
-                MplPolygon(ring, closed=True, facecolor=colour_of[band[pcode]],
-                           edgecolor="white", linewidth=0.6)
-            )
-
     centroids = {r["pcode"]: (float(r["lat"]), float(r["lon"])) for r in rows}
-    # Nudge labels in the crowded south-east so they do not overprint each other.
-    nudges = {
-        "NG-DE": (0.0, -0.42), "NG-AN": (0.0, 0.36), "NG-AK": (-0.34, -0.28),
-        "NG-CR": (0.14, 0.22), "NG-IM": (-0.34, -0.26), "NG-KN": (-0.30, -0.34),
-        "NG-JI": (0.12, 0.32), "NG-AB": (-0.30, 0.20), "NG-BE": (0.0, 0.30),
-        "NG-EN": (0.30, 0.18), "NG-RI": (-0.22, -0.30), "NG-BY": (-0.24, -0.24),
-        "NG-SO": (0.0, 0.16),
-    }
-    for pcode, (lat, lon) in centroids.items():
-        dlat, dlon = nudges.get(pcode, (0.0, 0.0))
-        # White on the two darkest bands, ink on the three light ones. The old
-        # threshold was the H value, which is a different number.
-        dark = depth[band[pcode]] >= 3
-        ax.text(
-            lon + dlon, lat + dlat, label[pcode], fontsize=6.6, ha="center", va="center",
-            color="white" if dark else INK, fontweight="bold",
-        )
+    # White labels on the two darkest bands, ink on the three light ones. The old
+    # threshold was the H value, which is a different number. (`ink_on` names the
+    # states drawn in ink; everything else is white -- so it is the *light* bands.)
+    dark = {pcode for pcode in band if depth[band[pcode]] >= 3}
+    light = set(band) - dark
+    draw_rings(ax, gj, band, colour_of, label, centroids, ink_on=light)
 
     # A discrete legend, in band order -- not a continuous colourbar, which would
     # advertise a resolution the five bands do not have. The "N. " sort key is
@@ -525,6 +563,164 @@ def visual_party_alignment() -> None:
     print("  6_party_alignment.png")
 
 
+# ------------------------------------------------- the spatial clustering map
+def visual_spatial_clusters() -> None:
+    """The QA gate for the cluster map: the same four types, in the same four colours.
+
+    The map draws the ADM1 rings with `spatial_group` as the fill, so the gate draws
+    the same rings from the same raw file with the same hexes from atlas_text, and
+    prints the reading the sheet's hover carries. A colour that drifts, or a state
+    whose type changes, is caught here before Tableau is opened -- which is what a gate
+    is for.
+
+    It is deliberately NOT a significance map: one state survives the correction and
+    none survives the stricter variant, so the map colours all 37 states by type and
+    the count goes in the footnote as a number. A map of what is significant would be
+    one state, and it would invite naming it "the poorest cluster", which is the
+    per-state ordering the atlas withdrew (docs/FIX_LEDGER.md A1).
+    """
+    rows = read(PROCESSED / "spatial_diagnostics.csv")
+    global_rows = read(PROCESSED / "spatial_global.csv")
+    atlas = read(ATLAS)
+    assert len(rows) == 37, f"expected 37 states, got {len(rows)}"
+
+    order = [words for _, words, _ in atlas_text.SPATIAL_QUADRANTS]
+    colour_of = {words: colour for _, words, colour in atlas_text.SPATIAL_QUADRANTS}
+    group = {r["pcode"]: r["spatial_group"] for r in rows}
+    unexpected = sorted(set(group.values()) - set(colour_of))
+    assert not unexpected, f"neighbourhood types with no colour: {unexpected}"
+
+    gj = json.loads((RAW / "nga_adm1.geojson").read_text(encoding="utf-8"))
+    labels = {r["pcode"]: r["state"] for r in atlas}
+    centroids = {r["pcode"]: (float(r["lat"]), float(r["lon"])) for r in atlas}
+
+    fig, ax = plt.subplots(figsize=(8.6, 9.4))
+    # Ink labels over the two pale tints, white over the two deep fills -- the same
+    # rule as the poverty map, where the two darkest bands take white.
+    draw_rings(
+        ax, gj, group, colour_of, labels, centroids,
+        ink_on={p for p in group if group[p] not in atlas_text.SPATIAL_DEEP_TYPES},
+    )
+
+    counts: dict[str, int] = {words: 0 for words in order}
+    for words in group.values():
+        counts[words] += 1
+    handles = [
+        Patch(facecolor=colour_of[words], edgecolor="#8a8a8a", linewidth=0.5,
+              label=f"{words} ({counts[words]})")
+        for words in order
+    ]
+    legend = ax.legend(
+        handles=handles,
+        title=f"{atlas_text.SPATIAL_LEGEND_TITLE}\n({atlas_text.SPATIAL_LEGEND_MEANING})",
+        loc="center left", bbox_to_anchor=(1.005, 0.5), frameon=False,
+        fontsize=7.6, title_fontsize=8, labelspacing=0.8,
+    )
+    legend._legend_box.align = "left"
+
+    titles(
+        ax,
+        f"Nigeria: {atlas_text.SPATIAL_MAP_TITLE}",
+        f"{atlas_text.SPATIAL_MAP_SUBTITLE}. {atlas_text.SPATIAL_MAP_READING}",
+        width=104,
+    )
+    technical = spatial_context_line(global_rows)
+    ax.text(
+        0, -0.05, "\n".join(textwrap.wrap(technical, 104)),
+        transform=ax.transAxes, fontsize=7.4, color="#555555", va="top",
+    )
+    ax.set_xlim(2.4, 15.0)
+    ax.set_ylim(3.9, 14.2)
+    ax.set_aspect(1.0)
+    ax.axis("off")
+    fig.tight_layout()
+    fig.savefig(PREVIEW / "7_spatial_clusters_map.png", dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print("  7_spatial_clusters_map.png")
+
+
+# ------------------------------------------------- the spatial diagnostic sheet
+def visual_spatial() -> None:
+    """The QA gate for the spatial sheet: the same numbers, the same words.
+
+    The sheet draws each state's poverty score against the average of the states it
+    borders, and the slope of that cloud is Moran's I. The gate draws the same cloud
+    from the same file, in the same four colours, and prints the four frozen reader
+    lines and the technical line that the workbook's tooltip carries -- so a
+    regression in the sheet, in the palette or in the wording is caught before
+    Tableau is opened, which is what a gate is for.
+    """
+    rows = read(PROCESSED / "spatial_diagnostics.csv")
+    global_rows = read(PROCESSED / "spatial_global.csv")
+    assert len(rows) == 37, f"expected 37 states, got {len(rows)}"
+
+    order = [words for _, words, _ in atlas_text.SPATIAL_QUADRANTS]
+    colour_of = {words: colour for _, words, colour in atlas_text.SPATIAL_QUADRANTS}
+    unexpected = sorted({r["spatial_group"] for r in rows} - set(colour_of))
+    assert not unexpected, f"neighbourhood types with no colour: {unexpected}"
+
+    own = {r["state"]: float(r["mpi_pct"]) for r in rows}
+    lagged = {r["state"]: float(r["spatial_lag_mpi_pct"]) for r in rows}
+    group = {r["state"]: r["spatial_group"] for r in rows}
+    mean_own = sum(own.values()) / len(own)
+    mean_lag = sum(lagged.values()) / len(lagged)
+
+    fig, ax = plt.subplots(figsize=(8.4, 7.0))
+
+    # The two means cut the cloud into the four neighbourhood types the legend names.
+    ax.axvline(mean_lag, color=GRID, linewidth=1.0, linestyle="--", zorder=1)
+    ax.axhline(mean_own, color=GRID, linewidth=1.0, linestyle="--", zorder=1)
+
+    for words in order:
+        states = [s for s in own if group[s] == words]
+        if not states:
+            continue
+        ax.scatter(
+            [lagged[s] for s in states], [own[s] for s in states],
+            s=46, c=colour_of[words], edgecolor="white", linewidth=0.7,
+            label=f"{words} ({len(states)})", zorder=3,
+        )
+    for state in own:
+        ax.annotate(
+            state, (lagged[state], own[state]), textcoords="offset points",
+            xytext=(4.5, 2.5), fontsize=6.2, color=INK, zorder=4,
+        )
+
+    # Corner labels in words, not letters: the reader is told what each corner
+    # means without having to hold a convention in their head.
+    corner = dict(fontsize=7.2, color="#8a8a8a", style="italic", zorder=0)
+    x0, x1 = ax.get_xlim()
+    y0, y1 = ax.get_ylim()
+    ax.text(x1, y1, "high, beside high", ha="right", va="top", **corner)
+    ax.text(x0, y1, "high, beside low", ha="left", va="top", **corner)
+    ax.text(x1, y0, "low, beside high", ha="right", va="bottom", **corner)
+    ax.text(x0, y0, "low, beside low", ha="left", va="bottom", **corner)
+
+    ax.set_xlabel(atlas_text.SPATIAL_AXIS_NEIGHBOURS, fontsize=8.6)
+    ax.set_ylabel(atlas_text.SPATIAL_AXIS_OWN, fontsize=8.6)
+    ax.legend(title=atlas_text.SPATIAL_LEGEND_TITLE, loc="center left",
+              bbox_to_anchor=(1.005, 0.72), frameon=False, fontsize=7.6,
+              title_fontsize=8, labelspacing=0.7)
+    ax.grid(color=GRID, linewidth=0.6, alpha=0.7)
+    ax.set_axisbelow(True)
+
+    titles(
+        ax,
+        atlas_text.SPATIAL_TITLE,
+        " ".join(atlas_text.SPATIAL_READER_LINES),
+        width=104,
+    )
+    technical = spatial_context_line(global_rows)
+    ax.text(
+        0, -0.14, "\n".join(textwrap.wrap(technical, 104)),
+        transform=ax.transAxes, fontsize=7.4, color="#555555", va="top",
+    )
+    fig.tight_layout()
+    fig.savefig(PREVIEW / "8_spatial_scatter.png", dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print("  8_spatial_scatter.png")
+
+
 def main() -> int:
     PREVIEW.mkdir(parents=True, exist_ok=True)
     rows = read(ATLAS)
@@ -539,7 +735,9 @@ def main() -> int:
     visual_climate(rows, panel)
     visual_radar(rows)
     visual_party_alignment()
-    print(f"\nwrote 6 previews to {PREVIEW}")
+    visual_spatial_clusters()
+    visual_spatial()
+    print(f"\nwrote 8 previews to {PREVIEW}")
     return 0
 
 

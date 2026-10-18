@@ -27,6 +27,12 @@ Sheet inventory
   6  Party alignment and MPI change   scatter, aligned_share vs dmpi_annual,
                                       interval on Colour (stage 8 panel, its
                                       own extract; never coloured by party)
+  7  Do poor states sit next to poor states?
+                                      scatter, this state's poverty against the
+                                      average of the states it borders, four
+                                      assigned neighbourhood colours (stage 9);
+                                      every word on it is written for a reader
+                                      who knows no statistics
 
 The spec's fifth visual, a radar chart, is *not* generated. A radar needs a
 polygon mark driven by computed path fields, which is the most fragile part of
@@ -46,7 +52,7 @@ from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
 import atlas_text
-from common import PROCESSED, REPO_ROOT
+from common import PROCESSED, REPO_ROOT, spatial_context_line
 
 DS_NAME = "federated.0mpiatlas2021"
 DS_CAPTION = "Nigeria MPI Atlas"
@@ -148,7 +154,15 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
     legend used to read the internal name ``mpi_band``.
     """
     extra = f" default-aggregation-type='{default_agg}'" if default_agg else ""
-    cap = f" caption='{escape(caption)}'" if caption else f" caption='{escape(name)}'"
+    # Captions go into a single-quoted attribute, so quotes have to be escaped and
+    # not just &/</>. A caption containing an apostrophe -- "this state's poverty"
+    # -- otherwise produces well-formed-looking markup that fails to parse
+    # ("invalid token"), and the whole workbook fails to build for a comma.
+    quoted = {chr(34): "&quot;", chr(39): "&apos;"}
+    cap = (
+        f" caption='{escape(caption, quoted)}'" if caption
+        else f" caption='{escape(name)}'"
+    )
     if datatype == "string":
         type_attr = "nominal"
     elif datatype == "integer":
@@ -183,6 +197,7 @@ ATLAS_HYPER = "mpi_atlas_2021.hyper"
 PANEL_HYPER = "mpi_trends_panel.hyper"
 ALIGN_HYPER = "party_alignment_panel.hyper"
 POLY_HYPER = "mpi_polygons.hyper"
+SPATIAL_HYPER = "spatial_diagnostics.hyper"
 
 
 def build_hyper(csv_path: Path, out_path: Path,
@@ -531,6 +546,46 @@ POLY_COLUMNS: list[tuple[str, str, str]] = [
 ]
 
 
+# --- The spatial diagnostic's extract (stage 9, spatial_diagnostics.csv) -------
+# A small table, not geometry: each state against the average of the states it
+# borders. Types are pinned rather than inferred for the same reason the polygon
+# extract's are -- `neighbours` must be a measure and `spatial_group` a plain
+# dimension, or the shelves resolve to an instance that does not exist.
+SPATIAL_DS_NAME = "federated.0mpispatial"
+SPATIAL_DS_CAPTION = "Spatial diagnostics"
+SPATIAL_CONN = "hyper.0mpispatial"
+SPATIAL_COLUMNS: list[tuple[str, str, str]] = [
+    ("state", "string", "dimension"),
+    ("pcode", "string", "dimension"),
+    ("spatial_group", "string", "dimension"),
+    ("mpi_pct", "real", "measure"),
+    ("spatial_lag_mpi_pct", "real", "measure"),
+    ("neighbours", "integer", "measure"),
+    ("mpi", "real", "measure"),
+    ("spatial_lag_mpi", "real", "measure"),
+    ("lisa_p", "real", "measure"),
+    ("lisa_p_bonferroni", "real", "measure"),
+]
+
+
+# --- The cluster map's extract (stage 9, spatial_polygons.csv) -----------------
+# Sheet 1's geometry, joined to the four neighbourhood types: the map draws the same
+# rings the poverty map draws, with `spatial_group` as the fill. A separate extract
+# rather than extra columns on mpi_polygons.csv because stage 4 owns that file and
+# runs before stage 9 exists -- appending there would make a stage-4 artifact depend
+# on a later stage. Column order is POLY_COLUMNS with the spatial fields appended, in
+# the order stage 9 writes them (POLY_SPATIAL_FIELDS).
+SPATIAL_POLY_DS_NAME = "federated.0mpispatialpoly"
+SPATIAL_POLY_DS_CAPTION = "Spatial polygons"
+SPATIAL_POLY_CONN = "hyper.0mpispatialpoly"
+SPATIAL_POLY_HYPER = "spatial_polygons.hyper"
+SPATIAL_POLY_COLUMNS: list[tuple[str, str, str]] = POLY_COLUMNS + [
+    ("spatial_group", "string", "dimension"),
+    ("spatial_lag_mpi_pct", "real", "measure"),
+    ("neighbours", "integer", "measure"),
+]
+
+
 # --- Reader dashboards: plain-language text from scripts/atlas_text.py ---------
 # Two text-only dashboards, "What the words mean" and "How we did it", built from
 # the same strings stage 7 renders on the HTML page. The words live in
@@ -671,10 +726,40 @@ READER_DASHBOARDS = [atlas_text.WORDS_TITLE, atlas_text.METHOD_TITLE]
 def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
                    panel_columns: list[tuple[str, str, str]], panel_rows: int,
                    align_columns: list[tuple[str, str, str]], align_rows: int,
-                   poly_rows: int) -> str:
+                   spatial_columns: list[tuple[str, str, str]], spatial_rows: int,
+                   spatial_technical: str,
+                   poly_rows: int, spatial_poly_rows: int) -> str:
     atlas_deps = deps_xml(atlas_columns)
     panel_deps = deps_xml(panel_columns)
     align_deps = deps_xml(align_columns)
+    spatial_captions = {
+        # The colour field's caption is the legend's title, so it says what the
+        # reader is looking at rather than naming the column.
+        "spatial_group": (
+            f"{atlas_text.SPATIAL_LEGEND_TITLE} ({atlas_text.SPATIAL_LEGEND_MEANING})"
+        ),
+        # Axis titles come from the field caption too. Left alone they would read
+        # `mpi_pct` and `spatial_lag_mpi_pct`, which is exactly the jargon this
+        # sheet exists to avoid.
+        "mpi_pct": atlas_text.SPATIAL_AXIS_OWN,
+        "spatial_lag_mpi_pct": atlas_text.SPATIAL_AXIS_NEIGHBOURS,
+    }
+    spatial_deps = deps_xml(SPATIAL_COLUMNS, spatial_captions)
+
+    # The cluster map draws the same legend, so it gets the same caption for
+    # `spatial_group` -- one dict could serve both datasources, but they are separate
+    # datasources and building the caption separately per datasource is exactly how
+    # the two would drift apart. This is the same caption text, from the same source.
+    spatial_poly_captions = {
+        "spatial_group": (
+            f"{atlas_text.SPATIAL_LEGEND_TITLE} ({atlas_text.SPATIAL_LEGEND_MEANING})"
+        ),
+        # Not on a shelf, but a caption is also what the field reads as in the
+        # datasource pane, and `spatial_lag_mpi_pct` is unreadable there.
+        "spatial_lag_mpi_pct": atlas_text.SPATIAL_AXIS_NEIGHBOURS,
+        "neighbours": "Number of states it borders",
+    }
+    spatial_poly_deps = deps_xml(SPATIAL_POLY_COLUMNS, spatial_poly_captions)
     # The colour field's caption is the legend's title text, so it has to say what
     # the reader is looking at -- the internal name "mpi_band" is not that. A legend
     # strip is 190px wide, so the title is the acronym expanded, not the full
@@ -690,6 +775,43 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         ),
     }
     poly_deps = deps_xml(POLY_COLUMNS, poly_captions)
+
+    # ---- the two spatial surfaces share one tooltip ------------------------
+    # The cluster map and the diagnostic scatter carry the same per-state numbers, the
+    # same four frozen reader lines and the same technical footer. Only the sentence
+    # that says how to read *this* surface differs, because on the map the reader is
+    # looking at colours and on the scatter at two axes -- and one copy of the rest is
+    # what keeps the two surfaces from telling the reader different things.
+    def spatial_tooltip_runs(ds: str, reading: str) -> str:
+        """The runs inside a spatial sheet's customized tooltip."""
+
+        def fld(column: str, kind: str = "sum", attrs: str = "") -> str:
+            return f"              <run{attrs}><![CDATA[<{ref(column, kind, ds)}>]]></run>\n"
+
+        def txt(body: str, attrs: str = "") -> str:
+            return f"              <run{attrs}>{body}</run>\n"
+
+        return (
+            fld("state", "dim", " bold='true' fontsize='13'")
+            + txt(" &#183; ")
+            + fld("spatial_group", "dim")
+            + txt("&#10;")
+            + txt("Poverty score: ", " bold='true'")
+            + fld("mpi_pct", "sum", " bold='true'")
+            + txt("%", " bold='true'")
+            + txt("&#10;Average of the ")
+            + fld("neighbours")
+            + txt(" states it borders: ")
+            + fld("spatial_lag_mpi_pct")
+            + txt("%&#10;&#10;")
+            + txt(reading + "&#10;&#10;", " italic='true'")
+            + txt(atlas_text.SPATIAL_READING_HEADING + "&#10;", " bold='true'")
+            + txt(escape(" ".join(atlas_text.SPATIAL_READER_LINES)))
+            + txt("&#10;")
+            + txt(escape(atlas_text.SPATIAL_NO_CAUSE) + "&#10;", " italic='true'")
+            + txt("Technical details&#10;", " bold='true'")
+            + txt(escape(spatial_technical))
+        )
 
     # ---- sheet 1: the filled map -------------------------------------------
     # A genuine filled choropleth, drawn from shipped geometry rather than from
@@ -830,6 +952,46 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
     )
 
+    # ---- sheet 1b: the cluster map, immediately after the poverty map -------
+    # The same rings, drawn again with the neighbourhood type as the fill. It is not a
+    # second poverty map: `spatial_group` says whether a state and the states it
+    # borders are on the same side of the national average, which is a statement about
+    # the map's pattern and not about how poor anywhere is. The four colours are the
+    # purple/teal set from atlas_text.SPATIAL_QUADRANTS, deliberately not the
+    # cream-to-brown poverty ramp.
+    #
+    # What this sheet must NOT do is colour by significance. Only one state survives the
+    # correction and none survives Benjamini-Yekutieli (docs/spatial_analysis.md s3), so
+    # a significance map would be a single state on a field of grey -- and it would
+    # invite the reader to name that state as "the poorest cluster", which is exactly
+    # the per-state ordering the atlas withdrew (docs/FIX_LEDGER.md A1). The count is in
+    # the hover instead, where it is a number and not a place.
+    sheet_cluster = worksheet_xml(
+        atlas_text.SPATIAL_MAP_TITLE,
+        subtitle=atlas_text.SPATIAL_MAP_SUBTITLE,
+        rows=ref("lat", "avg", SPATIAL_POLY_DS_NAME),
+        cols=ref("lon", "avg", SPATIAL_POLY_DS_NAME),
+        mark="Polygon",
+        encodings=(
+            f"            <lod column='{ref('state', 'dim', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('pcode', 'dim', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('ring', 'ord', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <path column='{ref('point_order', 'ord', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <color column='{ref('spatial_group', 'dim', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <text column='{ref('state', 'dim', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('mpi_pct', 'sum', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('spatial_lag_mpi_pct', 'sum', SPATIAL_POLY_DS_NAME)}' />\n"
+            f"            <lod column='{ref('neighbours', 'sum', SPATIAL_POLY_DS_NAME)}' />\n"
+        ),
+        ds_name=SPATIAL_POLY_DS_NAME,
+        ds_caption=SPATIAL_POLY_DS_CAPTION,
+        deps=spatial_poly_deps,
+        tooltip=spatial_tooltip_runs(SPATIAL_POLY_DS_NAME, atlas_text.SPATIAL_MAP_READING),
+        # The same white strokes sheet 1 carries, so the country reads as the same
+        # country drawn twice rather than as two different maps of two different places.
+        mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
+    )
+
     # ---- sheet 2: dimension breakdown ---------------------------------------
     # Verified 2026-10-06 in the application. The Measure Names / Measure Values
     # pair was tried first, because that is what a stacked bar needs, and it did
@@ -935,6 +1097,46 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         ds_caption=ALIGN_DS_CAPTION,
     )
 
+    # ---- the spatial diagnostic ---------------------------------------------
+    # Sheet 1's map drawn again as a scatter: each state against the average of
+    # the states it borders. It is a diagnostic ON that map, not a second poverty
+    # map -- the question is whether the map's pattern is more than the
+    # north-south gradient the atlas documents elsewhere (docs/FIX_LEDGER.md A2),
+    # and the honest answer is that about three quarters of it is that gradient.
+    #
+    # Hence every surface here is written for a reader who knows no statistics:
+    # the title asks the question, the subtitle answers it in one line, the axes
+    # and the legend are captioned in words (a field's caption IS the axis title
+    # and the colour card's title, so `mpi_pct` and `spatial_group` would
+    # otherwise reach the reader as column names), the four neighbourhood types
+    # are words rather than HH/HL/LH/LL, and the hover finishes each sentence. The
+    # statistic appears once, in the small technical line at the foot of the
+    # tooltip, which is the same pattern the HTML map's party panel uses.
+    #
+    # Colour is four explicit hexes from atlas_text.SPATIAL_QUADRANTS, assigned in
+    # the datasource palette: a nominal field otherwise draws in Tableau's default
+    # categorical palette, which is what D9 was about. `spatial_group` is on Shape
+    # as well as Colour, because colour alone fails WCAG 1.4.1.
+    sheet_spatial = worksheet_xml(
+        atlas_text.SPATIAL_TITLE,
+        subtitle=atlas_text.SPATIAL_SUBTITLE,
+        rows=ref("mpi_pct", "sum", SPATIAL_DS_NAME),
+        cols=ref("spatial_lag_mpi_pct", "sum", SPATIAL_DS_NAME),
+        mark="Circle",
+        encodings=(
+            f"            <lod column='{ref('state', 'dim', SPATIAL_DS_NAME)}' />\n"
+            f"            <color column='{ref('spatial_group', 'dim', SPATIAL_DS_NAME)}' />\n"
+            f"            <shape column='{ref('spatial_group', 'dim', SPATIAL_DS_NAME)}' />\n"
+            f"            <text column='{ref('state', 'dim', SPATIAL_DS_NAME)}' />\n"
+            f"            <lod column='{ref('neighbours', 'sum', SPATIAL_DS_NAME)}' />\n"
+            f"            <lod column='{ref('spatial_lag_mpi_pct', 'sum', SPATIAL_DS_NAME)}' />\n"
+        ),
+        ds_name=SPATIAL_DS_NAME,
+        ds_caption=SPATIAL_DS_CAPTION,
+        deps=spatial_deps,
+        tooltip=spatial_tooltip_runs(SPATIAL_DS_NAME, atlas_text.SPATIAL_AXIS_READING),
+    )
+
     # The methodology text lives on the dashboard canvas, not in the viz
     # description. Every caveat the atlas depends on -- the Nutrition exclusion,
     # the cross-sectionally relative conflict index, zero-reported-event states,
@@ -1011,7 +1213,7 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
 {words_dashboard()}{method_dashboard()}  </dashboards>
 """
 
-    windows = """  <windows source-height='1500'>
+    windows = f"""  <windows source-height='1500'>
     <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
@@ -1029,6 +1231,33 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         <edge name='right'>
           <strip size='160'>
             <card pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='{escape(atlas_text.SPATIAL_MAP_TITLE)}'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0mpispatialpoly].[none:spatial_group:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='{escape(atlas_text.SPATIAL_TITLE)}'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
           </strip>
         </edge>
       </cards>
@@ -1118,10 +1347,12 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
 
     # Sheet 1 draws the polygon extract, not the atlas one, so it is kept out of
     # the atlas instance list: a datasource must not declare instances for fields
-    # that live in another extract.
+    # that live in another extract. The cluster map draws a third extract again
+    # (the same rings joined to the neighbourhood types), so it is out too.
     atlas_sheets = " ".join([sheet_bar, sheet_scatter, sheet_quadrant])
     panel_sheets = " ".join([sheet_trend])
     poly_sheets = sheet_map
+    cluster_sheets = sheet_cluster
     atlas_instances = column_instances(atlas_sheets)
     atlas_ds = datasource_xml(
         atlas_columns, ATLAS_HYPER, atlas_rows, atlas_instances,
@@ -1157,6 +1388,42 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
         .replace(CONN_NAME, POLY_CONN)
         .replace(f"caption='{DS_CAPTION}'", f"caption='{POLY_DS_CAPTION}'", 1)
     )
+    spatial_ds = (
+        datasource_xml(
+            SPATIAL_COLUMNS, SPATIAL_HYPER, spatial_rows,
+            column_instances(sheet_spatial),
+            captions=spatial_captions,
+            # Four explicit colours for the four neighbourhood types, from
+            # atlas_text, for the same reason sheet 1's five bands are assigned:
+            # a nominal field with no palette draws in Tableau's default
+            # categorical scheme, and these four are a designed pair, not a
+            # set of arbitrary hues.
+            palette=(
+                "spatial_group",
+                [(words, colour) for _code, words, colour in atlas_text.SPATIAL_QUADRANTS],
+            ),
+        )
+        .replace(DS_NAME, SPATIAL_DS_NAME)
+        .replace(CONN_NAME, SPATIAL_CONN)
+        .replace(f"caption='{DS_CAPTION}'", f"caption='{SPATIAL_DS_CAPTION}'", 1)
+    )
+    spatial_poly_ds = (
+        datasource_xml(
+            SPATIAL_POLY_COLUMNS, SPATIAL_POLY_HYPER, spatial_poly_rows,
+            column_instances(sheet_cluster),
+            captions=spatial_poly_captions,
+            # The same four hexes as the scatter's datasource, for the same reason:
+            # the cluster map's fill is nominal, and without a palette Tableau draws
+            # it in five-unrelated-hues default style.
+            palette=(
+                "spatial_group",
+                [(words, colour) for _code, words, colour in atlas_text.SPATIAL_QUADRANTS],
+            ),
+        )
+        .replace(DS_NAME, SPATIAL_POLY_DS_NAME)
+        .replace(CONN_NAME, SPATIAL_POLY_CONN)
+        .replace(f"caption='{DS_CAPTION}'", f"caption='{SPATIAL_POLY_DS_CAPTION}'", 1)
+    )
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -1165,9 +1432,9 @@ def build_workbook(atlas_columns: list[tuple[str, str, str]], atlas_rows: int,
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{atlas_ds}{panel_ds}{align_ds}{poly_ds}  </datasources>
+{atlas_ds}{panel_ds}{align_ds}{poly_ds}{spatial_ds}{spatial_poly_ds}  </datasources>
   <worksheets>
-{sheet_map}{sheet_bar}{sheet_scatter}{sheet_trend}{sheet_quadrant}{sheet_align}  </worksheets>
+{sheet_map}{sheet_cluster}{sheet_spatial}{sheet_bar}{sheet_scatter}{sheet_trend}{sheet_quadrant}{sheet_align}  </worksheets>
 {dashboards}{windows}</workbook>
 """
 
@@ -1210,7 +1477,8 @@ def validate(xml: str, declared: set[str]) -> list[str]:
         if name not in declared:
             problems.append(f"field reference to undeclared column {name!r} in {token}")
     for ds in ("[federated.0mpiatlas2021]", "[federated.0mpipanel2021]",
-               "[federated.0partyalignment]", "[federated.0mpipolygons]"):
+               "[federated.0partyalignment]", "[federated.0mpipolygons]",
+               "[federated.0mpispatial]", "[federated.0mpispatialpoly]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
     return problems
@@ -1274,9 +1542,16 @@ def main() -> int:
     panel_path = PROCESSED / "mpi_trends_panel.csv"
     align_path = PROCESSED / "party_alignment_panel.csv"
     poly_path = PROCESSED / "mpi_polygons.csv"
-    for p in (atlas_path, panel_path, align_path, poly_path):
+    spatial_path = PROCESSED / "spatial_diagnostics.csv"
+    spatial_poly_path = PROCESSED / "spatial_polygons.csv"
+    spatial_global_path = PROCESSED / "spatial_global.csv"
+    for p in (atlas_path, panel_path, align_path, poly_path, spatial_path,
+              spatial_poly_path, spatial_global_path):
         if not p.exists():
-            raise SystemExit(f"missing {p}; run scripts/04_merge.py and 08_party_alignment.py first")
+            raise SystemExit(
+                f"missing {p}; run scripts/04_merge.py, 08_party_alignment.py and "
+                "09_spatial_diagnostics.py first"
+            )
 
     with atlas_path.open(newline="", encoding="utf-8-sig") as fh:
         atlas_reader = list(csv.DictReader(fh))
@@ -1286,11 +1561,63 @@ def main() -> int:
         align_reader = list(csv.DictReader(fh))
     with poly_path.open(newline="", encoding="utf-8-sig") as fh:
         poly_reader = list(csv.DictReader(fh))
+    with spatial_path.open(newline="", encoding="utf-8-sig") as fh:
+        spatial_reader = list(csv.DictReader(fh))
+    with spatial_poly_path.open(newline="", encoding="utf-8-sig") as fh:
+        spatial_poly_reader = list(csv.DictReader(fh))
+    with spatial_global_path.open(newline="", encoding="utf-8-sig") as fh:
+        spatial_global = list(csv.DictReader(fh))
+    assert len(spatial_reader) == 37, (
+        f"spatial table has {len(spatial_reader)} rows, expected 37"
+    )
+    assert {r["pcode"] for r in spatial_reader} == {r["pcode"] for r in atlas_reader}, (
+        "the spatial extract does not cover the same 37 states as the atlas"
+    )
+    # The four neighbourhood types are drawn from a fixed set of colours and
+    # explained in fixed words. A value in the data that is not on that list would
+    # draw in the default categorical colour with no legend entry, and the words in
+    # the tooltip and the sheet title would describe a fifth type nobody defined.
+    known_types = {words for _code, words, _colour in atlas_text.SPATIAL_QUADRANTS}
+    found_types = {r["spatial_group"] for r in spatial_reader}
+    assert found_types <= known_types, (
+        f"neighbourhood types missing from atlas_text.SPATIAL_QUADRANTS: "
+        f"{sorted(found_types - known_types)}"
+    )
+    assert len({colour for _c, _w, colour in atlas_text.SPATIAL_QUADRANTS}) == len(
+        atlas_text.SPATIAL_QUADRANTS
+    ), "atlas_text.SPATIAL_QUADRANTS repeats a colour; the four types must be distinct"
     assert len(align_reader) == 108, f"party alignment panel has {len(align_reader)} rows, expected 108"
     # 37 states, one ring each, 53k vertices: a drift here means the geometry or
     # the pcode join changed, and the map would silently lose a state.
     assert {r["pcode"] for r in poly_reader} == {r["pcode"] for r in atlas_reader}, (
         "polygon extract does not cover the same 37 states as the atlas"
+    )
+    # The cluster map draws the rings again, so it must carry the same geometry with
+    # the same vertex count, the same 37 states, and types from the same fixed set --
+    # a half-joined polygon table would draw states with no fill at all.
+    assert len(spatial_poly_reader) == len(poly_reader), (
+        f"the cluster map's table has {len(spatial_poly_reader)} vertices but the map "
+        f"draws {len(poly_reader)}; the two must be the same geometry"
+    )
+    assert [r["point_order"] for r in spatial_poly_reader] == [
+        r["point_order"] for r in poly_reader
+    ], "the cluster map's table is not the polygon table in the same order"
+    for row, source in zip(spatial_poly_reader, poly_reader):
+        if (row["pcode"], row["ring"], row["lon"], row["lat"]) != (
+            source["pcode"], source["ring"], source["lon"], source["lat"]
+        ):
+            raise AssertionError("the cluster map's geometry drifted from the polygon table")
+    assert {r["pcode"] for r in spatial_poly_reader} == {r["pcode"] for r in atlas_reader}, (
+        "the cluster map's table does not cover the same 37 states as the atlas"
+    )
+    found_poly_types = {r["spatial_group"] for r in spatial_poly_reader}
+    assert found_poly_types <= known_types, (
+        f"neighbourhood types missing from atlas_text.SPATIAL_QUADRANTS: "
+        f"{sorted(found_poly_types - known_types)}"
+    )
+    assert found_poly_types == found_types, (
+        "the cluster map and the spatial scatter disagree about which neighbourhood "
+        f"types exist: {sorted(found_poly_types ^ found_types)}"
     )
     # The workbook's colour palette and the two preview maps are all built from
     # atlas_text.MPI_BANDS. A band in the data that is not on that list would draw
@@ -1333,16 +1660,24 @@ def main() -> int:
     # integer dimensions (type='ordinal'), not measures, or the Path field
     # resolves to a nonexistent :ok/:nk instance. Types are pinned in POLY_COLUMNS.
     poly_columns = POLY_COLUMNS
+    spatial_columns = SPATIAL_COLUMNS
+    # The cluster map's extract is pinned too, and its first columns are POLY_COLUMNS
+    # unchanged: it is the same ring vertices with the spatial fields appended.
+    spatial_poly_columns = SPATIAL_POLY_COLUMNS
 
     declared = (
         {n for n, _, _ in atlas_columns}
         | {n for n, _, _ in panel_columns}
         | {n for n, _, _ in align_columns}
         | {n for n, _, _ in poly_columns}
+        | {n for n, _, _ in spatial_columns}
+        | {n for n, _, _ in spatial_poly_columns}
     )
     xml = build_workbook(
         atlas_columns, len(atlas_reader), panel_columns, len(panel_reader),
-        align_columns, len(align_reader), len(poly_reader),
+        align_columns, len(align_reader), spatial_columns, len(spatial_reader),
+        spatial_context_line(spatial_global), len(poly_reader),
+        len(spatial_poly_reader),
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1354,6 +1689,10 @@ def main() -> int:
     align_n = build_hyper(align_path, align_hyper, align_columns)
     poly_hyper = OUT_DIR / POLY_HYPER
     poly_n = build_hyper(poly_path, poly_hyper, poly_columns)
+    spatial_hyper = OUT_DIR / SPATIAL_HYPER
+    spatial_n = build_hyper(spatial_path, spatial_hyper, spatial_columns)
+    spatial_poly_hyper = OUT_DIR / SPATIAL_POLY_HYPER
+    spatial_poly_n = build_hyper(spatial_poly_path, spatial_poly_hyper, spatial_poly_columns)
 
     problems = validate(xml, declared)
     problems += check_hyper_schema(
@@ -1362,12 +1701,16 @@ def main() -> int:
             (PANEL_HYPER, panel_hyper, panel_columns),
             (ALIGN_HYPER, align_hyper, align_columns),
             (POLY_HYPER, poly_hyper, poly_columns),
+            (SPATIAL_HYPER, spatial_hyper, spatial_columns),
+            (SPATIAL_POLY_HYPER, spatial_poly_hyper, spatial_poly_columns),
         ],
         {
             ATLAS_HYPER: atlas_n,
             PANEL_HYPER: panel_n,
             ALIGN_HYPER: align_n,
             POLY_HYPER: poly_n,
+            SPATIAL_HYPER: spatial_n,
+            SPATIAL_POLY_HYPER: spatial_poly_n,
         },
     )
     if problems:
@@ -1387,12 +1730,16 @@ def main() -> int:
         zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
         zf.write(align_hyper, f"Data/{ALIGN_HYPER}")
         zf.write(poly_hyper, f"Data/{POLY_HYPER}")
+        zf.write(spatial_hyper, f"Data/{SPATIAL_HYPER}")
+        zf.write(spatial_poly_hyper, f"Data/{SPATIAL_POLY_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(
         f"Extracts validated: {ATLAS_HYPER} ({atlas_n} rows), "
         f"{PANEL_HYPER} ({panel_n} rows), {ALIGN_HYPER} ({align_n} rows), "
-        f"{POLY_HYPER} ({poly_n} rows) match the declared columns"
+        f"{POLY_HYPER} ({poly_n} rows), {SPATIAL_HYPER} ({spatial_n} rows), "
+        f"{SPATIAL_POLY_HYPER} ({spatial_poly_n} rows) "
+        "match the declared columns"
     )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")

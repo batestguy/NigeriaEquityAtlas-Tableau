@@ -172,3 +172,49 @@ def alignment_context_line(rows: list[dict[str, str]], alpha: float = 0.05) -> s
         return "Every robustness and leave-one-interval-out check also has p < 0.05."
     line = "; ".join(parts)
     return line[0].upper() + line[1:] + "."
+
+
+def _trim(x: float, dp: int) -> str:
+    text = f"{x:.{dp}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
+
+def spatial_context_line(rows: list[dict[str, str]]) -> str:
+    """One factual line on the spatial diagnostic, built only from spatial_global.csv.
+
+    Rows are looked up by the stable ``key`` column that spatial_diagnostics.R
+    writes, so a rewording cannot silently bind a figure to the wrong statistic.
+    Stage 5 (the gate PNG), stage 6 (the sheet's technical line) and stage 9 (the
+    note's result section) all call this, so the three surfaces cannot disagree.
+    """
+    by = {r["key"]: r for r in rows}
+
+    def value(key: str) -> str:
+        entry = by[key]
+        assert entry["value"] != "", f"spatial_global.csv row {key} has no value"
+        return entry["value"]
+
+    def p_text(key: str) -> str:
+        entry = by[key]
+        p = float(entry["p"])
+        floor = 1.0 / (float(entry["nsim"]) + 1.0)
+        return "\u2264 " + _trim(floor, 4) if p <= floor + 1e-12 else "= " + _trim(p, 4)
+
+    survivors = by["h3_survivors_n"]
+    names = survivors["note"].strip()
+    verb = "stands" if value("h3_survivors_n") == "1" else "stand"
+    shuffles = f"{int(by['h1_global_i']['nsim']):,}" if by["h1_global_i"]["nsim"] else "many"
+    return (
+        f"Moran's I of the poverty score {_trim(float(value('h1_global_i')), 3)} "
+        f"(p {p_text('h1_global_i')}, {shuffles} shuffles); after "
+        f"accounting for how far north a state is, {_trim(float(value('h2_resid_i')), 3)} "
+        f"(p {p_text('h2_resid_i')}); after latitude, conflict and climate together, "
+        f"{_trim(float(value('ctx_full_i')), 3)} (p {p_text('ctx_full_i')}). How far north "
+        f"a state is explains {_trim(100 * float(value('ctx_lat_r2')), 0)}% of the "
+        f"pattern. {value('ctx_raw_n')} of {survivors['n']} states look neighbourhood-like "
+        f"before correction; {value('h3_survivors_n')} ({names}) {verb} out after "
+        f"correcting for {survivors['n']} tests, and {value('sen_by_survivors_n')} with "
+        f"the stricter Benjamini\u2013Yekutieli correction."
+    )

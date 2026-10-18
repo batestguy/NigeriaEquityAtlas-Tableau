@@ -243,6 +243,133 @@
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
     </datasource>
+    <datasource caption='Spatial diagnostics' inline='true' name='federated.0mpispatial' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0mpispatial'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_diagnostics.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0mpispatial' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='Neighbourhood type (this state&apos;s poverty, beside its neighbours&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
+      <column caption='This state&apos;s poverty score (MPI, % of index)' datatype='real' name='[mpi_pct]' role='measure' type='quantitative' />
+      <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
+      <column caption='neighbours' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='spatial_lag_mpi' datatype='real' name='[spatial_lag_mpi]' role='measure' type='quantitative' />
+      <column caption='lisa_p' datatype='real' name='[lisa_p]' role='measure' type='quantitative' />
+      <column caption='lisa_p_bonferroni' datatype='real' name='[lisa_p_bonferroni]' role='measure' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[spatial_group]' derivation='None' name='[none:spatial_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_diagnostics.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[none:spatial_group:nk]' type='palette'>
+            <map to='#54278f'>
+              <bucket>&quot;high, beside high&quot;</bucket>
+            </map>
+            <map to='#b3a2c7'>
+              <bucket>&quot;high, beside low&quot;</bucket>
+            </map>
+            <map to='#80cdc1'>
+              <bucket>&quot;low, beside high&quot;</bucket>
+            </map>
+            <map to='#01665e'>
+              <bucket>&quot;low, beside low&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
+    <datasource caption='Spatial polygons' inline='true' name='federated.0mpispatialpoly' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0mpispatialpoly'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_polygons.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0mpispatialpoly' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='ring' datatype='integer' name='[ring]' role='dimension' type='ordinal' />
+      <column caption='point_order' datatype='integer' name='[point_order]' role='dimension' type='ordinal' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_pct' datatype='real' name='[mpi_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
+      <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='Neighbourhood type (this state&apos;s poverty, beside its neighbours&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
+      <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
+      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
+      <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[point_order]' derivation='None' name='[none:point_order:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[spatial_group]' derivation='None' name='[none:spatial_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_polygons.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[none:spatial_group:nk]' type='palette'>
+            <map to='#54278f'>
+              <bucket>&quot;high, beside high&quot;</bucket>
+            </map>
+            <map to='#b3a2c7'>
+              <bucket>&quot;high, beside low&quot;</bucket>
+            </map>
+            <map to='#80cdc1'>
+              <bucket>&quot;low, beside high&quot;</bucket>
+            </map>
+            <map to='#01665e'>
+              <bucket>&quot;low, beside low&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
   </datasources>
   <worksheets>
     <worksheet name='Where poverty sits'>
@@ -358,6 +485,190 @@
       </panes>
         <rows>[federated.0mpipolygons].[avg:lat:qk]</rows>
         <cols>[federated.0mpipolygons].[avg:lon:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='Where poverty clusters'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>Where poverty clusters</run><run fontsize='9'>  Each state coloured by its own poverty and its neighbours' — descriptive, not a significance test</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='Spatial polygons' name='federated.0mpispatialpoly' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='ring' datatype='integer' name='[ring]' role='dimension' type='ordinal' />
+      <column caption='point_order' datatype='integer' name='[point_order]' role='dimension' type='ordinal' />
+      <column caption='lon' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
+      <column caption='lat' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='mpi_band' datatype='string' name='[mpi_band]' role='dimension' type='nominal' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='mpi_se' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo' datatype='real' name='[mpi_ci_lo]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi' datatype='real' name='[mpi_ci_hi]' role='measure' type='quantitative' />
+      <column caption='headcount_ratio_pct' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='intensity_pct' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_poor_thousands' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='mpi_pct' datatype='real' name='[mpi_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
+      <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
+      <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='Neighbourhood type (this state&apos;s poverty, beside its neighbours&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
+      <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
+      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
+      <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[point_order]' derivation='None' name='[none:point_order:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[spatial_group]' derivation='None' name='[none:spatial_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style>
+          <style-rule element='mark'><format attr='has-stroke' value='true' /><format attr='stroke-color' value='#FFFFFF' /><format attr='stroke-size' value='3' /></style-rule>
+        </style>
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Polygon' />
+          <encodings>
+            <lod column='[federated.0mpispatialpoly].[none:state:nk]' />
+            <lod column='[federated.0mpispatialpoly].[none:pcode:nk]' />
+            <lod column='[federated.0mpispatialpoly].[none:ring:ok]' />
+            <path column='[federated.0mpispatialpoly].[none:point_order:ok]' />
+            <color column='[federated.0mpispatialpoly].[none:spatial_group:nk]' />
+            <text column='[federated.0mpispatialpoly].[none:state:nk]' />
+            <lod column='[federated.0mpispatialpoly].[sum:mpi_pct:qk]' />
+            <lod column='[federated.0mpispatialpoly].[sum:spatial_lag_mpi_pct:qk]' />
+            <lod column='[federated.0mpispatialpoly].[sum:neighbours:qk]' />
+          </encodings>
+          <customized-tooltip show-buttons='false'>
+            <formatted-text>
+              <run bold='true' fontsize='13'><![CDATA[<[federated.0mpispatialpoly].[none:state:nk]>]]></run>
+              <run> &#183; </run>
+              <run><![CDATA[<[federated.0mpispatialpoly].[none:spatial_group:nk]>]]></run>
+              <run>&#10;</run>
+              <run bold='true'>Poverty score: </run>
+              <run bold='true'><![CDATA[<[federated.0mpispatialpoly].[sum:mpi_pct:qk]>]]></run>
+              <run bold='true'>%</run>
+              <run>&#10;Average of the </run>
+              <run><![CDATA[<[federated.0mpispatialpoly].[sum:neighbours:qk]>]]></run>
+              <run> states it borders: </run>
+              <run><![CDATA[<[federated.0mpispatialpoly].[sum:spatial_lag_mpi_pct:qk]>]]></run>
+              <run>%&#10;&#10;</run>
+              <run italic='true'>The colour says two things at once. Purple means this state is poorer than the average state, teal means it is better off than average. Deep means the states it borders are on the same side as it is, pale means they are not. Read it as a description of where poverty sits, not as a list of places that stand out: the lines below give the one number that says how much of this is more than the north being poorer than the south.&#10;&#10;</run>
+              <run bold='true'>The reading, in plain words&#10;</run>
+              <run>Yes. States with similar poverty scores do tend to share a border. But most of that is simply that the north is poorer than the south: how far north a state sits explains about three quarters of what looks like neighbouring states resembling each other. Think of a height map. Two neighbours are usually at similar heights because the land slopes steadily — not because one hill lifts the next. Take the slope out, and only a little resemblance between neighbours is left. Only 1 of the 37 states stands out on its own, once we allow for having looked at 37 states at once.</run>
+              <run>&#10;</run>
+              <run italic='true'>Nothing here shows that one state's poverty affects its neighbour's — neighbours resembling each other is a fact about the map.&#10;</run>
+              <run bold='true'>Technical details&#10;</run>
+              <run>Moran's I of the poverty score 0.798 (p ≤ 0.0001, 9,999 shuffles); after accounting for how far north a state is, 0.244 (p = 0.0095); after latitude, conflict and climate together, 0.108 (p = 0.107). How far north a state is explains 77% of the pattern. 16 of 37 states look neighbourhood-like before correction; 1 (Yobe) stands out after correcting for 37 tests, and 0 with the stricter Benjamini–Yekutieli correction.</run>
+            </formatted-text>
+          </customized-tooltip>
+          <style>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='true' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>[federated.0mpispatialpoly].[avg:lat:qk]</rows>
+        <cols>[federated.0mpispatialpoly].[avg:lon:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='Do poor states sit next to poor states?'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>Do poor states sit next to poor states?</run><run fontsize='9'>  States with similar poverty scores do tend to share a border — but most of that is simply that the north is poorer than the south</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='Spatial diagnostics' name='federated.0mpispatial' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='Neighbourhood type (this state&apos;s poverty, beside its neighbours&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
+      <column caption='This state&apos;s poverty score (MPI, % of index)' datatype='real' name='[mpi_pct]' role='measure' type='quantitative' />
+      <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
+      <column caption='neighbours' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column caption='mpi' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='spatial_lag_mpi' datatype='real' name='[spatial_lag_mpi]' role='measure' type='quantitative' />
+      <column caption='lisa_p' datatype='real' name='[lisa_p]' role='measure' type='quantitative' />
+      <column caption='lisa_p_bonferroni' datatype='real' name='[lisa_p_bonferroni]' role='measure' type='quantitative' />
+      <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[spatial_group]' derivation='None' name='[none:spatial_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style></style>
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Circle' />
+          <encodings>
+            <lod column='[federated.0mpispatial].[none:state:nk]' />
+            <color column='[federated.0mpispatial].[none:spatial_group:nk]' />
+            <shape column='[federated.0mpispatial].[none:spatial_group:nk]' />
+            <text column='[federated.0mpispatial].[none:state:nk]' />
+            <lod column='[federated.0mpispatial].[sum:neighbours:qk]' />
+            <lod column='[federated.0mpispatial].[sum:spatial_lag_mpi_pct:qk]' />
+          </encodings>
+          <customized-tooltip show-buttons='false'>
+            <formatted-text>
+              <run bold='true' fontsize='13'><![CDATA[<[federated.0mpispatial].[none:state:nk]>]]></run>
+              <run> &#183; </run>
+              <run><![CDATA[<[federated.0mpispatial].[none:spatial_group:nk]>]]></run>
+              <run>&#10;</run>
+              <run bold='true'>Poverty score: </run>
+              <run bold='true'><![CDATA[<[federated.0mpispatial].[sum:mpi_pct:qk]>]]></run>
+              <run bold='true'>%</run>
+              <run>&#10;Average of the </run>
+              <run><![CDATA[<[federated.0mpispatial].[sum:neighbours:qk]>]]></run>
+              <run> states it borders: </run>
+              <run><![CDATA[<[federated.0mpispatial].[sum:spatial_lag_mpi_pct:qk]>]]></run>
+              <run>%&#10;&#10;</run>
+              <run italic='true'>A state above the middle line is poorer than the average state; one to the right of the upright line has poorer neighbours than average. So “high, beside high” means poor among poor neighbours, and “low, beside low” means better off among better-off neighbours.&#10;&#10;</run>
+              <run bold='true'>The reading, in plain words&#10;</run>
+              <run>Yes. States with similar poverty scores do tend to share a border. But most of that is simply that the north is poorer than the south: how far north a state sits explains about three quarters of what looks like neighbouring states resembling each other. Think of a height map. Two neighbours are usually at similar heights because the land slopes steadily — not because one hill lifts the next. Take the slope out, and only a little resemblance between neighbours is left. Only 1 of the 37 states stands out on its own, once we allow for having looked at 37 states at once.</run>
+              <run>&#10;</run>
+              <run italic='true'>Nothing here shows that one state's poverty affects its neighbour's — neighbours resembling each other is a fact about the map.&#10;</run>
+              <run bold='true'>Technical details&#10;</run>
+              <run>Moran's I of the poverty score 0.798 (p ≤ 0.0001, 9,999 shuffles); after accounting for how far north a state is, 0.244 (p = 0.0095); after latitude, conflict and climate together, 0.108 (p = 0.107). How far north a state is explains 77% of the pattern. 16 of 37 states look neighbourhood-like before correction; 1 (Yobe) stands out after correcting for 37 tests, and 0 with the stricter Benjamini–Yekutieli correction.</run>
+            </formatted-text>
+          </customized-tooltip>
+          <style>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='true' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>[federated.0mpispatial].[sum:mpi_pct:qk]</rows>
+        <cols>[federated.0mpispatial].[sum:spatial_lag_mpi_pct:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='Dimension breakdown (three panels, not stacked)'>
@@ -775,22 +1086,22 @@
     </dashboard>
     <dashboard name='What the words mean'>
       <style />
-      <size maxheight='4288' maxwidth='1000' minheight='4288' minwidth='1000' />
+      <size maxheight='4720' maxwidth='1000' minheight='4720' minwidth='1000' />
       <zones>
         <zone h='100000' id='39' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='37896' id='40' type-v2='text' w='100000' x='0' y='0'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='20'>What the words mean</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>This atlas measures poverty as missing basic needs in daily life, not as low income. Here is what each word on the map means.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poor</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A person counts as poor if their household is missing at least one third of the weighted list of basic needs below. Everyone in a household gets the same result.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Missing a need (deprived)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The household lacks one item on the list, for example it has no electricity, or nobody old enough has finished six years of school.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Deprivation score</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How much of the weighted list a household is missing, from 0% (nothing missing) to 100% (everything missing). 33.3% or more means poor.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Close to poverty (vulnerable)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Missing between 20% and 33.3% of the list. Not counted as poor, but near the line.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Severe poverty</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Missing 50% or more of the list.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Share of people who are poor (H)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Out of every 100 people, how many count as poor. Nigeria in 2021: 33.0%, about 1 in 3.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>How much poor people miss (A)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Among poor people only, the average deprivation score. Nigeria in 2021: 52.9%, so a typical poor person was missing about half of the list.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poverty score (MPI)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The share of people who are poor multiplied by how much they miss (H × A). It runs from 0 (nobody poor) to 1 (everybody poor and missing everything). Nigeria's global MPI in 2021 (MICS 2021 survey): 0.330 × 0.529 = 0.175.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Likely range</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Surveys talk to a sample of households, not everyone, so every figure has some uncertainty. The likely range is where the true value probably lies (statisticians call it a 95% confidence interval). When two states' ranges overlap, we cannot be sure which one is poorer.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poverty band</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>One of the five colour groups on the map: under 5%, 5%–10%, 10%–20%, 20%–30%, and 30% or more. The score is a 0-to-1 index, so these read as percentages of the index, not as the share of people who are poor (that share is shown separately and is much higher). The map uses bands rather than a 1-to-37 ranking because the likely ranges of states next to each other in the ranking overlap.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poorest 12 and Other 25</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The 12 states with a poverty score above 0.20, and the remaining 25 (including FCT).</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
+          <zone h='37055' id='40' type-v2='text' w='100000' x='0' y='0'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='20'>What the words mean</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>This atlas measures poverty as missing basic needs in daily life, not as low income. Here is what each word on the map means.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poor</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A person counts as poor if their household is missing at least one third of the weighted list of basic needs below. Everyone in a household gets the same result.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Missing a need (deprived)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The household lacks one item on the list, for example it has no electricity, or nobody old enough has finished six years of school.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Deprivation score</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How much of the weighted list a household is missing, from 0% (nothing missing) to 100% (everything missing). 33.3% or more means poor.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Close to poverty (vulnerable)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Missing between 20% and 33.3% of the list. Not counted as poor, but near the line.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Severe poverty</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Missing 50% or more of the list.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Share of people who are poor (H)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Out of every 100 people, how many count as poor. Nigeria in 2021: 33.0%, about 1 in 3.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>How much poor people miss (A)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Among poor people only, the average deprivation score. Nigeria in 2021: 52.9%, so a typical poor person was missing about half of the list.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poverty score (MPI)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The share of people who are poor multiplied by how much they miss (H × A). It runs from 0 (nobody poor) to 1 (everybody poor and missing everything). Nigeria's global MPI in 2021 (MICS 2021 survey): 0.330 × 0.529 = 0.175.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Likely range</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Surveys talk to a sample of households, not everyone, so every figure has some uncertainty. The likely range is where the true value probably lies (statisticians call it a 95% confidence interval). When two states' ranges overlap, we cannot be sure which one is poorer.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poverty band</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>One of the five colour groups on the map: under 5%, 5%–10%, 10%–20%, 20%–30%, and 30% or more. The score is a 0-to-1 index, so these read as percentages of the index, not as the share of people who are poor (that share is shown separately and is much higher). The map uses bands rather than a 1-to-37 ranking because the likely ranges of states next to each other in the ranking overlap.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Poorest 12 and Other 25</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The 12 states with a poverty score above 0.20, and the remaining 25 (including FCT).</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Area of life (dimension)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The list is grouped into three areas: health, education and living standards. Each area counts for one third.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
             <zone-style>
               <format attr='margin' value='12' />
             </zone-style>
           </zone>
-          <zone h='31576' id='41' type-v2='text' w='100000' x='0' y='37896'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='11'>Area of life (dimension)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The list is grouped into three areas: health, education and living standards. Each area counts for one third.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Share from each area (contribution)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How much of a state's poverty score comes from health, from education and from living standards. The three add up to 100%.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Survey round</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>One of the four large national household surveys used: 2013 (DHS), 2016–17 (MICS), 2018 (DHS) and 2021 (MICS). DHS is the Demographic and Health Survey; MICS is the Multiple Indicator Cluster Survey. The map shows 2021.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Comparable over time (harmonised)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A version of the four rounds prepared by Oxford University's poverty team (OPHI) so that changes between rounds can be compared fairly.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Conflict exposure (0–100)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How many recorded violent events and deaths a state had per 100,000 people in a survey year, compared with the other states that same year. 100 is the most of the 37 that year and 0 the fewest. It is relative, so 50 in 2013 and 50 in 2021 are not the same amount.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Recorded conflict event</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>An incident of organised violence in which at least one person is reported to have died, logged by the Uppsala Conflict Data Program from news and other reports. Violence that is never reported is missed.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Climate baseline</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A state capital's average yearly temperature and rainfall over 1991–2020.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Governor from the President's party</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The state governor belonged to the same party as the President: the PDP (People's Democratic Party) until 29 May 2015, the APC (All Progressives Congress) after that.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Party that won most often</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The party that won the most governorship elections in the state from 1999 to 2021. Ties are shown. It appears in the map's hover text only.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>FCT</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The Federal Capital Territory (Abuja). It is shown like a state, but it has no elected governor, so it is left out of the party question.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
+          <zone h='35212' id='41' type-v2='text' w='100000' x='0' y='37055'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='11'>Share from each area (contribution)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How much of a state's poverty score comes from health, from education and from living standards. The three add up to 100%.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Survey round</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>One of the four large national household surveys used: 2013 (DHS), 2016–17 (MICS), 2018 (DHS) and 2021 (MICS). DHS is the Demographic and Health Survey; MICS is the Multiple Indicator Cluster Survey. The map shows 2021.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Comparable over time (harmonised)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A version of the four rounds prepared by Oxford University's poverty team (OPHI) so that changes between rounds can be compared fairly.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Conflict exposure (0–100)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How many recorded violent events and deaths a state had per 100,000 people in a survey year, compared with the other states that same year. 100 is the most of the 37 that year and 0 the fewest. It is relative, so 50 in 2013 and 50 in 2021 are not the same amount.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Recorded conflict event</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>An incident of organised violence in which at least one person is reported to have died, logged by the Uppsala Conflict Data Program from news and other reports. Violence that is never reported is missed.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Climate baseline</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>A state capital's average yearly temperature and rainfall over 1991–2020.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Governor from the President's party</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The state governor belonged to the same party as the President: the PDP (People's Democratic Party) until 29 May 2015, the APC (All Progressives Congress) after that.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Party that won most often</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The party that won the most governorship elections in the state from 1999 to 2021. Ties are shown. It appears in the map's hover text only.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>FCT</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The Federal Capital Territory (Abuja). It is shown like a state, but it has no elected governor, so it is left out of the party question.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Neighbouring states</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Two states that share a border on the map. Nothing more is meant by it: it is a fact about the map, not about people or traffic moving between the states.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>States that resemble each other (clustering)</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>When states that share a border tend to have similar poverty scores, more often than if the scores were scattered about at random. It describes the pattern on the map. It does not say that one state's poverty makes its neighbour poorer.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Explained by how far north a state is</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Because poverty rises steadily from south to north, a lot of states looking like their neighbours is just that steady slope. Once the slope is taken out, we can see how much resemblance is left over and above it.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
             <zone-style>
               <format attr='margin' value='12' />
             </zone-style>
           </zone>
-          <zone h='30528' id='42' type-v2='text' w='100000' x='0' y='69472'>
+          <zone h='27733' id='42' type-v2='text' w='100000' x='0' y='72267'>
             <formatted-text><run bold='true' fontcolor='#22252a' fontsize='14'>The list of basic needs</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Each item has a weight. A household's deprivation score is the sum of the weights of the items it is missing.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Health · Child deaths · 1/3 (33.3%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: A child under 18 in the household died in the five years before the survey.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Education · Years of school · 1/6 (16.7%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: Nobody in the household who is old enough to have done so has finished six years of school (primary school).</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Education · Children in school · 1/6 (16.7%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: A school-age child is not attending school, up to the age they would finish class 8.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Cooking fuel · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: The household cooks with wood, charcoal, coal, dung, crop waste or shrubs.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Toilet · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: No toilet, a toilet that does not safely separate waste, or a toilet that is safe but shared with other households.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Drinking water · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: The water source is not safe, or safe water is a 30-minute or longer walk there and back.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Electricity · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: No electricity.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Housing · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: The floor, roof or walls are made of inadequate materials.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Living standards · Belongings · 1/18 (5.6%)</run><run fontcolor='#22252a' fontsize='11'> — Missing if: Owns no more than one of: radio, TV, phone, computer, animal cart, bicycle, motorbike, fridge, and has no car or truck.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Why health is a single item: the global measure normally splits health between child deaths and nutrition, but nutrition could not be included in Nigeria's published figures, so child deaths carry the whole health third. This is the same for every state, so comparing states within Nigeria is fair. It also means Nigeria's figures should not be compared with other countries'.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>An example household</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Nobody old enough has finished six years of school — 16.7%</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Cooks with wood — 5.6%</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>No electricity — 5.6%</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Safe water is a 30-minute walk there and back — 5.6%</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Shares its toilet with other households — 5.6%</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='11'>Deprivation score — 38.9%</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>38.9% is above the 33.3% line, so everyone in this household counts as poor. Because child deaths carry a full third in Nigeria, a household that lost a child in the past five years reaches the line from that one item alone. Percentages are rounded; the exact sum is 3/18 + 4/18 = 7/18. (An illustration, not a real household.)</run></formatted-text>
             <zone-style>
               <format attr='margin' value='12' />
@@ -801,17 +1112,17 @@
     </dashboard>
     <dashboard name='How we did it'>
       <style />
-      <size maxheight='2276' maxwidth='1000' minheight='2276' minwidth='1000' />
+      <size maxheight='2963' maxwidth='1000' minheight='2963' minwidth='1000' />
       <zones>
         <zone h='100000' id='59' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='51230' id='60' type-v2='text' w='100000' x='0' y='0'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='20'>How we did it</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>In plain terms: where the numbers come from, how they are put together, how sure we can be, and what this atlas cannot tell you.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>1. Where the numbers come from</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Poverty figures come from large national household surveys (MICS 2021, plus DHS 2013, MICS 2016–17 and DHS 2018). Oxford University's poverty team (OPHI) and the UN Development Programme turn the survey answers into state poverty scores and publish them. We used their published figures as they are and did not recalculate them.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Other layers: violent events from the Uppsala Conflict Data Program, weather records for each state capital from Open-Meteo, state borders from geoBoundaries, capital locations from GeoNames, and governorship election results checked against cited sources. Every download is logged with its date.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>2. How a state's poverty score is built</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Step 1: for each surveyed household, check each of the nine needs on the list. Step 2: add up the weights of the needs it is missing; that is its deprivation score. Step 3: if the score is 33.3% or more, everyone in the household counts as poor. Step 4: for the state, work out the share of people who are poor and how much they miss on average, then multiply the two to get the poverty score.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Multiplying the two matters: a state where fewer people are poor, but those people miss a lot, can score as high as a state where more people are poor but miss less.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>3. How sure we can be</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Because the surveys use samples, each state's score has a likely range. For a typical state the range runs about 30% above and below the score itself. The ranges of every pair of states that sit next to each other in the ranking overlap, so the atlas never names a single poorest state. It shows five bands instead, and the poorest 12 states as a group.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>4. Comparing over time</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The four survey rounds are used in OPHI's version made comparable over time. Between rounds, states mostly kept their positions relative to each other, even where poverty levels changed.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
+          <zone h='49004' id='60' type-v2='text' w='100000' x='0' y='0'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='20'>How we did it</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>In plain terms: where the numbers come from, how they are put together, how sure we can be, and what this atlas cannot tell you.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>1. Where the numbers come from</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Poverty figures come from large national household surveys (MICS 2021, plus DHS 2013, MICS 2016–17 and DHS 2018). Oxford University's poverty team (OPHI) and the UN Development Programme turn the survey answers into state poverty scores and publish them. We used their published figures as they are and did not recalculate them.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Other layers: violent events from the Uppsala Conflict Data Program, weather records for each state capital from Open-Meteo, state borders from geoBoundaries, capital locations from GeoNames, and governorship election results checked against cited sources. Every download is logged with its date.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>2. How a state's poverty score is built</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Step 1: for each surveyed household, check each of the nine needs on the list. Step 2: add up the weights of the needs it is missing; that is its deprivation score. Step 3: if the score is 33.3% or more, everyone in the household counts as poor. Step 4: for the state, work out the share of people who are poor and how much they miss on average, then multiply the two to get the poverty score.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Multiplying the two matters: a state where fewer people are poor, but those people miss a lot, can score as high as a state where more people are poor but miss less.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>3. How sure we can be</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Because the surveys use samples, each state's score has a likely range. For a typical state the range runs about 30% above and below the score itself. The ranges of every pair of states that sit next to each other in the ranking overlap, so the atlas never names a single poorest state. It shows five bands instead, and the poorest 12 states as a group.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>4. Comparing over time</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>The four survey rounds are used in OPHI's version made comparable over time. Between rounds, states mostly kept their positions relative to each other, even where poverty levels changed.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>5. The conflict layer</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We counted recorded violent events and deaths in each state for each survey year, divided by population, and scaled them from 0 to 100 within that year.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Limits: events that are not reported are missed, and reporting may be weakest in some of the poorest areas. In 2021, 10 of the 37 states recorded no events at all, including five of the poorest 12 (Bauchi, Jigawa, Kebbi, Katsina and Kano). We could not detect a link between conflict and poverty, but this design could only have seen a fairly strong one, so that is not proof there is none.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
             <zone-style>
               <format attr='margin' value='12' />
             </zone-style>
           </zone>
-          <zone h='48770' id='61' type-v2='text' w='100000' x='0' y='51230'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='14'>5. The conflict layer</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We counted recorded violent events and deaths in each state for each survey year, divided by population, and scaled them from 0 to 100 within that year.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Limits: events that are not reported are missed, and reporting may be weakest in some of the poorest areas. In 2021, 10 of the 37 states recorded no events at all, including five of the poorest 12 (Bauchi, Jigawa, Kebbi, Katsina and Kano). We could not detect a link between conflict and poverty, but this design could only have seen a fairly strong one, so that is not proof there is none.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>6. The climate layer</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We took daily weather for each state capital from 1990 to 2024 and worked out the 1991–2020 averages.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Rainfall goes down as you move north, and poverty is higher in the states further north, so the two line up. That overlap does not show that weather causes poverty: how far north a state is matches poverty about as closely as rainfall does.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>7. The party question</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We asked one question: between 2013 and 2021, did poverty fall faster in states whose governor was from the President's party? We wrote down the main test and the wording of the possible answers before running it. A few of the re-tests were added afterwards, and the technical details say which.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Each state was compared with itself across three periods (2013–16, 2016–18, 2018–21). To check the gap was not luck, we shuffled the party records between states 10,000 times and counted how often a gap that big appeared by chance, then re-tested it in other ways. The answer, and how many re-tests it survived, is in the party-question section.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>8. What this atlas cannot tell you</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>It cannot show cause and effect: it describes patterns between 37 places. It says nothing about individual households, towns or local government areas, only whole states. It should not be compared with other countries' figures. And it is not the same as Nigeria's official national poverty measure from the National Bureau of Statistics (0.257), which uses a different list of needs, including work and shocks.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
+          <zone h='50996' id='61' type-v2='text' w='100000' x='0' y='49004'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='14'>6. The climate layer</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We took daily weather for each state capital from 1990 to 2024 and worked out the 1991–2020 averages.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Rainfall goes down as you move north, and poverty is higher in the states further north, so the two line up. That overlap does not show that weather causes poverty: how far north a state is matches poverty about as closely as rainfall does.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>7. The party question</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>We asked one question: between 2013 and 2021, did poverty fall faster in states whose governor was from the President's party? We wrote down the main test and the wording of the possible answers before running it. A few of the re-tests were added afterwards, and the technical details say which.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Each state was compared with itself across three periods (2013–16, 2016–18, 2018–21). To check the gap was not luck, we shuffled the party records between states 10,000 times and counted how often a gap that big appeared by chance, then re-tested it in other ways. The answer, and how many re-tests it survived, is in the party-question section.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>8. Do poor states sit next to poor states?</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Yes. States with similar poverty scores do tend to share a border.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>But most of that is simply that the north is poorer than the south: how far north a state sits explains about three quarters of what looks like neighbouring states resembling each other.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Think of a height map. Two neighbours are usually at similar heights because the land slopes steadily — not because one hill lifts the next. Take the slope out, and only a little resemblance between neighbours is left.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>Only 1 of the 37 states stands out on its own, once we allow for having looked at 37 states at once.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>How we checked: for each state we compared its poverty score with the average of the states it borders. If poor states really do sit together, that comparison lines up more closely than it would if the same scores had been dealt out across the map at random. Statisticians call this resemblance between neighbours clustering. The sheet draws the comparison itself; the exact figures are in the small technical line on the sheet and in docs/spatial_analysis.md.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>What it does not say: that poverty spreads from one state to the next, or that one state's poverty is caused by its neighbour's. Sharing a border is a fact about the map. Nor can it tell 37 states apart: the ranges of any two states that sit next to each other in the ranking overlap, so this atlas names no poorest state and no worst neighbourhood.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='14'>9. What this atlas cannot tell you</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'>It cannot show cause and effect: it describes patterns between 37 places. It says nothing about individual households, towns or local government areas, only whole states. It should not be compared with other countries' figures. And it is not the same as Nigeria's official national poverty measure from the National Bureau of Statistics (0.257), which uses a different list of needs, including work and shocks.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='11'> </run></formatted-text>
             <zone-style>
               <format attr='margin' value='12' />
             </zone-style>
@@ -838,6 +1149,33 @@
         <edge name='right'>
           <strip size='160'>
             <card pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Where poverty clusters'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0mpispatialpoly].[none:spatial_group:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Do poor states sit next to poor states?'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
           </strip>
         </edge>
       </cards>

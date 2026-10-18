@@ -128,6 +128,20 @@ TERMS: list[Term] = [
     {"term": "FCT",
      "meaning": "The Federal Capital Territory (Abuja). It is shown like a state, but it "
                 "has no elected governor, so it is left out of the party question."},
+    {"term": "Neighbouring states",
+     "meaning": "Two states that share a border on the map. Nothing more is meant by it: "
+                "it is a fact about the map, not about people or traffic moving between "
+                "the states."},
+    {"term": "States that resemble each other (clustering)",
+     "meaning": "When states that share a border tend to have similar poverty scores, "
+                "more often than if the scores were scattered about at random. It "
+                "describes the pattern on the map. It does not say that one state's "
+                "poverty makes its neighbour poorer."},
+    {"term": "Explained by how far north a state is",
+     "meaning": "Because poverty rises steadily from south to north, a lot of states "
+                "looking like their neighbours is just that steady slope. Once the slope "
+                "is taken out, we can see how much resemblance is left over and above "
+                "it."},
 ]
 
 INDICATORS_TITLE = "The list of basic needs"
@@ -222,6 +236,97 @@ MPI_BANDS: list[tuple[str, str]] = [
     ("4. 20% to 30%", "#d95f0e"),
     ("5. 30% and above", "#993404"),
 ]
+# --- The spatial sheet: do poor states sit next to poor states? ---------------
+# A diagnostic on sheet 1's map, not a second poverty map. Every word here is
+# written for a reader who does not know any statistics: the statistic is named
+# once, in the small technical line, and never in a headline. The wording of the
+# four reading lines is frozen in docs/spatial_preregistration.md, which was
+# committed before the analysis code existed; 09_spatial_diagnostics.py asserts
+# that the figures these words state are still the figures in the data.
+# The cluster map: sheet 1's own geometry, drawn a second time with the
+# neighbourhood type as the fill. It is the "where" of the same question the scatter
+# answers "how much" of, and it sits immediately after the poverty map in the tab
+# order. The colours are descriptive and are never a significance map: only one
+# state survives the correction (SPATIAL_READER_LINES line 4), so a map of what is
+# statistically significant would be a single state and would re-import the
+# per-state ordering the atlas withdrew (docs/FIX_LEDGER.md A1).
+SPATIAL_MAP_TITLE = "Where poverty clusters"
+SPATIAL_MAP_SUBTITLE = (
+    "Each state coloured by its own poverty and its neighbours' \u2014 descriptive, "
+    "not a significance test"
+)
+SPATIAL_MAP_READING = (
+    "The colour says two things at once. Purple means this state is poorer than the "
+    "average state, teal means it is better off than average. Deep means the states "
+    "it borders are on the same side as it is, pale means they are not. Read it as a "
+    "description of where poverty sits, not as a list of places that stand out: the "
+    "lines below give the one number that says how much of this is more than the "
+    "north being poorer than the south."
+)
+SPATIAL_TITLE = "Do poor states sit next to poor states?"
+SPATIAL_SUBTITLE = (
+    "States with similar poverty scores do tend to share a border \u2014 but most of that "
+    "is simply that the north is poorer than the south"
+)
+SPATIAL_AXIS_OWN = "This state's poverty score (MPI, % of index)"
+SPATIAL_AXIS_NEIGHBOURS = "Average poverty score of the states it borders (MPI, % of index)"
+SPATIAL_LEGEND_TITLE = "Neighbourhood type"
+SPATIAL_LEGEND_MEANING = "this state's poverty, beside its neighbours'"
+SPATIAL_READING_HEADING = "The reading, in plain words"
+# The scatter's own "how to read this surface" sentence: on the map the reading is
+# colours, on the scatter it is two axes. Both surfaces carry the same four lines
+# below and the same technical footer.
+SPATIAL_AXIS_READING = (
+    "A state above the middle line is poorer than the average state; one to the right "
+    "of the upright line has poorer neighbours than average. So \u201chigh, beside "
+    "high\u201d means poor among poor neighbours, and \u201clow, beside low\u201d means "
+    "better off among better-off neighbours."
+)
+# The caveat that has to survive on both surfaces, because "neighbourhood type" is
+# vocabulary that invites a spillover reading.
+SPATIAL_NO_CAUSE = (
+    "Nothing here shows that one state's poverty affects its neighbour's \u2014 "
+    "neighbours resembling each other is a fact about the map."
+)
+
+# The four lines, in order. Frozen wording (docs/spatial_preregistration.md).
+# They are static, and stage 09 fails if the data stops matching them, so the
+# words and the numbers cannot drift apart silently.
+SPATIAL_READER_LINES: list[str] = [
+    "Yes. States with similar poverty scores do tend to share a border.",
+    "But most of that is simply that the north is poorer than the south: how far "
+    "north a state sits explains about three quarters of what looks like neighbouring "
+    "states resembling each other.",
+    "Think of a height map. Two neighbours are usually at similar heights because the "
+    "land slopes steadily \u2014 not because one hill lifts the next. Take the slope "
+    "out, and only a little resemblance between neighbours is left.",
+    "Only 1 of the 37 states stands out on its own, once we allow for having looked at "
+    "37 states at once.",
+]
+
+# The four neighbourhood types: (code, words for the reader, colour).
+# Hue says how poor *this* state is, shade says whether its neighbours are like it
+# (verified against the hexes rather than asserted, 2026-10-18: the two pale tints
+# were the wrong way round, which made the hue encode the neighbours instead):
+# deep purple = poor among poor neighbours, pale purple = poor among better-off
+# neighbours, pale teal = better off among poorer neighbours, deep teal = better off
+# among better-off neighbours. That is the reading the map's own legend words need,
+# and it is the one a reader can check against a map by eye -- purple states are the
+# poor ones.
+# Deliberately not the poverty ramp and not the dimension colours, so neither spatial
+# sheet can be read as a second poverty map. Nominal fields otherwise draw in
+# Tableau's default categorical palette.
+SPATIAL_QUADRANTS: list[tuple[str, str, str]] = [
+    ("HH", "high, beside high", "#54278f"),
+    ("HL", "high, beside low", "#b3a2c7"),
+    ("LH", "low, beside high", "#80cdc1"),
+    ("LL", "low, beside low", "#01665e"),
+]
+
+# The two deep fills. A property of the hexes above, not of the data: a map label is
+# drawn white over these and in ink over the two pale tints, in both maps' previews.
+SPATIAL_DEEP_TYPES: list[str] = ["high, beside high", "low, beside low"]
+
 METHOD_INTRO = (
     "In plain terms: where the numbers come from, how they are put together, how sure "
     "we can be, and what this atlas cannot tell you."
@@ -296,7 +401,22 @@ METHOD: list[Section] = [
          "then re-tested it in other ways. The answer, and how many re-tests it "
          "survived, is in the party-question section."),
      ]},
-    {"heading": "8. What this atlas cannot tell you",
+    {"heading": "8. Do poor states sit next to poor states?",
+     "paragraphs": [
+         *SPATIAL_READER_LINES,
+         ("How we checked: for each state we compared its poverty score with the average "
+         "of the states it borders. If poor states really do sit together, that comparison "
+         "lines up more closely than it would if the same scores had been dealt out across "
+         "the map at random. Statisticians call this resemblance between neighbours "
+         "clustering. The sheet draws the comparison itself; the exact figures are in the "
+         "small technical line on the sheet and in docs/spatial_analysis.md."),
+         ("What it does not say: that poverty spreads from one state to the next, or that "
+         "one state's poverty is caused by its neighbour's. Sharing a border is a fact "
+         "about the map. Nor can it tell 37 states apart: the ranges of any two states "
+         "that sit next to each other in the ranking overlap, so this atlas names no "
+         "poorest state and no worst neighbourhood."),
+     ]},
+    {"heading": "9. What this atlas cannot tell you",
      "paragraphs": [
          ("It cannot show cause and effect: it describes patterns between 37 places. It "
          "says nothing about individual households, towns or local government areas, "

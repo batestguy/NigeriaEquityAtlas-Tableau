@@ -10,7 +10,7 @@ produces a validated `.twbx` with the data packaged inside it.
 
 ## What is already built
 
-`tableau/Nigeria-MPI-Equity-Atlas.twbx` (125 KB) contains:
+`tableau/Nigeria-MPI-Equity-Atlas.twbx` (214 KB) contains:
 
 ```
 Nigeria-MPI-Equity-Atlas.twb     the workbook
@@ -18,6 +18,8 @@ Data/mpi_atlas_2021.hyper        37 rows, one per state
 Data/mpi_trends_panel.hyper      148 rows, 37 states x 4 survey rounds
 Data/party_alignment_panel.hyper 108 rows, 36 states x 3 intervals (FCT excluded)
 Data/mpi_polygons.hyper          7,089 rows, the simplified ADM1 ring vertices the map draws
+Data/spatial_diagnostics.hyper   37 rows, the spatial diagnostic (stage 9)
+Data/spatial_polygons.hyper      7,089 rows, the same rings + the neighbourhood type
 ```
 
 The data ships as **Hyper extracts**, not CSV. This is not a preference: Tableau
@@ -27,22 +29,30 @@ convert a live file on save. Stage 6 writes the extracts itself with
 `tableauhyperapi`, and validates the schema it wrote back against the declared
 columns before packaging.
 
-**Six sheets and three dashboards.** The five spec sheets sit on the `Equity Atlas`
-dashboard; the party sheet is standalone. `Equity Atlas` also carries two text zones
-(the attribution paragraph and the KPI strip). **The five spec sheets were verified by
-opening the workbook in Tableau Public and looking at every sheet on 2026-10-06; the
-party sheet and the two reader dashboards were added and verified on 2026-10-09/10.**
+**Eight sheets and three dashboards.** The five spec sheets sit on the `Equity Atlas`
+dashboard; the party sheet and the two spatial sheets (stage 9) are standalone.
+`Equity Atlas` also carries two text zones (the attribution paragraph and the KPI
+strip). **The five spec sheets were verified by opening the workbook in Tableau Public
+and looking at every sheet on 2026-10-06; the party sheet and the two reader dashboards
+were added and verified on 2026-10-09/10; the cluster map was verified on 2026-10-18.**
 The lower part of `What the words mean` has never been scrolled on screen — see
 `docs/SESSION_HANDOFF.md`.
 
 | Sheet | Type (mark class) | What it carries |
 |---|---|---|
 | Where poverty sits | **filled map (*Polygon*)** | `AVG(lat)` on Rows, `AVG(lon)` on Columns (both `[Geographical]` roles, so the sheet stays a geographic map); `state` + `pcode` + `ring` on Detail; `point_order` on **Path**; `mpi_band` on Colour; `state` on Text. Datasource: `Nigeria MPI polygons`. Hover carries `mpi`, `mpi_se`, `mpi_ci_lo`, `mpi_ci_hi`, `headcount_ratio_pct`, `intensity_pct`, `mpi_poor_thousands`, `poverty_group`, `mpi_pct`, `mpi_ci_lo_pct`, `mpi_ci_hi_pct`, `gov_party` |
+| Where poverty clusters | **filled map (*Polygon*)** | the same shelves, from `spatial_polygons.csv`: `spatial_group` on Colour, `mpi_pct` + `spatial_lag_mpi_pct` + `neighbours` on Detail for the hover. Datasource: `Spatial polygons`. **Descriptive, not a significance map** — one state survives the correction, so a significance map would be one state; the count is in the hover |
+| Do poor states sit next to poor states? | scatter (*Circle*) | `SUM(mpi_pct)` on Rows, `SUM(spatial_lag_mpi_pct)` on Columns, `state` on Detail and Text, `spatial_group` on Colour **and** Shape. Datasource: `Spatial diagnostics`. Standalone |
 | Dimension breakdown (three panels, not stacked) | bar (*Bar*) | `SUM(contrib_health_pct) + SUM(contrib_education_pct) + SUM(contrib_living_standards_pct)` on Rows, `state` on Columns |
 | Poverty vs conflict | scatter (*Circle*) | `SUM(conflict_exposure_index)` on Rows, `SUM(mpi)` on Columns, `state` on Detail and Text, `quadrant` on Colour **and** Shape |
 | Poverty over time | line (*Line*) | `SUM(mpi)` on Rows, `survey_year` (string) on Columns, `state` on **Colour** and Detail — one line per state on one axis. Datasource: `Nigeria MPI trends panel` |
 | Incidence vs intensity | scatter (*Circle*) | `SUM(intensity_pct)` on Rows, `SUM(headcount_ratio_pct)` on Columns, `state` on Detail and Text, `quadrant` on Colour and Shape |
 | Party alignment and MPI change | scatter (*Circle*) | `SUM(dmpi_annual)` on Rows, `SUM(aligned_share)` on Columns, `state` on Detail, `interval` on Colour. Datasource: `Party alignment panel`. **Not on the `Equity Atlas` dashboard — it is standalone** |
+
+**Tab order is sheet order**: the poverty map, then the cluster map, then the spatial
+scatter, then the five remaining sheets. Sheet order is the `<worksheets>` element
+order in the `.twb`; the `<windows>` list is kept in the same order (the reader
+dashboards are last, so the workbook opens on `Equity Atlas`).
 
 The three dashboards:
 
@@ -270,6 +280,20 @@ want the full-resolution coastline; the two differ by less than a pixel in the w
   the card again. The dashboard's own `type-v2='color'` zone for `mpi_band` is likewise
   unverified: the worksheet opens by default and the legend has only ever been checked
   there.
+- **Both maps show `Avg. lat` / `Avg. lon` as axis titles.** They are real axis titles
+  for custom coordinate fields, not generated Latitude/Longitude, so Tableau prints the
+  field captions. A map should not show them. **To fix by hand:** right-click each axis
+  → uncheck **Show Header**, on both map sheets, then Save. Doing it in XML needs an
+  axis/header style rule whose grammar is unverified here (the `border-*` lesson,
+  `docs/SESSION_HANDOFF.md`), and a wrong guess fails the workbook open rather than
+  failing quietly — so it is a GUI step.
+- **The cluster map's colour card does draw on the worksheet**, as of 2026-10-18: a
+  1295-px capture of `Where poverty clusters` shows the right-hand strip with the
+  `Neighbourhood type` title and the swatches, from the same `type='color'` window card
+  grammar sheet 1 uses. That contradicts the open item above at least once, so
+  re-check `Where poverty sits` with the same capture method before concluding that its
+  legend is broken — the earlier conclusion may have been drawn from a capture that
+  clipped the right edge. Not resolved here; both sheets ship the same declaration.
 
 ## If something looks wrong
 
