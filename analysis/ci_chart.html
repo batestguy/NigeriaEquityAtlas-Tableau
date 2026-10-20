@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The honest ranking - MPI dot + 95% interval</title>
+<style>
+body{margin:0;background:#fbfaf8;color:#1b1b1b;font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:26px 20px 50px}
+h1{font-size:21px;margin:0;letter-spacing:-.02em}
+h1 span{color:#d80000}
+.sub{color:#6b6b6b;font-size:13px;margin:6px 0 18px;max-width:80ch}
+svg{display:block;background:#fff;border:1px solid #e3e0da;border-radius:10px}
+text{font-family:inherit}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#6b6b6b;margin:12px 0}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.recipe{margin-top:18px;background:#fff;border:1px solid #e3e0da;border-radius:10px;padding:14px 16px;
+  font-size:12.5px;color:#444}
+.recipe b{color:#1b1b1b}
+.recipe code{font-family:Consolas,monospace;font-size:11.5px;background:#f4f2ef;padding:1px 5px;border-radius:4px}
+#tip{position:fixed;pointer-events:none;background:#161616;color:#fff;font-size:12px;padding:7px 10px;
+  border-radius:6px;opacity:0;transition:opacity .1s;z-index:9;line-height:1.5;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The honest ranking <span>&middot;</span> MPI with its 95% interval</h1>
+  <p class="sub">Each row is a state. The dot is the MPI value; the whisker is OPHI's published 95% interval.
+     In Tableau this is <b>two marks on one dual axis</b>: a Circle at <code>mpi</code> and a Gantt bar that
+     starts at <code>mpi_ci_lo</code> with <code>Size = mpi_ci_hi - mpi_ci_lo</code>. Every adjacent pair
+     overlaps, so there is no defensible "first" or "second" -- only bands.</p>
+  <svg id="chart" role="img" aria-label="MPI dot plot with 95% intervals for 37 states"></svg>
+  <div class="legend" id="legend"></div>
+  <div class="recipe">
+    <b>Tableau recipe.</b> Rows: <code>state</code>. Columns: <code>mpi_ci_lo</code> (Gantt bar; Size =
+    calculated field <code>mpi_ci_hi - mpi_ci_lo</code>; hide its axis heading) and <code>mpi</code>
+    (Circle) &rarr; right-click the second MPI pill &rarr; <i>Dual Axis</i>, then right-click the
+    axis itself &rarr; <i>Synchronize Axis</i> (Tableau adds a warning triangle until you do). Sort
+    <code>state</code> by MPI descending, hide axis headings, colour the circle by
+    <code>mpi_band</code> with the atlas ramp, whisker in light grey.
+  </div>
+</div>
+<div id="tip"></div>
+<script>
+const ROWS = [{"state":"Bauchi","band":"5. 30% and above","mpi":0.4411,"lo":0.3792,"hi":0.5049,"h":75.36,"group":"Poorest 12"},{"state":"Jigawa","band":"5. 30% and above","mpi":0.4377,"lo":0.3894,"hi":0.4872,"h":74.78,"group":"Poorest 12"},{"state":"Kebbi","band":"5. 30% and above","mpi":0.4373,"lo":0.3746,"hi":0.502,"h":73.79,"group":"Poorest 12"},{"state":"Sokoto","band":"5. 30% and above","mpi":0.4372,"lo":0.358,"hi":0.5197,"h":70.74,"group":"Poorest 12"},{"state":"Zamfara","band":"5. 30% and above","mpi":0.3913,"lo":0.3358,"hi":0.4497,"h":71.87,"group":"Poorest 12"},{"state":"Yobe","band":"5. 30% and above","mpi":0.3428,"lo":0.2735,"hi":0.4195,"h":63.02,"group":"Poorest 12"},{"state":"Gombe","band":"5. 30% and above","mpi":0.3345,"lo":0.2647,"hi":0.4124,"h":61.34,"group":"Poorest 12"},{"state":"Katsina","band":"5. 30% and above","mpi":0.3331,"lo":0.2838,"hi":0.3863,"h":61.13,"group":"Poorest 12"},{"state":"Borno","band":"4. 20% to 30%","mpi":0.2922,"lo":0.2218,"hi":0.3743,"h":53.89,"group":"Poorest 12"},{"state":"Taraba","band":"4. 20% to 30%","mpi":0.2702,"lo":0.224,"hi":0.322,"h":56.7,"group":"Poorest 12"},{"state":"Kano","band":"4. 20% to 30%","mpi":0.2497,"lo":0.1907,"hi":0.3196,"h":45.06,"group":"Poorest 12"},{"state":"Niger","band":"4. 20% to 30%","mpi":0.2191,"lo":0.1626,"hi":0.2885,"h":44.56,"group":"Poorest 12"},{"state":"Plateau","band":"3. 10% to 20%","mpi":0.1945,"lo":0.1599,"hi":0.2345,"h":42.47,"group":"Other 25"},{"state":"Nasarawa","band":"3. 10% to 20%","mpi":0.1888,"lo":0.1493,"hi":0.2357,"h":40.58,"group":"Other 25"},{"state":"Adamawa","band":"3. 10% to 20%","mpi":0.182,"lo":0.1418,"hi":0.2305,"h":39.1,"group":"Other 25"},{"state":"Kaduna","band":"3. 10% to 20%","mpi":0.1671,"lo":0.1251,"hi":0.2196,"h":34.09,"group":"Other 25"},{"state":"Benue","band":"3. 10% to 20%","mpi":0.1156,"lo":0.0911,"hi":0.1457,"h":27.02,"group":"Other 25"},{"state":"Kwara","band":"2. 5% to 10%","mpi":0.0962,"lo":0.0596,"hi":0.1518,"h":20.16,"group":"Other 25"},{"state":"Ogun","band":"2. 5% to 10%","mpi":0.0918,"lo":0.0642,"hi":0.1297,"h":19.95,"group":"Other 25"},{"state":"Oyo","band":"2. 5% to 10%","mpi":0.0809,"lo":0.0483,"hi":0.1324,"h":17.38,"group":"Other 25"},{"state":"Cross River","band":"2. 5% to 10%","mpi":0.0775,"lo":0.0513,"hi":0.1155,"h":19.09,"group":"Other 25"},{"state":"Bayelsa","band":"2. 5% to 10%","mpi":0.0644,"lo":0.0335,"hi":0.1202,"h":13.97,"group":"Other 25"},{"state":"Kogi","band":"2. 5% to 10%","mpi":0.0638,"lo":0.0434,"hi":0.0929,"h":14.02,"group":"Other 25"},{"state":"Ondo","band":"2. 5% to 10%","mpi":0.0637,"lo":0.0462,"hi":0.0871,"h":14.45,"group":"Other 25"},{"state":"Ekiti","band":"2. 5% to 10%","mpi":0.0532,"lo":0.0399,"hi":0.0704,"h":12.47,"group":"Other 25"},{"state":"Delta","band":"2. 5% to 10%","mpi":0.0507,"lo":0.0359,"hi":0.0713,"h":11.78,"group":"Other 25"},{"state":"Akwa Ibom","band":"1. under 5%","mpi":0.0446,"lo":0.033,"hi":0.0598,"h":9.81,"group":"Other 25"},{"state":"Abia","band":"1. under 5%","mpi":0.0419,"lo":0.0296,"hi":0.0591,"h":9.4,"group":"Other 25"},{"state":"FCT","band":"1. under 5%","mpi":0.0414,"lo":0.0245,"hi":0.0691,"h":10.18,"group":"Other 25"},{"state":"Edo","band":"1. under 5%","mpi":0.0358,"lo":0.0241,"hi":0.0528,"h":8.32,"group":"Other 25"},{"state":"Rivers","band":"1. under 5%","mpi":0.0351,"lo":0.0239,"hi":0.0513,"h":8.39,"group":"Other 25"},{"state":"Ebonyi","band":"1. under 5%","mpi":0.0341,"lo":0.0174,"hi":0.0655,"h":8.02,"group":"Other 25"},{"state":"Osun","band":"1. under 5%","mpi":0.0315,"lo":0.0201,"hi":0.049,"h":7.52,"group":"Other 25"},{"state":"Enugu","band":"1. under 5%","mpi":0.03,"lo":0.0198,"hi":0.0452,"h":6.88,"group":"Other 25"},{"state":"Imo","band":"1. under 5%","mpi":0.0183,"lo":0.0102,"hi":0.0327,"h":4.61,"group":"Other 25"},{"state":"Anambra","band":"1. under 5%","mpi":0.0089,"lo":0.0037,"hi":0.021,"h":2.04,"group":"Other 25"},{"state":"Lagos","band":"1. under 5%","mpi":0.0044,"lo":0.0021,"hi":0.0091,"h":1.11,"group":"Other 25"}];
+const BANDS = [["1. under 5%", "#ffe5e5"], ["2. 5% to 10%", "#ffb8b8"], ["3. 10% to 20%", "#ff8a8a"], ["4. 20% to 30%", "#f45555"], ["5. 30% and above", "#d80000"]];
+const BAND_COLOR = {}; BANDS.forEach(([k,c])=>BAND_COLOR[k]=c);
+const pct = v => (v*100).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) + "%";
+
+const W=820, rowH=30, topPad=40, botPad=60;
+const H = topPad + rowH*ROWS.length + botPad;
+const lo = Math.min(...ROWS.map(r=>r.lo)), hi = Math.max(...ROWS.map(r=>r.hi));
+const pad = (hi-lo)*0.03;
+const x0 = 0, x1 = Math.ceil((hi+pad)*10)/10;
+const sx = v => 170 + (v-x0)/(x1-x0) * (W-190);
+
+let s = `<g>`;
+for (let t=Math.ceil(x0*100)/100; t<=x1+1e-9; t=t+0.05){
+  const xx=sx(t);
+  s += `<line x1="${xx}" y1="${topPad-8}" x2="${xx}" y2="${H-botPad+8}" stroke="#eef0f2"/>`;
+  s += `<text x="${xx}" y="${H-34}" font-size="10.5" fill="#9aa0a6" text-anchor="middle">${pct(t)}</text>`;
+}
+ROWS.forEach((r,i)=>{
+  const y = topPad + i*rowH + rowH/2;
+  s += `<text x="160" y="${y+4}" font-size="12.5" fill="#333" text-anchor="end">${r.state}</text>`;
+  s += `<line x1="${sx(r.lo)}" y1="${y}" x2="${sx(r.hi)}" y2="${y}" stroke="#dcd8d2" stroke-width="7"
+          stroke-linecap="round" class="wh"/>`;
+  s += `<circle cx="${sx(r.mpi)}" cy="${y}" r="5.6" fill="${BAND_COLOR[r.band]}" fill-opacity=".9"
+          stroke="#fff" stroke-width="1" class="pt" data-i="${i}"/>`;
+  if (i>0){
+    const p = ROWS[i-1];
+    const ov = r.hi >= p.lo;   // adjacent overlap marker
+    if (!ov) s += `<text x="${W-14}" y="${y-8}" font-size="10" fill="#a80000" text-anchor="end">separates</text>`;
+  }
+});
+s += `<text x="170" y="${H-10}" font-size="10.5" fill="#9aa0a6">MPI value as % of the index (95% interval)</text>`;
+s += `<text x="${sx(x0)+2}" y="${topPad-14}" font-size="10.5" fill="#9aa0a6">0.0%</text>`;
+s += `<text x="${sx(x1)-2}" y="${topPad-14}" font-size="10.5" fill="#9aa0a6" text-anchor="end">${pct(x1)}</text>`;
+document.getElementById("chart").innerHTML = s;
+document.getElementById("chart").setAttribute("viewBox",`0 0 ${W} ${H}`);
+document.getElementById("chart").setAttribute("height", H);
+BANDS.forEach(([k,c]) => document.getElementById("legend").insertAdjacentHTML("beforeend",
+  `<span><i style="background:${c}"></i>${k}</span>`));
+
+const tip = document.getElementById("tip");
+document.addEventListener("mousemove", e=>{
+  const d = e.target.closest && e.target.closest(".pt");
+  if (!d){ tip.style.opacity=0; return; }
+  const r = ROWS[+d.dataset.i];
+  tip.innerHTML = `<b>${r.state}</b> &middot; ${r.group}<br>MPI ${pct(r.mpi)}
+    &nbsp;(95% interval ${pct(r.lo)} to ${pct(r.hi)})<br>Headcount ratio ${r.h}% of the population`;
+  tip.style.left = (e.clientX+14)+"px";
+  tip.style.top = (e.clientY-12)+"px";
+  tip.style.opacity = 1;
+});
+</script>
+</body>
+</html>

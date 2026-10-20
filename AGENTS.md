@@ -67,8 +67,12 @@ It records the five decisions (D1 harmonised series, D2 climate layer, D3 confli
 layer, D4 no causal claim, D5 orderings withdrawn), what the Tableau render test
 found, and what is deliberately left to the GUI.
 
+**Next sheet (agreed, not built):** \docs/SHEET_TIME_PANEL.md\ — "A state over time",
+the Measure-Names small-multiple panel view. Freeze design on build.
+
 **Session docs.** \docs/SESSION_HANDOFF.md\ (current state, next steps),
-\docs/CAUSAL_DECISION.md\, \docs/CLAIMS.md\, \docs/FIX_LEDGER.md\.
+\docs/CAUSAL_DECISION.md\, \docs/CLAIMS.md\, \docs/FIX_LEDGER.md\,
+\docs/SHEET_TIME_PANEL.md\ (the next sheet's design freeze).
 
 **Before publishing, read `docs/CLAIMS.md`, `docs/FIX_LEDGER.md` and
 `docs/CAUSAL_DECISION.md`.** They supersede the earlier assumption that the open

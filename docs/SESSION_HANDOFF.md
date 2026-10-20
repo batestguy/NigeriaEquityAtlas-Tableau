@@ -1,8 +1,34 @@
-# Handoff — sessions 2026-10-18 (reference table) and 2026-10-09/10 (party test, map fit)
+# Handoff — sessions 2026-10-20 (explorer tools, next-sheet freeze), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
 
 **Start here.** Pipeline is **9 stages**, all green (`.\scripts\run_all.ps1`, exit 0,
 ~160 s). Everything below is committed and pushed. The atlas is still **not
 published** — that remains the one manual step (your Tableau Public login).
+
+## 2026-10-20 (fifth session) — offline analysis tools, and the next sheet frozen
+
+The instruction for this pass: build offline HTML tools to inspect every pipeline
+output, hypothesise honestly, and decide what earns a place in the workbook.
+
+- **Three self-verifying explorer pages live in `analysis/`** (new top-level folder;
+  regenerate with `& C:\Users\TOSHIBA\ds-general\python.exe analysis\<name>.py`):
+  `data_explorer.html` (six tabs: master table, scatter lab, four rounds, spatial,
+  party, Tableau ideas), `dags.html` (six causal DAGs, one per page, with build-time
+  asserts so no page can quote a stale number) and `ci_chart.html` (the MPI dot +
+  95% interval mock). All numbers on these pages are **recomputed from
+  `data/processed/*.csv` at build time and asserted** — never quoted from memory.
+- **Survivorship tally from the DAG pass** (verdicts, not new results): the
+  harmonised-series, spatial, dimension-mix and band views survive as tested; the
+  party result is fragile-only (fired, then failed every robustness check); the
+  climate-precipitation, latitude and conflict associations are not identifiable at
+  n = 37 — rhos of −0.80 (precip↔MPI) collapse under the latitude confound
+  (partial rank −0.24; latitude↔MPI +0.82 is the twin of the outcome).
+- **The next sheet is frozen, not built:** `docs/SHEET_TIME_PANEL.md` — "A state over
+  time". Measure Names/Values small multiples, one state picked, any set of whitelisted
+  variables ticked, four rounds as line + markers, **no fitted trend line**. Red list:
+  `conflict_exposure_index` (re-anchored within each round), `temp_anomaly_c` /
+  `precip_anomaly_pct` (four points of weather are not a climate signal). Build
+  implications already written down: a third Hyper extract (`mpi_trends_panel.hyper`)
+  in stage 6, a sixth QA preview in stage 5.
 
 ## 2026-10-18 (fourth session) — five views: two maps and one reference table
 
