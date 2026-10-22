@@ -697,7 +697,7 @@ PAIRS_DS_NAME = "federated.0mpipairs"
 PAIRS_DS_CAPTION = "Pairs board"
 PAIRS_CONN = "hyper.0mpipairs"
 PAIRS_HYPER = "pairs_board.hyper"
-SHEET_PAIRS_TITLE = "How measures pair"
+SHEET_PAIRS_TITLE = atlas_text.PAIRS_TITLE
 PAIRS_X_CALC = "pair_x_sel"
 PAIRS_Y_CALC = "pair_y_sel"
 PAIRS_X_CALC_CAPTION = "Pair X position"
@@ -883,34 +883,18 @@ def pairs_captions() -> dict[str, str]:
 def pairs_tooltip_runs() -> str:
     """The runs inside the pairs board's customized tooltip.
 
-    Same CDATA grammar as the maps' tooltips, but the value lines come from
-    the two CASE columns' aggregates (they hold the chosen measure's value),
-    then the caveat. Log-aware text: whether either axis is logged is visible
-    in the dropdown, not recomputed here.
+    Same CDATA grammar as the maps' tooltips. 2026-10-22 the user asked for
+    state names ONLY in the hover (was: state + round + group + the two
+    values + caveat), so the tooltip is the bold state line alone; the
+    chosen pair is visible in the dropdown cards and the caveat sentence
+    stays in the subtitle.
     """
     ds = PAIRS_DS_NAME
 
     def fld(text: str, attrs: str = "") -> str:
         return f"              <run{attrs}><![CDATA[<{text}>]]></run>\n"
 
-    def txt(body: str, attrs: str = "") -> str:
-        return f"              <run{attrs}>{body}</run>\n"
-
-    return (
-        fld(ref("state", "dim", ds), " bold='true' fontsize='13'")
-        + txt(" &#183; ")
-        + fld(ref("survey_year", "ord", ds), " bold='true'")
-        + txt(" round (")
-        + fld(ref("survey", "dim", ds))
-        + txt(")&#10;")
-        + fld(ref("poverty_group", "dim", ds))
-        + txt(" of the 37 states, by 2021 MPI&#10;X value: ")
-        + fld(ref(PAIRS_X_CALC, "avg", ds), " bold='true'")
-        + txt("&#10;Y value: ")
-        + fld(ref(PAIRS_Y_CALC, "avg", ds), " bold='true'")
-        + txt("&#10;&#10;")
-        + txt(escape(atlas_text.PAIRS_TOOLTIP_CAVEAT) + "&#10;", " italic='true'")
-    )
+    return fld(ref("state", "dim", ds), " bold='true' fontsize='13'")
 
 
 def pairs_instance_xml() -> str:
@@ -997,6 +981,22 @@ def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
         f"{deps}"
         f"          <aggregation value='true' />\n"
         f"        </view>\n"
+        # The mark colour saga, 2026-10-22 (full trial list in
+        # docs/SHEET_PAIRS.md): the fill is set by the pane-level
+        # mark-color format below -- the FinanceDashboard shape. Not
+        # worksheet-level: a plain attr='color' format was inert, an
+        # <encoding> palette map on a pane rule and on a table-level rule
+        # was inert beside the colour pill, an unqualified-field table rule
+        # also left blue, and a ds-level palette on this datasource failed
+        # the LOAD outright (grey empty shell). None of the four are in
+        # this file's output.
+        #
+        # <style> under <table> is REQUIRED even when it carries no rules:
+        # the builds that dropped it here (2026-10-22) failed the LOAD --
+        # grey empty shell, twice on clean starts, packet and full workbook
+        # alike -- while this exact shape with the element present loads.
+        # Found by bracketing against the pre-session build: the twb diff
+        # names this element and the tooltip runs as the only deltas.
         f"        <style />\n"
         f"      <panes>\n"
         f"        <pane selection-relaxation-option='selection-relaxation-allow'>\n"
@@ -1007,6 +1007,12 @@ def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
         f"          <encodings>\n"
         f"            <lod column='[{ds}].[none:state:nk]' />\n"
         f"            <lod column='[{ds}].[none:survey_year:ok]' />\n"
+        # NO colour pill here: an explicit colour encoding engages the
+        # categorical-palette machinery, which beat every style rule tried
+        # (packet still drew blue + one stray default-palette orange dot,
+        # 2026-10-22). The fill is set by the pane-level mark-color format
+        # below, the exact shape FinanceDashboard serialises (52 hits:
+        # <format attr='mark-color' value='#000000' /> on pane mark rules).
         f"          </encodings>\n"
         f"          <customized-tooltip show-buttons='false'>\n"
         f"            <formatted-text>\n"
@@ -1015,6 +1021,19 @@ def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
         f"          </customized-tooltip>\n"
         f"          <style>\n"
         f"            <style-rule element='mark'>\n"
+        # The circle fill: pane-level mark-color, the real-workbook shape
+        # (FinanceDashboard, 52 hits; scope verified -- it is a <pane>-level
+        # mark format there). Tried and dead before this (2026-10-22): a
+        # plain attr='color' format (inert), an <encoding> palette on the
+        # pane and table rules (inert, the pill's categorical palette won,
+        # one stray orange dot), and a ds-level palette on this datasource
+        # (failed the LOAD outright -- grey empty shell).
+        # mark-color BISECT resolved (2026-10-22): the earlier mark-color
+        # "failure" was the missing table-level <style /> above, not this
+        # format -- the bracketing diff against the pre-session build names
+        # the element as the only structural delta. The format is the
+        # FinanceDashboard shape (52 hits, pane mark rules).
+        f"              <format attr='mark-color' value='{atlas_text.PAIRS_POINT_COLOUR}' />\n"
         f"              <format attr='mark-labels-show' value='false' />\n"
         f"            </style-rule>\n"
         f"          </style>\n"
@@ -2113,6 +2132,13 @@ def build_workbook(spatial_technical: str,
         # places, the way the shipped datasources carry them.
         instances=pairs_instance_xml(),
         captions=pairs_captions(),
+        # (The ds-level palette mapping poverty_group to one green did NOT
+        # load here: with it, both the packet and the full workbook failed to
+        # open at all — a grey empty shell, 2026-10-22. Bisect: removed; the
+        # colour pill on the sheet + a worksheet table-level rule is what the
+        # verified build carries instead. The maps' ds-level palettes render,
+        # so this is a pairs-datasource-specific finding to re-investigate at
+        # publish time.)
     )
     # Append the two calc <column> blocks right after the plain ones, before the
     # <extract> element: datasource_xml emits <column/>s between <aliases/> and

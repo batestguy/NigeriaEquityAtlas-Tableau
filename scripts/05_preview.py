@@ -5,7 +5,8 @@ with a missing cell is caught here, in Python, before the workbook is opened -- 
 is what a gate is for.
 
 Seven previews, in tab order, one per published view (eight sheets since the
-composition bar joined; the three reference tabs are one sheet in three files):
+composition bar and pairs board joined; the three reference tabs are one sheet
+in three files):
 
 1. Where poverty sits            filled choropleth, the five MPI bands the
                                  workbook draws, in the colours it draws them
@@ -23,6 +24,8 @@ composition bar joined; the three reference tabs are one sheet in three files):
 6. The list of basic needs       reference tab 2 of 3, same gate
 7. How we did it                 reference tab 3 of 3 -- the gate for a table
                                  is missing cells and misfiled rows
+8. How measures pair             the pairs board (docs/SHEET_PAIRS.md) on its
+                                 default pair, green circles, points only
 
 The reference table is one table shipped as three tabs, cut on the three groups it
 already had: as a single dashboard it measured 2000 x 8720 px (docs/FIX_LEDGER.md W2).
@@ -69,6 +72,7 @@ from common import (  # noqa: E402
 
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
+PAIRS = PROCESSED / "mpi_pairs_148.csv"
 
 INK = "#22252a"
 
@@ -639,6 +643,58 @@ def visual_state_over_time() -> None:
     print("  4_state_over_time.png")
 
 
+def visual_pairs_board() -> None:
+    """8. The pairs board on its default pair, the gate for colour and shape.
+
+    One green circle per state-round, the two poverty-group panes stacked the
+    way the workbook stacks them ('Other 25' above 'Poorest 12' -- the group
+    field's alphabetical order, P5), points only: no fit, no slope, no size
+    channel, the guardlist the freeze imposes. Colour binds to
+    atlas_text.PAIRS_POINT_COLOUR so the gate and the sheet cannot disagree.
+    """
+    col = read(PAIRS)
+    assert len(col) == 148, f"pairs gate has {len(col)} rows, expected 148"
+    by_group: dict[str, list[tuple[float, float]]] = {}
+    for row in col:
+        h, y = float(row["headcount_ratio_pct"]), float(row["log1p_events_per_100k"])
+        assert 0 <= h <= 100 and y >= 0, f"{row['state']}: out-of-range pair"
+        by_group.setdefault(row["poverty_group"], []).append((h, y))
+    assert set(by_group) == {atlas_text.POVERTY_GROUP_TOP, atlas_text.POVERTY_GROUP_REST}
+
+    fig, axes = plt.subplots(
+        2, 1, figsize=(7.4, 7.4), sharex=True,
+        gridspec_kw={"height_ratios": [
+            len(by_group[atlas_text.POVERTY_GROUP_REST]),
+            len(by_group[atlas_text.POVERTY_GROUP_TOP]),
+        ]},
+    )
+    groups = (atlas_text.POVERTY_GROUP_REST, atlas_text.POVERTY_GROUP_TOP)
+    for ax, group in zip(axes, groups):
+        pts = by_group[group]
+        ax.scatter([p[0] for p in pts], [p[1] for p in pts], s=28,
+                   color=atlas_text.PAIRS_POINT_COLOUR, edgecolors="none", zorder=3)
+        ax.set_ylabel(group, fontsize=8)
+        ax.grid(axis="both", color="#dddddd", linewidth=0.6, zorder=0)
+        ax.spines[["top", "right"]].set_visible(False)
+    axes[0].set_ylabel("Other 25 \u2014 pair Y (log(1+rate))", fontsize=8)
+    axes[1].set_xlabel("Pair X \u2014 the dropdowns choose it", fontsize=8)
+    axes[1].set_ylabel("Poorest 12 \u2014 pair Y (log(1+rate))", fontsize=8)
+
+    # Figure-level title (two axes, so the shared titles() helper's single-axes
+    # assumptions don't apply): title left, subtitle wrapped under it, layout
+    # reserved above the top pane.
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    fig.suptitle(atlas_text.PAIRS_TITLE, fontsize=13, fontweight="700",
+                 ha="left", x=0.04, y=0.985)
+    fig.text(0.04, 0.955, "\n".join(textwrap.wrap(atlas_text.PAIRS_SUBTITLE, 112)),
+             fontsize=8.6, color="#555555", va="top", ha="left", linespacing=1.35)
+    # Named 8_: the gate's naming rule is "N_name.png, in tab order", and the
+    # pairs board is tab 8 -- last, after the three reference tabs (5-7).
+    fig.savefig(PREVIEW / "8_how_measures_pair.png", dpi=170)
+    plt.close(fig)
+    print("  8_how_measures_pair.png")
+
+
 def main() -> int:
     PREVIEW.mkdir(parents=True, exist_ok=True)
     rows = read(ATLAS)
@@ -650,9 +706,11 @@ def main() -> int:
     visual_spatial_clusters()
     visual_dimension_bars(rows)
     visual_state_over_time()
+    visual_pairs_board()
     # The kept set is what this run wrote, not a second list that can drift from it.
     kept = {"1_where_poverty_sits.png", "2_where_poverty_clusters.png",
-            "3_how_poverty_is_made_up.png", "4_state_over_time.png"}
+            "3_how_poverty_is_made_up.png", "4_state_over_time.png",
+            "8_how_measures_pair.png"}
     kept.update(visual_reference_table())
 
     # The directory holds this stage's output and nothing else, so a preview that a

@@ -122,3 +122,64 @@ The same guardlist as the withdrawn chart sheets, plus prompt items:
   state (H × log1p events, two panes) from the same CSV columns stage 6 packs.
 - Publish-time manual checks: switch x and y via both cards, confirm payload
   changes, confirm zero-event states stay on the 0 gridline on logged axes.
+
+## Built (2026-10-22) — deltas against this freeze
+
+Recorded here rather than silently absorbed into the freeze bullets above.
+
+- **Tab 8, not tab 4.** The build placed the sheet last, after the three
+  reference tabs, and that is what shipped and verified. The freeze's
+  "insert at position 4" bullet is superseded. The stage-5 gate PNG is named
+  `8_how_measures_pair.png` (tab order), not the planned `7_how_pairs_default.png`.
+- **Hover = the state name only** (user request, 2026-10-22). One bold run in
+  the `<customized-tooltip>`; the round, poverty_group, the two Pair values
+  and the caveat runs are gone. The caveat sentences stay on-sheet in the
+  subtitle, so the guardlist's wording is not lost — it just no longer rides
+  the hover. `atlas_text.PAIRS_TOOLTIP_CAVEAT` was withdrawn with it.
+- **Circle fill = one green**, the atlas's Okabe-Ito green `#009E73`
+  (`atlas_text.PAIRS_POINT_COLOUR`, the living-standards share's green), via a
+  **pane-level `<format attr='mark-color'>`** — the shape FinanceDashboard
+  serialises (52 hits, verified at `<pane>` scope).
+- **No colour pill.** A `<color column=...>` encoding engaged Tableau's
+  categorical-palette machinery, which overrode every style rule tried and
+  painted one stray default-palette orange dot. The fill comes solely from the
+  pane mark rule, so no colour legend exists on this sheet and none is needed.
+- **The colour grammar saga** (six packets, all render-verified; the losing
+  shapes are recorded so nobody re-tries them):
+  1. pane-level plain `<format attr='color' value=#009E73>` — inert (loaded;
+     circles stayed blue);
+  2. pane-level `<encoding>` palette map (both group buckets → one green) with
+     the colour pill present — loaded; circles stayed blue + **one stray
+     orange dot** (the pill's default categorical palette winning through);
+  3. table-level `<encoding>` rule, ds-qualified then unqualified field,
+     with the pill — same: loaded, stayed blue;
+  4. **datasource-level palette** (`palette=` on `datasource_xml`, the
+     placement the map sheets render from) on the *pairs* datasource —
+     **failed the LOAD outright**: grey empty shell, both packet and full
+     workbook, no error dialog. Not one to retry here;
+  5. pane-level `<format attr='mark-color'>` — initially appeared to fail the
+     load, but see 6;
+  6. **the real finding: `<table>` requires its `<style>` element present
+     even when empty.** Builds with `<style />` deleted under the pairs
+     table failed the load with a grey empty shell on clean starts, packet
+     and full workbook alike. Discovered by bracketing the failing build
+     against the pre-session build (twb diff: the element and the tooltip
+     runs were the only deltas). With `<style />` restored, `mark-color`
+     renders the green (5 was never the breaker).
+- **Stage-5 gate added:** `visual_pairs_board()` → `8_how_measures_pair.png`
+  (default pair H × log1p events, panes 'Other 25' above 'Poorest 12',
+  green points, no fit), so the pairs board is no longer the one published
+  view without a QA-preview.
+- **Reproducibility finding (open):** full-workbook renders sometimes open
+  with the parameter cards on *non-file-default* selections (observed:
+  Y = capital rainfall, temperature) and the chart follows the cards — the
+  board's interactivity is proven working (payload tracks the dropdown), but
+  which selections a fresh open carries is not deterministic from the file.
+  Watch it at publish time; the shipped defaults ARE declared in the file
+  (X = `H (% poor)`, Y = `Events log`) and the final verified render opened
+  on exactly that pair.
+- **Verified by render** (2026-10-22): `render_pairs_markcolor2.png`,
+  `render_full_green_ok.png` — green circles on both panes, defaults correct,
+  full workbook loads (`Tableau Public - Nigeria-MPI-Equity-Atlas`). The
+  hover's on-screen content cannot be captured by PrintWindow; tooltip = one
+  state-name run is XML-verified and goes to the publish-time manual checks.

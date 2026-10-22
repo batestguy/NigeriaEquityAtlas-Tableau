@@ -515,19 +515,18 @@ PANEL_DEFAULT_STATE = "Bauchi"
 # no size channel; the panes cut on the outcome itself, so anything computed
 # within them is range-restricted arithmetic, not evidence. The subtitle and the
 # hover caveat both say it; the guardlist is in the freeze doc ("may not say").
+PAIRS_TITLE = "How measures pair"
 PAIRS_SUBTITLE = (
     "choose any two measures; points, not a test \u00b7 panes cut on the 2021 "
     "poorest-12 split, so pane slopes are range-restricted \u00b7 logged axes are "
     "log(1+rate) and keep zero-event states on the zero line"
 )
-# Rides the customized hover, after the two values.
-PAIRS_TOOLTIP_CAVEAT = (
-    "Points, not a test. The panes cut on the 2021 MPI poorest-12 split, so "
-    "slopes read from them are range-restricted and no test is offered. Logged "
-    "axes are log(1+rate): a state with zero events sits exactly on the zero "
-    "line, not off the chart. Rank-pair intervals overlap at 95%, so treat "
-    "positions side-by-side, not as orderings."
-)
+# The board's circle fill: the atlas's Okabe-Ito green (the same green the
+# living-standards share prints), single-sourced so the two sheets agree.
+PAIRS_POINT_COLOUR = "#009E73"
+# The hover caveat was withdrawn with the hover simplification (2026-10-22):
+# the tooltip prints the state name alone, and the caveat sentences live where
+# a reader actually sees them -- in the subtitle. (Was: PAIRS_TOOLTIP_CAVEAT.)
 
 # ---------------------------------------------------------------------------
 # "How poverty is made up" -- the three-area decomposition sheet

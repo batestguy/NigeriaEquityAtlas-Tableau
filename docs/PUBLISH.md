@@ -49,7 +49,7 @@ wrote back against the declared columns before packaging.
 | What the words mean | **text zones** (part 1 of 3) | the reference table, 24 rows: the word, its formula or weight, what it means, how it was made |
 | The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
 | How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
-| How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; looking only — no computed claim, no fitted trend (`docs/SHEET_PAIRS.md`) |
+| How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; circles filled **one green** (`#009E73`, `atlas_text.PAIRS_POINT_COLOUR`) via a pane-level `<format attr='mark-color'>`, no colour pill and therefore no colour legend; hover = **the state name only**; looking only — no computed claim, no fitted trend (`docs/SHEET_PAIRS.md`) |
 
 The three reference tabs are **one table paginated on its own groups**, not three
 documents. It was two prose dashboards (`What the words mean`, `How we did it`) until it
@@ -371,6 +371,22 @@ workbook.
       cluster map's (the one proven to draw); if the legend fails to show on this
       sheet too, it joins the `Where poverty sits` defect family — the fix is one
       click of **Analysis → Legends → Colour Legend**, then Save.
+
+- **The pairs board's interactions are likewise only open-state-verified**
+  (2026-10-22: green circles render-verified on the packet and the full
+  workbook; a human must confirm on the published viz):
+  1. **Hover a point** and confirm the tooltip prints **the state name and
+     nothing else** (one bold line — `docs/SHEET_PAIRS.md` Built). The caveat
+     sentences live in the subtitle, not the hover.
+  2. **Switch each dropdown** (X then Y) and confirm the payload follows the
+     card; zero-event states stay on the 0 gridline whenever Y is a logged
+     axis.
+  3. **Eye-check the circles are green on both panes** and that no colour
+     legend card prints (the sheet has no colour pill by design; if one
+     appears, the pane `mark-color` rule was lost).
+  4. **Note the open-state finding** (`docs/SHEET_PAIRS.md` Built): a fresh
+     open sometimes carries non-default card selections; check the shipped
+     defaults (X = `H (% poor)`, Y = `Events log`) on the published viz.
 
 ## If something looks wrong
 

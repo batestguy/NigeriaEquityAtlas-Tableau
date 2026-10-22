@@ -1008,22 +1008,11 @@
           <customized-tooltip show-buttons='false'>
             <formatted-text>
               <run bold='true' fontsize='13'><![CDATA[<[federated.0mpipairs].[none:state:nk]>]]></run>
-              <run> &#183; </run>
-              <run bold='true'><![CDATA[<[federated.0mpipairs].[none:survey_year:ok]>]]></run>
-              <run> round (</run>
-              <run><![CDATA[<[federated.0mpipairs].[none:survey:nk]>]]></run>
-              <run>)&#10;</run>
-              <run><![CDATA[<[federated.0mpipairs].[none:poverty_group:nk]>]]></run>
-              <run> of the 37 states, by 2021 MPI&#10;X value: </run>
-              <run bold='true'><![CDATA[<[federated.0mpipairs].[avg:pair_x_sel:qk]>]]></run>
-              <run>&#10;Y value: </run>
-              <run bold='true'><![CDATA[<[federated.0mpipairs].[avg:pair_y_sel:qk]>]]></run>
-              <run>&#10;&#10;</run>
-              <run italic='true'>Points, not a test. The panes cut on the 2021 MPI poorest-12 split, so slopes read from them are range-restricted and no test is offered. Logged axes are log(1+rate): a state with zero events sits exactly on the zero line, not off the chart. Rank-pair intervals overlap at 95%, so treat positions side-by-side, not as orderings.&#10;</run>
             </formatted-text>
           </customized-tooltip>
           <style>
             <style-rule element='mark'>
+              <format attr='mark-color' value='#009E73' />
               <format attr='mark-labels-show' value='false' />
             </style-rule>
           </style>

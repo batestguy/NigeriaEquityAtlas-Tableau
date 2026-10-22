@@ -730,3 +730,29 @@ builders `packet_builder.py` / `build_packetA3.py` / `build_packetA5.py` alongsi
   in docs/SHEET_DIMENSIONS.md: header caption truncation and the "Poorest 12"
   line-wrap (the header-width rule value='92' did not take here).
   Full workbook still loads (title Nigeria-MPI-Equity-Atlas).
+- **D-054 (2026-10-22). The pairs board's circles: mark-color is the grammar, and `<style />` is load-required**
+  User request: green circles, state-name-only hover. Six colour shapes,
+  one variable per packet, all render-verified (green1..markcolor2):
+  pane-level plain `<format attr='color'>` inert (loaded, stayed blue);
+  pane-level `<encoding>` palette map with the colour pill present loaded but
+  the pill's default categorical palette won through (blue + one stray
+  orange dot); table-level `<encoding>` rule (ds-qualified, then unqualified,
+  the real-workbook form) inert the same way; a **ds-level palette** on the
+  pairs datasource (`palette=` on `datasource_xml`, the placement the map
+  sheets render from) **failed the load outright** - grey empty shell, packet
+  and full workbook, no dialog; pane-level `<format attr='mark-color'>` -
+  FinanceDashboard's 52-hit shape, scope verified - appeared to fail the load
+  too. Bracketing the failing build against the pre-session one (twb diff)
+  found the actual breaker: **deleting `<table>`'s `<style>` element fails
+  the load even with no rules in it** - the element is required present, and
+  every earlier "mark-color failed" call was that deletion, not the format.
+  With `<style />` restored, pane `mark-color` renders the green on both
+  panes (render_pairs_markcolor2), no stray dot, and the full workbook loads
+  (render_full_green_ok). Landed config: no colour pill, pane rule =
+  `mark-color` + `mark-labels-show`. Generator: `pairs_worksheet_xml()`.
+  Hover reduced to the bold state run (caveat wording stays in the subtitle;
+  `atlas_text.PAIRS_TOOLTIP_CAVEAT` withdrawn). Stage 5 gained
+  `8_how_measures_pair.png` (the gate's first scatter view; pairs is tab 8).
+  Open finding, not a defect: a fresh open sometimes carries non-default
+  parameter-card selections and the payload follows the cards
+  (docs/SHEET_PAIRS.md Built).
