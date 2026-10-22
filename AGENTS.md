@@ -69,9 +69,12 @@ found, and what is deliberately left to the GUI.
 
 **The next build phase is pre-documented: \docs/POLISH_PLAN.md\** (2026-10-22)
 -- the cover tab ("One Country. Two Realities.", illustration, cover-only
-faint green-white-green Nigeria watermark), the sheet-by-sheet polish waves,
-their guardlist and unknowns; wave 0 proves the dashboard grammar before any
-of it touches the shipped twb.
+faint green-white-green Nigeria watermark), **Nigerian-themed colour system**
+(flag green #008751 for chrome; data encodings reviewed per surface,
+severity ramps stay orderable), the sheet-by-sheet polish pass (each tab's
+four axes before the next tab, next session, publishing only after the whole
+pass), their guardlist and unknowns; wave 0 proves the dashboard grammar
+before any of it touches the shipped twb.
 
 **Latest sheet (built 2026-10-20, pending publish-time interaction checks):**
 \docs/SHEET_TIME_PANEL.md\ — "A state over time", the Measure-Names small-multiple

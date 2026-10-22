@@ -29,6 +29,26 @@ already carry the plain-language layer, so the cover's job is the doorway.
 - **Polish axes, all four, in this order:** (1) clear the open defects list,
   (2) uniform sheet language, (3) visual composition pass, (4) non-professional
   reader pass. Each axis feeds the next; waves are one tab each.
+- **Colours go Nigerian-themed (added 2026-10-22, same day).** The atlas's
+  chrome — cover, title text, credit lines, watermark, sheet accents — adopts
+  a Nigerian palette: the flag's green (`#008751`) and white as the identity
+  colours, with the wave-1 rule that decoration and data do not share hues.
+  **Boundary on data encodings:** encodings that carry meaning (the five-band
+  red severity ramp — deepest = poorest, justified by OPHI's published SEs;
+  the Okabe-Ito dimension/cluster/pairs hues, chosen colour-blind-safe) are
+  not re-coloured wholesale by fiat — each data sheet's palette isreviewed
+  per surface during the sheet pass, and a severity ramp keeps orderability
+  (a green ramp of flag-toned steps is the allowed Nigerian re-skin; a
+  decorative multi-hue flag palette on an ordered measure is not). Whatever
+  changes, the rule stands: every colour change is single-sourced in
+  `scripts/atlas_text.py`, and the stage-5 gate PNGs re-render from the same
+  constants, so sheet and gate cannot disagree.
+- **Session structure amendment:** the polish runs **sheet by sheet, working
+  each tab's four axes before moving to the next tab — in the next session,
+  and only then publishing.** The axis-waves above stay as the checklist per
+  tab (defects → language → composition → reader pass), not as separate
+  calendar passes; publishing waits for the whole pass to be render-verified
+  sheet by sheet.
 - **Publishing split unchanged:** the agent does XML/grammar/render/docs; the
   user does every GUI click and the publish itself.
 
