@@ -4,28 +4,39 @@ This is the QA gate. A colour that drifts, a state whose type changes, or a tabl
 with a missing cell is caught here, in Python, before the workbook is opened -- which
 is what a gate is for.
 
-Five previews, in tab order, one per published view:
+Seven previews, in tab order, one per published view (eight sheets since the
+composition bar joined; the three reference tabs are one sheet in three files):
 
 1. Where poverty sits            filled choropleth, the five MPI bands the
                                  workbook draws, in the colours it draws them
 2. Where poverty clusters        the same rings filled by neighbourhood type
                                  (stage 9), in the four colours the sheet uses
-3. What the words mean           reference tab 1 of 3, as a monospace grid
-4. The list of basic needs       reference tab 2 of 3, same gate
-5. How we did it                 reference tab 3 of 3 -- the gate for a table
+3. How poverty is made up        the stacked composition bar (docs/
+                                 SHEET_DIMENSIONS.md): the three dimension
+                                 shares per state, bars in the workbook's
+                                 hand-computed MPI order, in the sheet's three
+                                 colours
+4. A state over time             the time panel (docs/SHEET_TIME_PANEL.md): the
+                                 default state's six whitelisted measures over the
+                                 four rounds, in the six colours the sheet assigns
+5. What the words mean           reference tab 1 of 3, as a monospace grid
+6. The list of basic needs       reference tab 2 of 3, same gate
+7. How we did it                 reference tab 3 of 3 -- the gate for a table
                                  is missing cells and misfiled rows
 
 The reference table is one table shipped as three tabs, cut on the three groups it
 already had: as a single dashboard it measured 2000 x 8720 px (docs/FIX_LEDGER.md W2).
 The gate follows the tabs, so the numbering is per-part and not per-table.
 
-Previews 2-6 and 8 used to exist: the dimension breakdown, the conflict overlay, the
-gradient plot, the radar, the party panel and the Moran scatter. Their sheets were
-withdrawn on 2026-10-18 (docs/FIX_LEDGER.md W1) and the previews went with them --
-a gate for a sheet that is not in the workbook cannot gate anything. The analyses
-themselves still run: stage 8's party test is pre-registered and its result is
-reported in docs/party_alignment.md, and the spatial test behind preview 2 is
-reported in docs/spatial_analysis.md.
+Previews 2-6 and 8 used to exist: the conflict overlay, the gradient plot, the
+radar, the party panel and the Moran scatter. Their sheets were withdrawn on
+2026-10-18 (docs/FIX_LEDGER.md W1) and the previews went with them -- a gate for
+a sheet that is not in the workbook cannot gate anything. The original dimension
+breakdown also went that day, but it came back on 2026-10-22 rebuilt to a frozen
+design (preview 3 above); unlike the others its gate survived, rebuilt with it.
+The remaining analyses still run: stage 8's party test is pre-registered and its
+result is reported in docs/party_alignment.md, and the spatial test behind
+preview 2 is reported in docs/spatial_analysis.md.
 
 One departure from the spec survives, deliberately: there is no radar chart. The
 polygon-mark grammar it needs is the most fragile part of the Tableau schema to
@@ -306,6 +317,134 @@ def visual_spatial_clusters() -> None:
     print("  2_where_poverty_clusters.png")
 
 
+# ------------------------------------------------- the composition bar (sheet 3)
+def visual_dimension_bars(rows: list[dict[str, str]]) -> None:
+    """The QA gate for "How poverty is made up": same shares, same order, same colours.
+
+    The sheet stacks each state's MPI split across OPHI's three dimensions -- an
+    identity, so the bar always totals 100 -- listed in the hand-computed MPI
+    order stage 6 ships as the manual sort dictionary. The gate draws the same
+    bars from the same atlas rows with the same three colours sourced from
+    `atlas_text.DIMENSION_SHARES`, so a colour that drifts, a share that breaks
+    the identity, or a state lost from the order fails here before Tableau
+    opens. The drawn subset is the workbook's DEFAULT view (the user's
+    2026-10-22 decision): the five poorest states and the first twelve of the
+    Other 25, MPI order, with the remaining 20 one tick away on the sheet's
+    state filter -- the filter membership is stage 6's to prove, this gate
+    proves the 17 bars it draws. The gate labels the wide segments the way the
+    sheet's datalabel rule renders its numbers, in white, so a reader comparing
+    the two images sees the same thing; the ordering is the point estimate's,
+    and all 36 adjacent rank pairs overlap at 95%, which is what the frozen
+    subtitle and the footer both say.
+    """
+    share_fields = [(f, caption) for f, caption, _colour in atlas_text.DIMENSION_SHARES]
+    colour_of = {caption: colour for _f, caption, colour in atlas_text.DIMENSION_SHARES}
+    assert len(atlas_text.DIMENSION_SHARES) == 3, "expected the three OPHI dimensions"
+    assert len(colour_of) == 3, "DIMENSION_SHARES repeats a caption"
+    assert len({c for _f, _c, c in atlas_text.DIMENSION_SHARES}) == 3, "colours repeat"
+
+    parsed: list[tuple[str, float, list[float], str]] = []
+    for row in rows:
+        shares = [float(row[field]) for field, _caption in share_fields]
+        assert all(0 <= s <= 100 for s in shares), (
+            f"{row['state']}: a dimension share outside 0-100"
+        )
+        assert abs(sum(shares) - 100) < 0.5, (
+            f"{row['state']}: shares total {sum(shares):.2f}, expected 100"
+        )
+        assert row["mpi_label"].strip() and row["dim_hover"].strip(), (
+            f"{row['state']}: the composition sheet's hover strings are blank"
+        )
+        parsed.append((row["state"], float(row["mpi"]), shares,
+                       row["poverty_group"]))
+    assert len(parsed) == 37, f"composition gate has {len(parsed)} states, expected 37"
+    parsed.sort(key=lambda t: -t[1])
+    # The default view (see the docstring): all-per-state asserts above ran on
+    # the full 37; the draw below is the 17 the workbook shows on load.
+    parsed = parsed[:5] + parsed[12:24]
+    assert len(parsed) == 17, f"default view has {len(parsed)} bars, expected 17"
+
+    # The workbook nests poverty_group above state on Rows, so the two groups
+    # print as pane headers with a divider between them. The gate mirrors the
+    # marker the user asked for (2026-10-22): the group name on a header slot
+    # of its own (the way Tableau's pane headers own a strip) and a divider
+    # under each block's last bar.
+    slots: list[tuple[str, str]] = []
+    last_grp: str | None = None
+    for state, _mpi, _shares, grp in parsed:
+        if grp != last_grp:
+            slots.append(("hdr", grp))
+            last_grp = grp
+        slots.append(("bar", state))
+    headers = [val for kind, val in slots if kind == "hdr"]
+    assert len(headers) == 2, (
+        f"the default view should span both poverty groups, saw {set(headers)}"
+    )
+    by_state = {state: (shares, grp) for state, _mpi, shares, grp in parsed}
+    ordered = [(state,) + by_state[state] for kind, state, in slots if kind == "bar"]
+    assert [st for kind, st in slots if kind == "bar"] == [st for st, _sh, _g in ordered]
+
+    fig, ax = plt.subplots(figsize=(8.2, 10.6 * len(slots) / 37))
+    ypos = [i for i, (kind, _val) in enumerate(slots) if kind == "bar"]
+    left = [0.0] * len(ypos)
+    # Reversed list order: the first render (Tableau Public 2026.2, 2026-10-22)
+    # stacks the LAST declared measure nearest the axis -- Living standards,
+    # then Health, then Education -- so the gate stacks the same way, from the
+    # same single-source list. The colours bind by measure, not by position, so
+    # the two surfaces agree either way; this keeps the segment order too.
+    for index, (_field, caption, _colour) in enumerate(reversed(atlas_text.DIMENSION_SHARES)):
+        which = len(atlas_text.DIMENSION_SHARES) - 1 - index
+        widths = [shares[which] for _state, shares, _grp in ordered]
+        ax.barh(ypos, widths, left=left, height=0.72, color=colour_of[caption],
+                edgecolor="white", linewidth=0.3, label=caption, zorder=3)
+        # The workbook labels every segment with its value in white (its
+        # datalabel rule); the gate labels the segments wide enough to carry
+        # one, white, so a reader comparing the two images sees the same thing.
+        for y, w, l in zip(ypos, widths, left):
+            if w >= 7:
+                ax.text(l + w / 2, y, f"{w:.1f}", ha="center", va="center",
+                        fontsize=6.6, color="white", zorder=4)
+        left = [l + w for l, w in zip(left, widths)]
+
+    # The group headers sit on their own strip, bold, above their block; the
+    # divider runs at the top edge of each header except the first, i.e. one
+    # pane line between "Poorest 12" and "Other 25" -- the workbook's pane
+    # divider mirrored.
+    for i, (kind, val) in enumerate(slots):
+        if kind == "hdr":
+            ax.text(0, i, val, transform=ax.get_yaxis_transform(), ha="left",
+                    va="center", fontsize=8.4, fontweight="bold",
+                    color="#222222", zorder=6)
+            if i > 0:
+                ax.axhline(i - 0.5, color="#444444", linewidth=1.3, zorder=5)
+
+    ax.set_yticks(ypos)
+    ax.set_yticklabels([st for kind, st in slots if kind == "bar"], fontsize=7.2)
+    ax.invert_yaxis()  # highest MPI at the top: the manual sort dictionary's order
+    ax.set_xlim(0, 100)
+    ax.set_xticks([0, 25, 50, 75, 100])
+    ax.set_xticklabels(["0%", "25%", "50%", "75%", "100%"], fontsize=8)
+    ax.grid(axis="x", color="#dddddd", linewidth=0.6, zorder=0)
+    ax.spines[["top", "right"]].set_visible(False)
+
+    legend = ax.legend(
+        title="The three areas\n(share of each state's MPI)",
+        loc="center left", bbox_to_anchor=(1.005, 0.5), frameon=False,
+        fontsize=7.6, title_fontsize=8, labelspacing=0.8,
+    )
+    legend._legend_box.align = "left"
+
+    titles(ax, atlas_text.DIMENSIONS_TITLE, atlas_text.DIMENSIONS_SUBTITLE, width=104)
+    ax.text(
+        0, -0.06, "\n".join(textwrap.wrap(atlas_text.DIMENSIONS_CAVEAT, 104)),
+        transform=ax.transAxes, fontsize=7.4, color="#555555", va="top",
+    )
+    fig.tight_layout()
+    fig.savefig(PREVIEW / "3_how_poverty_is_made_up.png", dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print("  3_how_poverty_is_made_up.png")
+
+
 # ------------------------------------------------- the reference tab (sheet 3)
 def visual_reference_table() -> list[str]:
     """The QA gate for the reference tabs: every cell present, columns still aligned.
@@ -343,7 +482,6 @@ def visual_reference_table() -> list[str]:
                     .ljust(column_chars[column])
                     for column in range(len(column_chars))
                 ))
-
         lines.extend(wrapped(atlas_text.TABLE_INTRO, sum(column_chars) + 4))
         lines.append("")
         lines.append(f"PART {part} OF {len(groups)} \u00b7 {heading.upper()}")
@@ -363,7 +501,10 @@ def visual_reference_table() -> list[str]:
             lines.append("")
 
         slug = re.sub(r"[^a-z0-9]+", "_", heading.lower()).strip("_")
-        name = f"{2 + part}_{slug}.png"
+        # Named from 5: the gate's naming rule is "N_name.png, in tab order",
+        # and the reference parts are tabs 5-7 (maps 1-2, the composition bar 3,
+        # the time panel 4).
+        name = f"{4 + part}_{slug}.png"
         figure = plt.figure(figsize=(13.5, max(4.0, len(lines) * 0.135)))
         figure.text(0.005, 1.0, "\n".join(lines), family="monospace", fontsize=7.2,
                     va="top", ha="left")
@@ -376,6 +517,128 @@ def visual_reference_table() -> list[str]:
     return written
 
 
+# ------------------------------------------------------- the time panel (sheet 3)
+def visual_state_over_time() -> None:
+    """The QA gate for "A state over time": same measures, same colours, same state.
+
+    The sheet is a Measure Names / Measure Values panel -- one line per ticked
+    measure over the four harmonised rounds, one y-axis per measure. The gate draws
+    exactly what sheet 3 draws by default: `atlas_text.PANEL_DEFAULT_STATE` on the
+    six `atlas_text.PANEL_MEASURES` rows, in the sheet's six colours, from the same
+    `mpi_trends_panel.csv` the extract packages. A colour that drifts, a measure
+    whose caption changes in one place but not the other, or a default state the
+    panel does not contain, is caught here before Tableau is opened.
+
+    What it deliberately does NOT do: fit a trend. Line + markers is the whole
+    sentence; a slope through four points is the withdrawn sheet's defect
+    (docs/FIX_LEDGER.md W1), and the gate must not re-import it under matplotlib's
+    name either. Axes are unscaled per measure, as the sheet's per-measure axes are.
+    """
+    panel = read(PROCESSED / "mpi_trends_panel.csv")
+    assert len(panel) == 148, f"panel has {len(panel)} rows, expected 148"
+    years = sorted({int(r["survey_year"]) for r in panel})
+    assert years == [2013, 2016, 2018, 2021], f"unexpected rounds {years}"
+    per_state: dict[str, list[dict[str, str]]] = {}
+    for row in panel:
+        per_state.setdefault(row["state"], []).append(row)
+    assert len(per_state) == 37, f"panel covers {len(per_state)} states, expected 37"
+    assert all(len(rows) == 4 for rows in per_state.values()), (
+        "each state must have one row per round in the panel"
+    )
+    # The rank columns are what the marks show, so the gate recomputes every one
+    # of them from the panel's own value columns -- the same independent read
+    # stage 6 runs against the extract (04_merge.py's RANK_FIELDS, copied on
+    # purpose: a stage-4 edit that re-points a rank at the wrong source field is
+    # exactly what this wants to catch).
+    RANK_FIELDS: dict[str, str] = {
+        "rank_mpi": "mpi",
+        "rank_headcount": "headcount_ratio_pct",
+        "rank_intensity": "intensity_pct",
+        "rank_events": "events_per_100k",
+        "rank_deaths": "fatalities_per_100k",
+        "rank_temp": "temp_mean_c",
+    }
+    for year in years:
+        yr_rows = [r for r in panel if int(r["survey_year"]) == year]
+        for rank_field, value_field in RANK_FIELDS.items():
+            yr_rows.sort(key=lambda r: float(r[value_field]), reverse=True)
+            rank = 0
+            for i, row in enumerate(yr_rows):
+                if i and float(row[value_field]) != float(yr_rows[i - 1][value_field]):
+                    rank = i
+                assert int(row[rank_field]) == rank + 1, (
+                    f"{rank_field} in {row['state']} {year} is "
+                    f"{row[rank_field]}, recomputation says {rank + 1}"
+                )
+
+    name = atlas_text.PANEL_DEFAULT_STATE
+    assert name in per_state, f"default state {name!r} missing from the panel"
+    rows = sorted(per_state[name], key=lambda r: int(r["survey_year"]))
+    measures = atlas_text.PANEL_MEASURES
+    assert len(measures) == 6, f"expected the freeze's six measures, got {len(measures)}"
+    assert len({m[0] for m in measures}) == 6, "PANEL_MEASURES repeats a column"
+    assert len({m[2] for m in measures}) == 6, "PANEL_MEASURES repeats a colour"
+    assert len({m[1] for m in measures}) == 6, "PANEL_MEASURES repeats a caption"
+    assert set(m[0] for m in measures) == set(RANK_FIELDS), (
+        "the gate's whitelist and rank map must name the same columns"
+    )
+
+    fig, axes = plt.subplots(2, 3, figsize=(12.6, 7.0))
+    for ax, (field, caption, colour) in zip(axes.flat, measures):
+        values = [int(float(r[field])) for r in rows]
+        # One identical check to the one 06_build_twb.py runs on the extract: a
+        # blank measure cell cannot reach the workbook without failing here first.
+        for r, v in zip(rows, values):
+            assert 1 <= v <= 37, f"rank out of 1-37 in {field} for {name} {r['survey_year']}"
+        ax.plot(years, values, color=colour, linewidth=1.6, marker="o",
+                markersize=4.5, zorder=3)
+        ax.set_xticks(years)
+        ax.set_xticklabels([str(y) for y in years], fontsize=8)
+        ax.set_ylim(0, 38)  # ranks 1-37, same span on every pane
+        ax.grid(axis="y", color="#dddddd", linewidth=0.6, zorder=0)
+        ax.spines[["top", "right"]].set_visible(False)
+        wrapped = textwrap.fill(caption, 30)
+        ax.set_ylabel(wrapped, fontsize=8.6, color=INK)
+        # The point count is the sentence: four rounds, nothing fitted. The label
+        # is the R-prefixed rank the workbook's number format prints -- one
+        # formatting of the same integer on both surfaces.
+        for y, v in zip(years, values):
+            ax.annotate(f"R{v}", (y, v), textcoords="offset points",
+                        xytext=(0, 8), ha="center", fontsize=7.0, color="#555555",
+                        zorder=4)
+    titles_placeholder = None  # noqa: F841 (title drawn by fig.suptitle below)
+    fig.suptitle(f"Nigeria, {name}: six measures' ranks over the four survey rounds",
+                 fontsize=13, fontweight="700", x=0.07, y=0.985, ha="left")
+    fig.text(
+        0.065, 0.945,
+        textwrap.fill(
+            "Line + markers, not a fitted trend: each point is the state's rank of "
+            "the 37 states in that round, printed R-style like the workbook's own "
+            "labels. Direction: R1 = the measure's highest value (poorest MPI, "
+            "most conflict, hottest capital), so a rising R means the state moves "
+            "away from the extreme; equal values share the better rank. The raw "
+            "values stay in mpi_trends_panel.csv -- they left the marks by design. "
+            "Over the harmonised OPHI rounds (DHS/MICS), so within-panel comparison "
+            "holds. The workbook opens on this state from the dropdown; every "
+            "measure can be ticked off separately there, and the hover carries the "
+            "annualised change since the previous round with the star flag OPHI's "
+            "change test gives it. Conflict figures are UCDP GED attributed to the "
+            "state; temperature is measured at the state capital. Movement between "
+            "states is not readable on this sheet: every adjacent rank pair "
+            "overlaps at 95%.",
+            118,
+        ),
+        fontsize=8.6, color="#555555", va="top", ha="left", linespacing=1.4,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.83))
+    # Named 4_: the gate's naming rule is "N_name.png, in tab order", and this
+    # sheet is tab 4 since the composition bar took tab 3 (2026-10-22) -- the
+    # three reference parts therefore number 5-7.
+    fig.savefig(PREVIEW / "4_state_over_time.png", dpi=170)
+    plt.close(fig)
+    print("  4_state_over_time.png")
+
+
 def main() -> int:
     PREVIEW.mkdir(parents=True, exist_ok=True)
     rows = read(ATLAS)
@@ -385,8 +648,11 @@ def main() -> int:
     print("rendering previews:")
     visual_choropleth(rows)
     visual_spatial_clusters()
+    visual_dimension_bars(rows)
+    visual_state_over_time()
     # The kept set is what this run wrote, not a second list that can drift from it.
-    kept = {"1_where_poverty_sits.png", "2_where_poverty_clusters.png"}
+    kept = {"1_where_poverty_sits.png", "2_where_poverty_clusters.png",
+            "3_how_poverty_is_made_up.png", "4_state_over_time.png"}
     kept.update(visual_reference_table())
 
     # The directory holds this stage's output and nothing else, so a preview that a

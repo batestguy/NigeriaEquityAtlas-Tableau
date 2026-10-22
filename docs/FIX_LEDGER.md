@@ -542,3 +542,191 @@ one, and both are recorded where they belong in the code:
   so the parser accepts it and Tableau's only complaint is `D2E8DA72`, "the load was
   not able to complete successfully", with nothing naming the element. `validate()`
   now fails the build on a literal `\n`, `\t` or `\u` in the XML text.
+
+## H. The "A state over time" build - 2026-10-20
+
+Render findings from building the sixth view (design freeze in
+`docs/SHEET_TIME_PANEL.md`, grammar copied from real workbooks fetched via the
+`tableau` MCP server). These are the render-test lessons beyond what that doc
+records; every one was observed in Tableau Public 2026.2, not inferred.
+
+- **T1. A dimension on detail splits a Line mark into one-point lines**
+  **Severity DEFECT - fixed during build, status done.** The first render drew
+  six panes x four rounds of isolated dots with no connecting lines, because
+  `survey` and `mpi_change_significant` (string dimensions) were on `<lod>`
+  fields: per-round values differ (DHS -> MICS, blank -> **), so each mark was
+  its own line. Marked measures (`mpi_change_since_prev`,
+  `fatalities_per_100k_high`) cannot split a line, but there was no way to keep
+  the string annotations off the mark's identity at all - so the `<lod>` list
+  went entirely and the annotations moved into the customized tooltip. The fix
+  is verified in the render: all four rounds connect in all six panes.
+- **T2. Left-edge cards draw; right-edge cards do not**
+  **Severity DEFECT (open W-singleton class) - reproduced, status documented.**
+  The state dropdown (`mode='dropdown' param='[ds].[none:state:nk]'`) is copied
+  byte-equivalent from HRAnalytics and did not render on a right strip - the
+  first time the map colour legend's "declared but not drawn" defect (section B)
+  has been reproduced with a second card type, ruling out the colour-card
+  grammar specifically. The time panel's two interactive cards therefore
+  declare on the LEFT strip (above `<card type='marks' />`), where both render.
+  Whether the maps' colour legends can take the same left-strip treatment is
+  untested; it is the obvious next experiment for that open defect.
+- **T3. `<card type='title' />` is required for a worksheet title**
+  **Severity IMPROVEMENT - fixed during build, status done.** Without the title
+  strip on the top edge the sheet's title and frozen two-line subtitle never
+  render. Added (`strip size='31'`), and the subtitle draws in full.
+- **T4. Hyper-extract system fields leak into the Measure Names domain**
+  **Severity IMPROVEMENT (accepted wart) - status todo, documented.**
+  "Migrated Data (Count)" and "Latitude/Longitude (generated)" are added by
+  Tableau to every Hyper extract (the two map extracts carry them too) and
+  cannot be deleted. The union filter excludes them and they draw unchecked;
+  a determined reader can still tick "Count of Migrated Data" and get a
+  nonsense line. A Measure-Names allowlist via a Tableau set is the future
+  guard; not attempted in v1. One repro of the measure checklist widening after
+  a mark selection was observed mid-session; if it reproduces on the published
+  viz, drop the `param` filter cards and rely on the standard Filters shelf
+  card. Listed in `docs/PUBLISH.md` checks.
+
+## H2. The rank amendment - 2026-10-21
+
+The user amended the freeze: ranks replace the values on the marks, and the
+sheet carries **rank variables only** (full record in
+`docs/SHEET_TIME_PANEL.md`, section "Built, 2026-10-21"). The render-test
+findings beyond what that doc records:
+
+- **T5. A sheet-level `attr='number-format'` rule does not exist in the 2026.2
+  schema**
+  **Severity DEFECT (build-time) - fixed by finding the real serialisation,
+  status done.** Both field-scoped and mark-scoped
+  `<style-rule><format attr='number-format' .../></style-rule>` fail the whole
+  workbook load with the modal "Unable to complete action", error code
+  `D2E8DA72`, full text `Error(549,65): value 'number-format' not in
+  enumeration` (read via the modal's Copy Error Message button - the un-assumed
+  step that ended the bisect). The `<format>` attr enum, dumped from
+  `tabfileformat.dll`'s data tables, has ~140 values and does not contain
+  `number-format` at all, so no placement of the old form can work. The real
+  serialisation is **`default-format='"R"0'` on the `<column>` element** - found
+  in the same enum dump (`column` attributes include `decimals` and
+  `default-format`), confirmed by a load test, and shipped in
+  `col_block(number_format=...)`. With it the workbook loads and the integer
+  marks print bare integers (the pre-amendment "36.00"-style two-decimal dust
+  gone); the quoted-literal "R" prefix itself does not render, so the R-wording
+  stays in the caption/subtitle prose.
+- **T6. An integer measure declared `type='ordinal'` falls out of the Measure
+  Names domain**
+  **Severity DEFECT - fixed during build, status done.** With the rank columns
+  `datatype='integer'` and the datatype->type zip giving them `type='ordinal'`,
+  the union filter's `[sum:rank_X:qk]` members and the palette buckets did not
+  match the fields' domain keys. Symptom cluster, all from one load: the
+  Measure Names checklist showed the datasource's raw field names
+  (`events_per_100k`, `mpi`, ...) rather than the member captions, exactly one
+  arbitrary tick, the state filter slid to a random member ("Ekiti"), the
+  palette fell back to Tableau's default categoricals, and Tableau's generated
+  "Count of Migrated Data" drew as a drawn pane. The fix is one rule in
+  `col_block`: a measure is always `type='quantitative'` whatever its datatype.
+  Verified fixed: stored members bind (six ticked; "(All)" and "Count of
+  Migrated Data" unticked), the six assigned colours draw, Bauchi stays pinned.
+  The two first observations of the symptom pair (one capture looked
+  bound-but-captioned) were transient load states of the same broken key
+  resolution; the col_block fix made the load deterministic.
+- **T7. The Measure Names domain = the datasource's measures**
+  **Severity IMPROVEMENT - acted on, status done.** Everything the extract
+  declares as a measure is a candidate member of the domain, so hover fields
+  that were numeric measures (`mpi_change_since_prev`,
+  `fatalities_per_100k_high`) appeared in the measure checklist even though
+  they were never on a shelf. The amendment removes them as measures: stage 04
+  pre-formats the annotations into string columns (`mpi_change_label`,
+  `deaths_high_label`, TEXT in the extract), the tooltip prints the strings,
+  and the domain shows the six ranks and the system leaks, nothing else. The
+  red-list assert grew the same fields so the removal cannot silently revert.
+
+## P. The parameters probes - 2026-10-21
+
+Six packets against Tableau Public 2026.2 (tabpublic.exe, load-and-look),
+settling every open grammar question for the "How measures pair" sheet
+(`docs/SHEET_PAIRS.md`). Workbooks under `C:\Users\TOSHIBA\AppData\Local\Temp\opencode\packetA*.twbx`,
+builders `packet_builder.py` / `build_packetA3.py` / `build_packetA5.py` alongside.
+
+- **P1. Parameters are an inline pseudo-datasource, packed and proven**
+  There is no `<parameter>` element in the 2026.2 schema. The shipped shape is
+  `<datasource hasconnection='false' inline='true' name='Parameters'
+  version='18.1'>` whose `<column>` children carry `param-domain-type='list'`,
+  a `<calculation class='tableau' formula='"default"'>` child and a
+  `<members>` child (one `<member value='"..."' />` per menu entry). Packet A1:
+  added to the workbook-level `<datasources>` block, unused, loads clean.
+- **P2. The card renders even with the parameter unused**
+  `<card mode='compact' param='[Parameters].[Parameter 1]' type='parameter' />`
+  inside the window's left-edge `<strip>` draws the dropdown at load. Packet A2.
+- **P3. The table content model is exact: view, style, panes, rows, cols**
+  Packet A3's first load died with `D2E8DA72`: `detail` is not an encoding
+  element (the allowed set is
+  `(color|size|text|shape|wedge-size|lod|geometry|image|tooltip|path|level|edge|custom)`;
+  Detail-card state = `<lod>`), and `<cols>` must come **after** `<rows>` in a
+  `<table>`. Corrected once; the sheet then loads and draws.
+- **P4. The sheet-level deps block binds the parameter's current value**
+  Packet A4 first shipped the MPI default in the Parameters datasource only and
+  still computed H (status bar SUM = 4931.34). With the same default mirrored
+  into the worksheet's `<datasource-dependencies datasource='Parameters'>`
+  column (`value=` / formula), the payload switched to MPI and the status bar
+  read exactly 25.9903 = **sum of mpi over the 148 marks**. Deterministic
+  proof that `CASE [Parameters].[Parameter n] WHEN ... THEN [col] END`
+  calc columns resolve from the bound value. Rule for the builder: every
+  parameter column carries the same `value=` at both places.
+- **P5. The pane split is a paren-plus rows shelf**
+  `<rows>([ds].[none:poverty_group:nk] + [ds].[avg:pair_y:qk])</rows>` stacks
+  the two poverty-group panes, each with its own y scale, row headers rendered
+  ("Other 25", "Poorest 12"), 148 marks held by `<lod>` Detail on state +
+  survey_year. Packet A5, with the group stamped onto all 148 panel rows.
+- **P6. log1p as an extract column drives the payload**
+  Packet A6 defaulted X to the extracted `log1p_events` column
+  (log(1+events_per_100k), zeros = exactly 0). Payload resolved from the
+  extract column, zero-event states on the 0 gridline; no LOG() needed in the
+  CASE. Stage 04 will therefore ship `log1p_*` columns and the menu maps them.
+- **P7 (open finding). The map's colour legend rendered in these packets**
+  The "Where poverty sits" colour legend - declared in the shipped workbook and
+  documented as never drawing (see §B defect list) - **draws** in packets A5/A6,
+  whose only structural additions are the Parameters datasource, the pairs
+  datasource, the seventh worksheet and `Data/pairs_probe.hyper`. Cause not yet
+  isolated. To be checked on the first real build that carries the same
+  additions; if the legend draws there, the defect closes as an incidental fix
+  and §B is amended.
+- **P8 (unverified). Titles binding parameters**
+  The A5/A6 title run used
+  `<run><![CDATA[<[Parameters].[Parameter 1]>]]></run>` but the capture never
+  showed the title area, so whether worksheet titles render a parameter value
+  is unresolved. Verify at build time before finalising title text.
+
+- **D-051 (2026-10-22). Mark-label colour: the datalabel rule is the grammar**
+  The composition sheet asked for white segment numbers. Six packets, one
+  variable each: worksheet-level plain `element='label'` colours EVERY label
+  (row headers went white-on-white, render_dim2); field-scoped on Measure
+  Values inert at worksheet level (dim3) and pane level (dim4); pane-level
+  plain `element='label'` inert (dim5); emitting a style-rule outside the
+  pane's `<style>` block fails the whole open ("Unable to complete action").
+  Landed: pane-level `<style-rule element='datalabel'>` with
+  `color-mode='user'`, `color`, `font-weight='bold'`, copied byte-shape from
+  Try-UmphantStartGallagherPremOpeningWeekend.twbx, before the mark rule,
+  inside `<pane><style>`. Renders bold white on all three fills, headers
+  ink (render_dim6/7). Generator: `worksheet_xml(label_colour=...)`; scoped
+  to the composition sheet via generated XML check (1 occurrence).
+- **D-052 (2026-10-22). The composition sheet defaults to 17 of 37 bars**
+  User request: "show five states in poorest and 12 in other, give me the
+  option of adding more states". Default ticks ranks 1-5 and 13-24 of the
+  manual MPI order (five poorest, then the first twelve of the Other 25);
+  all 37 on a left-rail `state` checklist card — the time panel's proven
+  card shape with a multi-member `union user:op='manual'` categorical
+  filter (the Measure Names filter's own shape) on `state`. Manual bar
+  order survives the filter (render_dim7). Subtitle, QA gate (17 drawn,
+  full-37 asserts) and checklist ticks all describe the same default.
+- **D-053 (2026-10-22). The group divider: nested rows render the boundary**
+  User: "no extra button to add states, and a clear axis marker between poor
+  states and others". The button was there (packets proved it draws — byte-
+  identical window XML, review_tab copies verbatim) but it needed to be more
+  obvious, so the subtitle now names the control and the card renders `(All)`.
+  Marker: Rows now nest `poverty_group` above `state` (the pairs board's
+  paren-plus shelf shape, P5), plus a manual sort on the group so "Poorest 12"
+  precedes "Other 25" (a plain string-bucket dictionary, the proven sort
+  grammar). The sheet prints two blocks with a pane divider, MPI order inside
+  each; default ticks unchanged (render_dim8/9). Cosmetic leftovers recorded
+  in docs/SHEET_DIMENSIONS.md: header caption truncation and the "Poorest 12"
+  line-wrap (the header-width rule value='92' did not take here).
+  Full workbook still loads (title Nigeria-MPI-Equity-Atlas).

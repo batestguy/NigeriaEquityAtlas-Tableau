@@ -16,14 +16,18 @@ produces a validated `.twbx` with the data packaged inside it.
 Nigeria-MPI-Equity-Atlas.twb     the workbook
 Data/mpi_polygons.hyper          7,089 rows, the simplified ADM1 ring vertices the poverty map draws
 Data/spatial_polygons.hyper      7,089 rows, the same rings + the neighbourhood type, for the cluster map
+Data/mpi_trends_panel.hyper      148 rows (4 harmonised rounds x 37 states), the "A state over time" panel
+Data/pairs_board.hyper           148 rows, the pairs board's extract (docs/SHEET_PAIRS.md)
+Data/dimension_shares.hyper      37 rows, the three dimension shares per state, for the composition bar (docs/SHEET_DIMENSIONS.md)
 ```
 
-Two extracts and nothing else. The atlas, trends-panel, party-alignment and
-spatial-diagnostic extracts were packaged until 2026-10-18, when the sheets that drew
-them were withdrawn (`docs/FIX_LEDGER.md` W1); those four `.hyper` files are no longer
-built or packaged, and stale copies of them from an earlier build may still be sitting
-in `tableau/` — they are gitignored artefacts, so delete them if the folder still lists
-them.
+Five extracts and nothing else. The atlas, party-alignment and spatial-diagnostic
+extracts were packaged until 2026-10-18, when the sheets that drew them were withdrawn
+(`docs/FIX_LEDGER.md` W1); those `.hyper` files are no longer built or packaged, and
+stale copies of them from an earlier build may still be sitting in `tableau/` — they are
+gitignored artefacts, so delete them if the folder still lists them. The trends-panel
+extract came back on 2026-10-20 as `mpi_trends_panel.hyper` feeding the new sixth view
+(`docs/SHEET_TIME_PANEL.md`).
 
 The data ships as **Hyper extracts**, not CSV. Tableau Public refuses any workbook whose
 datasource is not an extract (*"Workbooks saved to Tableau Public must use extracts"*,
@@ -31,15 +35,21 @@ error `3C242D89`) and it does **not** convert a live file on save. Stage 6 write
 extracts itself with `tableauhyperapi` and validates the schema it wrote back against
 the declared columns before packaging.
 
-**Two worksheets and three dashboards.**
+Stage 6 writes each extract itself with `tableauhyperapi` and validates the schema it
+wrote back against the declared columns before packaging.
+
+**The tabs, in tab order** (view 3 added 2026-10-22, view 8 joined 2026-10-21):
 
 | Tab | Type (mark class) | What it carries |
 |---|---|---|
 | Where poverty sits | **filled map (*Polygon*)** | `AVG(lat)` on Rows, `AVG(lon)` on Columns (both `[Geographical]` roles, so the sheet stays a geographic map); `state` + `pcode` + `ring` on Detail; `point_order` on **Path**; `mpi_band` on Colour; `state` on Text. Datasource: `Nigeria MPI polygons`. Hover carries `mpi`, `mpi_se`, `mpi_ci_lo`, `mpi_ci_hi`, `headcount_ratio_pct`, `intensity_pct`, `mpi_poor_thousands`, `poverty_group`, `mpi_pct`, `mpi_ci_lo_pct`, `mpi_ci_hi_pct`, `gov_party` |
 | Where poverty clusters | **filled map (*Polygon*)** | the same shelves, from `spatial_polygons.csv`: `spatial_group` on Colour, `mpi_pct` + `spatial_lag_mpi_pct` + `neighbours` on Detail for the hover. Datasource: `Spatial polygons`. **Descriptive, not a significance map** — one state survives the correction, so a significance map would be one state; the count is in the hover |
+| How poverty is made up | **stacked bar (*Bar*)**, one per state | the three dimension shares on Measure Names / Measure Values from `dimension_shares.hyper`: `state` on Rows, the generated field on Columns, Colour = Measure Names, the three-member union filter, bars ordered by a **manual sort dictionary** hand-computed from the atlas MPI (the MPI value itself is NOT in the extract). **Default view (2026-10-22, the user's decision): the five poorest states and the first twelve of the Other 25 - 17 bars - with all 37 readable on the interactive left-rail `state` checklist card (`(All)` adds everything in one tick; 17 pre-ticked; the manual MPI order survives the filter). Rows nest `poverty_group` above `state`, so the sheet prints a **"Poorest 12" block and an "Other 25" block with a pane divider** between them (`docs/SHEET_DIMENSIONS.md`).** The segment value labels are **bold white** via a pane-level `<style-rule element='datalabel'>` (`color-mode='user'`), the Label card's custom colour, so the numbers read on the dark green/orange/blue fills. Hover: state, `mpi_label`, the segment's area name, `dim_hover` (the full split, pre-formatted) + the caveat. Datasource: `Poverty composition` (`docs/SHEET_DIMENSIONS.md`) |
+| A state over time | **small-multiple lines (*Line*)** | the Measure Names / Measure Values panel from `mpi_trends_panel.hyper`: one pane per monitored measure × four rounds, Bauchi default via the `state` filter, the six-measure whitelist via the Measure Names union filter, both exposed as interactive cards on the **left** rail (right-edge cards do not draw in packets built by stage 6). No trend is fitted anywhere; the hover annotates `survey`, the annualised `mpi_change_since_prev`, the `mpi_change_significant` stars and `fatalities_per_100k_high` (`docs/SHEET_TIME_PANEL.md`) |
 | What the words mean | **text zones** (part 1 of 3) | the reference table, 24 rows: the word, its formula or weight, what it means, how it was made |
 | The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
 | How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
+| How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; looking only — no computed claim, no fitted trend (`docs/SHEET_PAIRS.md`) |
 
 The three reference tabs are **one table paginated on its own groups**, not three
 documents. It was two prose dashboards (`What the words mean`, `How we did it`) until it
@@ -47,10 +57,11 @@ was merged into a single three-column table on 2026-10-18, and then split becaus
 merged version measured **2000 x 8720 px** — thirteen screens on the 687 px window it
 was reviewed in (`docs/FIX_LEDGER.md` W2). Each part repeats the intro and the column
 headers on purpose, so a reader who arrives on part 3 from the tab bar is told what the
-columns are. It is a layout of text zones, not a datasource: a real multi-column Tableau
-text table needs the Measure Names / Measure Values pair *and* its filter, which this
-project could not make render from hand-written XML — the note is above
-`table_dashboards` in stage 6.
+columns are. It is a layout of text zones by design: a datasource-backed text table of
+paragraph-length cells would paginate itself around the reader, not by the groups the
+table already had. (The Measure Names / Measure Values pair itself *does* render from
+hand-written XML — the time panel is built on it since 2026-10-20 — the earlier "could
+not make it render" claim applied to a filtered text table and is retired.)
 
 **Verified by opening the workbook in Tableau Public 2026.2 and looking at it:** the
 poverty map and the five spec sheets on 2026-10-06; the party sheet and the reader
@@ -60,11 +71,23 @@ dashboards on 2026-10-09/10; the cluster map and all three reference parts on
 `Where poverty sits` / `Where poverty clusters` / `What the words mean` /
 `The list of basic needs` / `How we did it`, no error dialog, the poverty map drawing the
 red ramp under white state strokes, and the cluster map drawing grey north / deep teal
-south / purple Nasarawa with its colour card. In each case what was checked is the top of
+south / purple Nasarawa with its colour card. On **2026-10-20** the shipped workbook
+opened again with the sixth view in place: tab bar
+`Where poverty sits` / `Where poverty clusters` / `A state over time` / `What the words
+mean` / `The list of basic needs` / `How we did it`, the time sheet drawing "24 marks,
+6 rows by 4 columns" (six whitelist measures × four rounds, lines connecting, labels on
+marks), the subtitle in full, the state dropdown pinned to `Bauchi`, and the Measure
+Names checklist showing the six whitelist measures ticked with
+`fatalities_per_100k_high` and the generated system fields unticked. In each case what
+was checked is the top of
 the tab at a 1295x687 window — the reference parts have not been scrolled to the end on
 screen, and neither map has been panned. The third column of the reference table, which
 the window is too narrow to show, was read end to end in a review copy that keeps that
-column and drops the other two.
+column and drops the other two. The time panel was additionally reviewed as a
+**single-worksheet packet** (`%TEMP%\opencode\review_time_only.twbx`, built by
+`%TEMP%\opencode\make_time_only.py` — one worksheet, no dashboards, one window), which
+removes the tab-bar ambiguity entirely and is how the render findings in
+`docs/FIX_LEDGER.md` §H were observed.
 
 **Tab order is the `<windows>` order**: `Where poverty sits`, then `Where poverty
 clusters`, then the three reference parts. **Which tab opens is not dependable, though:**
@@ -95,8 +118,12 @@ Public. See `docs/HANDOFF.md` §3b.
 1. Sign in to your Tableau Public account.
 2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. **It has been opened successfully on
    this machine** — it loads with no error dialog and renders (see `HANDOFF.md` §3).
+   Re-verified 2026-10-22 on the current build: title reads `Nigeria-MPI-Equity-Atlas`,
+   and the composition sheet's default view, bold-white segment labels and interactive
+   `state` checklist all draw (packets `render_dim6/7.png`, full-workbook
+   `render_full_dim.png`).
 3. **File > Save to Tableau Public.**
-4. Wait for the upload and the render, then open the live URL and confirm all five tabs
+4. Wait for the upload and the render, then open the live URL and confirm all eight tabs
    are present and that `Where poverty sits` draws the filled choropleth, not a scatter
    of points. Fetch it with the `tableau` MCP `get_workbook_image` rather than trusting
    the upload dialog.
@@ -299,11 +326,51 @@ workbook.
   legend is broken — the earlier conclusion may have been drawn from a capture that
   clipped the right edge. Not resolved here; both sheets ship the same declaration.
 
-- **Alt text is not set on any of the five tabs.** Tableau auto-generates a description;
+- **Alt text is not set on any of the eight tabs.** Tableau auto-generates a description;
   edit it per view, then Save. Keep it descriptive and objective, not interpretive: for
   `Where poverty sits` that means naming the measure, the five bands and the period, not
   asserting which state is worst — no single state holds the highest score defensibly
-  (`docs/CLAIMS.md`).
+  (`docs/CLAIMS.md`). For `A state over time`, name the panel (one small chart per
+  monitored measure, four harmonised survey rounds, one state at a time) — the wording
+  is drafted in `docs/SHEET_TIME_PANEL.md`.
+- **The time panel's interactions are only open-state-verified.** Captures cannot press
+  a mouse button or read a tooltip (tooltips are separate popup windows a PrintWindow
+  capture never sees), so two checks remain for a human at publish time, on the
+  published viz:
+  1. **Hover a point** and confirm the annotations read out: the survey round
+     (e.g. `DHS 2013`), the annualised `Mean annual change since the previous round`,
+     the `Movement the OPHI change test calls significant` stars, and the
+     `Conflict deaths ... (upper estimate)` number. If a field shows the
+     "not in the view" placeholder instead of a value, report it — the customized
+     tooltip is the one construct on the sheet without a copied precedent.
+  2. **Tick measures off in the Measure Names checklist** — untick MPI, tick Mean
+     temp; the pane count should follow the ticks. One session observed the checklist
+     widen back to nine rows after a mark selection (`docs/FIX_LEDGER.md` T4); if that
+     reproduces on the publish, remove the two `param` filter cards
+     (checklist + state dropdown) and rely on the standard Filters shelf card, which
+     exposes the same two filters and demonstrably works.
+
+- **The composition sheet's interactions are likewise only open-state-verified**
+  (2026-10-22 packet `render_dim7.png`): the renders show the 17-bar default, the bold
+  white segment numbers and the left-rail `state` checklist with the intended ticks, but
+  a human must confirm:
+  1. **Hover a segment** and confirm the tooltip reads out: the state, the MPI label,
+      the segment's area name (`Area being shown: ...`), the full `dim_hover` split and
+      the caveat line. Same placeholder caveat as the time panel above.
+  2. **Tick a new state on the `state` checklist** (e.g. Rivers) and confirm its bar
+      appears **in MPI position** in its group block (the manual sort survives the
+      filter), then untick back to the 17-bar default; `(All)` should add all 37 at
+      once. If the group header column shows `Poorest` wrapping, drag its splitter
+      wider (cosmetic; an XML width rule was tried and did not take).
+  3. **Eye-check the thin-segment labels**: slivers under ~5% wide can print a number
+      wider than the segment; Tableau culls only when `mark-labels-cull` is on, which
+      this sheet does not set (the shared pane template cannot gain it without losing
+      the time panel's R-labels). If a collision shows on a wide window, switching this
+      sheet's Label card to "never overlap" at publish time is a safe GUI fix.
+  4. **The colour card** on this sheet's right edge is declared exactly like the
+      cluster map's (the one proven to draw); if the legend fails to show on this
+      sheet too, it joins the `Where poverty sits` defect family — the fix is one
+      click of **Analysis → Legends → Colour Legend**, then Save.
 
 ## If something looks wrong
 
@@ -316,7 +383,7 @@ Most likely, in order:
 - **`Where poverty sits` is empty.** `mpi_polygons.hyper` did not make it into the
   package, or `ring`/`point_order` lost their ordinal type — they must be declared
   `datatype='integer'` *dimensions*. Re-run `scripts/04_merge.py` then
-  `scripts/06_build_twb.py` and confirm the package lists two `.hyper` files.
+  `scripts/06_build_twb.py` and confirm the package lists three `.hyper` files.
 - **"must use extracts" (3C242D89).** A `.twbx` built by an older revision of stage 6
   still packages CSV. Re-run `scripts/06_build_twb.py` and confirm the package
   contents list `.hyper` files.

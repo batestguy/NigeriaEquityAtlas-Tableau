@@ -1,10 +1,72 @@
-# Handoff — sessions 2026-10-20 (explorer tools, next-sheet freeze), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
+# Handoff - sessions 2026-10-22 (composition sheet + white labels + default view), 2026-10-20 (explorer tools, next sheet frozen, then built), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
 
 **Start here.** Pipeline is **9 stages**, all green (`.\scripts\run_all.ps1`, exit 0,
-~160 s). Everything below is committed and pushed. The atlas is still **not
-published** — that remains the one manual step (your Tableau Public login).
+~160 s). The atlas is still **not published** — that remains the one manual
+step (your Tableau Public login). Not committed at handoff: **both** the
+pairs-board tab and everything the 2026-10-22 sections below describe sit as
+working-tree changes stacked on `2f1b7bb`.
 
-## 2026-10-20 (fifth session) — offline analysis tools, and the next sheet frozen
+## 2026-10-22 (seventh session) - the composition sheet, white numbers, and a default view
+
+The session's three landed results, all verified by render packets in Tableau
+Public 2026.2 (evidence `C:\Users\TOSHIBA\AppData\Local\Temp\opencode\render_dim*.png`,
+`render_full_dim.png`):
+
+- **The frozen composition sheet is built** (tab 3): `dimension_shares.hyper`
+  (3 contrib measures + 4 string dims, MPI deliberately absent), manual bar
+  order, Okabe-Ito colours, hover strings from stage 4, gate
+  `3_how_poverty_is_made_up.png`. `docs/SHEET_DIMENSIONS.md` carries the
+  freeze and the Built record.
+- **The segment numbers are bold white** — the label-colour grammar (after a
+  six-packet hunt) is a pane-level `<style-rule element='datalabel'>`
+  (`color-mode='user'`), the Try-Umphant workbook's byte shape;
+  `FIX_LEDGER.md` D-051 records the five shapes that failed out.
+- **The sheet defaults to 17 of 37 bars** (the user's request: five poorest +
+  the first twelve of the Other 25), with all 37 on an interactive left-rail
+  `state` checklist card (`FIX_LEDGER.md` D-052). Subtitle and QA gate
+  describe the same default.
+
+One warning for the next session: the whole of the above and the pairs-board
+work before it are **uncommitted**, stacked in one tree — separate or commit
+consciously.
+
+## 2026-10-20 (sixth session) - the frozen sheet is built
+
+The instruction: build the sixth view exactly as `docs/SHEET_TIME_PANEL.md` freezes it.
+Done, end to end, in one commit (this session's):
+
+- **`scripts/atlas_text.py`** gained `PANEL_MEASURES` (the six-measure whitelist: MPI,
+  headcount, intensity, conflict events, conflict deaths, capital temperature — each
+  with its caption and its hex colour) and `PANEL_DEFAULT_STATE = "Bauchi"`. The
+  captions are short on purpose: they are the row headers, the checklist items, the
+  colour legend and the tooltip fields, and long captions truncated hard under
+  Entire View.
+- **`scripts/06_build_twb.py`** writes the third extract (`Data/mpi_trends_panel.hyper`,
+  148 rows) whose schema is **asserted** against the whitelist and against the red list
+  — the red-list fields (`conflict_exposure_index`, the two anomalies) and the raw
+  event/fatality counts are not in the extract at all; `fatalities_per_100k_high` is
+  hover-only. The sheet is the Measure-Names small-multiple panel; the two interactive
+  cards (Measure Names checklist, state dropdown) declare on the **left** rail because
+  right-edge cards do not draw in packets this script builds (`docs/FIX_LEDGER.md` T2).
+  The annotations ride a **customized tooltip** because a string dimension on `<lod>`
+  splits a Line mark into one-point lines (T1 — found by the render, fixed by moving
+  the fields off the mark).
+- **`scripts/05_preview.py`** draws the sixth QA gate, `docs/preview/
+  3_state_over_time.png` (the naming rule is "N, in tab order" — the reference parts
+  renumbered to 4/5/6).
+- **Rendered in Tableau Public 2026.2**, twice: as a single-worksheet packet (no tab
+  bar to fight) and as the **shipped full workbook** — six tabs in order, "24 marks,
+  6 rows by 4 columns", all six whitelist measures ticked with the hover-only and
+  system fields unticked, `Bauchi` in the dropdown, subtitle rendering in full.
+  Two checks remain interactive-only (hover annotations; checklist ticking) and are
+  listed in `docs/PUBLISH.md`. `docs/FIX_LEDGER.md` §H records the render findings.
+- Grammar rule update for the record: the Measure Names / Measure Values pair **is**
+  buildable from hand-authored XML (rows `([ds].[:Measure Names] +
+  [ds].[Multiple Values])`, bare `[:Measure Names]` on colour, union filter keyed by
+  quoted field refs), copied from `ClimatechangeprofileNigeria` — the PUBLISH note
+  saying the pair could not be made to render is retired.
+
+## 2026-10-20 (fifth session) - offline analysis tools, and the next sheet frozen
 
 The instruction for this pass: build offline HTML tools to inspect every pipeline
 output, hypothesise honestly, and decide what earns a place in the workbook.

@@ -447,6 +447,152 @@ SPATIAL_DEEP_TYPES: list[str] = [
     "Better off than average, neighbours better off",
 ]
 
+# --- The time panel: watch one state's measures across the four rounds ---------
+# docs/SHEET_TIME_PANEL.md is the design freeze (amended 2026-10-21: the marks draw
+# RANKS, not values). The list is a whitelist, one row per measure the sheet
+# (workbook) and the pre-Tableau gate (stage 5) both draw: (column, caption,
+# colour). The caption is what the workbook's field is called everywhere -- row
+# header, colour legend entry, checklist item and tooltip field -- so each one
+# names its measure.
+#
+# The columns are the panel CSV's rank fields (04_merge.py RANK_FIELDS): the
+# state's position on that measure among the 37 states, in that round, with
+# R1 = the measure's highest value (poorest MPI, most conflict, hottest capital)
+# and ties sharing the better rank. The raw values stay in the CSV; the sheet's
+# visible number is the rank. That is the rank-persistence finding made visible
+# for one state -- and it is NOT an ordering claim: OPHI's published SEs leave
+# every adjacent pair overlapping at 95%, which is printed on the sheet itself
+# (PANEL_SUBTITLE below), so the sheet carries its own limit.
+#
+# Deliberately absent, per the freeze: `conflict_exposure_index` (its 0 and 100 are
+# re-anchored within each survey round, so a line over time of it charts the
+# re-anchoring, not violence), `temp_anomaly_c` and `precip_anomaly_pct` (four
+# rounds of weather at one city is not a climate signal), and the raw `events` /
+# `fatalities` counts (scale-dominated by population; the per-100k pair carries the
+# defensible form). 06_build_twb.py refuses a schema that contains them -- the
+# exclusion is asserted, not remembered. Since 2026-10-21 that refusal extends to
+# every raw value column: the extract carries the ranks and the STRING hover
+# annotations only (mpi_change_label / deaths_high_label, pre-formatted by
+# 04_merge.py), so the Measure Names domain is ranks alone.
+#
+# The colours are six unrelated hues -- different measures, not an ordered scale;
+# unlike MPI_BANDS the order of this list carries no meaning. The word "surveys"
+# in captions: the four rounds are DHS and MICS harmonised by OPHI (Data Table 6,
+# MN 63), so within-panel comparison holds. "1 = highest" sits in every header
+# because a bare "R6" means nothing without the direction; the subtitle carries
+# the worked examples of what "highest" is per measure.
+PANEL_MEASURES: list[tuple[str, str, str]] = [
+    ("rank_mpi", "MPI \u00b7 rank (1 = highest)", "#d62728"),
+    ("rank_headcount", "H % poor \u00b7 rank (1 = highest)", "#1f77b4"),
+    ("rank_intensity", "Intensity A \u00b7 rank (1 = highest)", "#ff7f0e"),
+    ("rank_events", "Conflict events/100k \u00b7 rank (1 = highest)", "#2ca02c"),
+    ("rank_deaths", "Conflict deaths/100k \u00b7 rank (1 = highest)", "#9467bd"),
+    ("rank_temp", "Capital temp \u00b7 rank (1 = highest)", "#17becf"),
+]
+# The key sentence on the sheet: ranks replaced the values on the marks, so the
+# direction has to be on the canvas. Wording stays inside docs/CLAIMS.md's rules:
+# it describes what the label IS (position on the published point estimate) and
+# what it is NOT (a separation claim between states).
+PANEL_SUBTITLE = (
+    "labels are the state's rank of 37 in that round: 1 = the measure's highest "
+    "value (poorest MPI, most conflict, hottest capital), higher = away from the "
+    "extreme \u00b7 stars flag OPHI-significant movement \u00b7 not a trend; ranks "
+    "don't separate at 95%"
+)
+# The state the sheet opens on: the hover example everywhere else in the atlas, so
+# the sheet never loads blank. Asserted to exist in the panel before the workbook
+# is built (stage 6) and before the gate draws (stage 5).
+PANEL_DEFAULT_STATE = "Bauchi"
+
+# ---------------------------------------------------------------------------
+# "How measures pair" -- the bivariate exploration board (docs/SHEET_PAIRS.md,
+# frozen 2026-10-21 before build; the two selectors are Tableau parameters whose
+# grammar was proven in packets A1-A6, docs/FIX_LEDGER.md section P).
+#
+# This sheet exists to LOOK, not to claim. It draws any two continuous measures
+# as one point per state-round, split into the two 2021 poverty-group panes.
+# What it must never do is compute: no fit, no per-pane slope, no correlation,
+# no size channel; the panes cut on the outcome itself, so anything computed
+# within them is range-restricted arithmetic, not evidence. The subtitle and the
+# hover caveat both say it; the guardlist is in the freeze doc ("may not say").
+PAIRS_SUBTITLE = (
+    "choose any two measures; points, not a test \u00b7 panes cut on the 2021 "
+    "poorest-12 split, so pane slopes are range-restricted \u00b7 logged axes are "
+    "log(1+rate) and keep zero-event states on the zero line"
+)
+# Rides the customized hover, after the two values.
+PAIRS_TOOLTIP_CAVEAT = (
+    "Points, not a test. The panes cut on the 2021 MPI poorest-12 split, so "
+    "slopes read from them are range-restricted and no test is offered. Logged "
+    "axes are log(1+rate): a state with zero events sits exactly on the zero "
+    "line, not off the chart. Rank-pair intervals overlap at 95%, so treat "
+    "positions side-by-side, not as orderings."
+)
+
+# ---------------------------------------------------------------------------
+# "How poverty is made up" -- the three-area decomposition sheet
+# (docs/SHEET_DIMENSIONS.md, frozen 2026-10-22 before build).
+#
+# The one claim this sheet makes is the atlas's strongest: the dimension
+# CONTRAST, never a per-state ranking. "Lagos is 70% health-driven; Bauchi 15%"
+# is a 55-point spread that survives sampling noise (docs/CLAIMS.md section 2,
+# "Dimension contrast"), and the 17.6-point education-share gap between the
+# poorest 12 and the rest (p = 1e-5) is the headline finding the atlas leads
+# with. What the sheet must never do is name a state as worst: the bars are
+# ordered by each state's MPI, but all 36 adjacent pairs of those MPI values
+# overlap at 95%, so the subtitle and the hover both say read the partition,
+# not the order. (The orderings the atlas withdrew in docs/FIX_LEDGER.md A1
+# were naming claims; the same withdrawal is why the map bands instead of
+# ranking, and the wording rule is identical here.)
+#
+# The shares are an IDENTITY, not an inference: MPI decomposes exactly into the
+# three dimension contributions, so every bar sums to 100 (stage 4 asserts it,
+# stage 6 re-asserts it against the same rows). No standard error is published
+# for the shares and none is needed for an identity -- the CAUTION is that a
+# share of a tiny MPI is a share of very little (Abia's 57.7% health describes
+# 0.002 of index weight), which is what the hover's MPI line is for.
+#
+# The colours are three colourblind-safe hues (Okabe-Ito blue / orange / green),
+# deliberately absent from the map palettes -- the maps' ramps mean geography
+# and poverty level, this palette means the three areas and nothing else. It is
+# read by this sheet's workbook palette and by the stage-5 QA gate from this one
+# list, the single-source rule MPI_BANDS and SPATIAL_QUADRANTS already follow.
+# The list order was the freeze's stacking intent, Education first from the
+# axis -- what Tableau actually does with it is recorded in
+# docs/SHEET_DIMENSIONS.md ("Built"): 2026.2 stacks the LAST listed measure
+# nearest the axis, so the first render showed Living standards, Health,
+# Education left-to-right. The gate stacks the same way (reversed off this
+# list); the colours bind by measure key, so no surface can disagree about
+# which colour is which area.
+DIMENSIONS_TITLE = "How poverty is made up"
+DIMENSIONS_SUBTITLE = (
+    "each bar: one state's MPI split across OPHI's three areas \u00b7 the split "
+    "is exact, and the bar always totals 100% \u00b7 shown by default: the five "
+    "poorest states and the first twelve of the rest \u00b7 add any other state "
+    "from the state checklist card on the left rail \u00b7 bars listed in MPI "
+    "order, which is not a ranking \u00b7 health is child mortality only "
+    "(nutrition is excluded for every state), so it carries the full "
+    "one-third weight"
+)
+DIMENSION_SHARES: list[tuple[str, str, str]] = [
+    ("contrib_education_pct", "Education", "#0072B2"),
+    ("contrib_health_pct", "Health", "#E69F00"),
+    ("contrib_living_standards_pct", "Living standards", "#009E73"),
+]
+# The hover line and the italic caveat, single-sourced like every other surface.
+DIMENSION_HOVER_PREFIX = "of the state's MPI: "
+# The poverty-group labels: what stage 4 stamps into `poverty_group` (rank
+# i <= 12 → "Poorest 12", else "Other 25"). Sourced here so the composition
+# sheet's header labels and its manual sort dictionary cannot drift from the
+# data values.
+POVERTY_GROUP_TOP = "Poorest 12"
+POVERTY_GROUP_REST = "Other 25"
+
+DIMENSIONS_CAVEAT = (
+    "Read the split, not the bar order. The bars follow each state's MPI, but "
+    "neighbouring states' MPI intervals overlap at 95%, so the order is the "
+    "point estimate's, not a finding."
+)
 METHOD_INTRO = (
     "In plain terms: where the numbers come from, how they are put together, how sure "
     "we can be, and what this atlas cannot tell you."

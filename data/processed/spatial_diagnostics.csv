@@ -1,38 +1,38 @@
 pcode,state,lat,mpi,mpi_pct,neighbours,spatial_lag_mpi,spatial_lag_mpi_pct,spatial_quadrant,spatial_group,lisa_i,lisa_z,lisa_p,lisa_p_bonferroni,lisa_p_by,run_date
-NG-AB,Abia,5.5249,0.0419,4.19,7,0.0355,3.55,LL,"Better off than average, neighbours better off",0.738245,2.620376,0.00878328,0.324981,0.193746,2026-10-18
-NG-AD,Adamawa,9.2084,0.182,18.2,3,0.298967,29.9,HH,"Poorer than average, neighbours poorer too",0.130898,1.681209,0.0927223,1,0.686404,2026-10-18
-NG-AK,Akwa Ibom,5.0513,0.0446,4.46,3,0.0515,5.15,LL,"Better off than average, neighbours better off",0.630564,1.408752,0.158909,1,0.851853,2026-10-18
-NG-AN,Anambra,6.2127,0.0089,0.89,7,0.039371,3.94,LL,"Better off than average, neighbours better off",0.911973,2.576857,0.00997031,0.368901,0.193746,2026-10-18
-NG-BA,Bauchi,10.3103,0.4411,44.11,7,0.285214,28.52,HH,"Poorer than average, neighbours poorer too",1.660484,2.756097,0.00584956,0.216434,0.193746,2026-10-18
-NG-BE,Benue,7.7337,0.1156,11.56,6,0.110733,11.07,LL,"Better off than average, neighbours better off",0.116241,0.959979,0.337066,1,1,2026-10-18
-NG-BO,Borno,11.8469,0.2922,29.22,3,0.286433,28.64,HH,"Poorer than average, neighbours poorer too",0.781565,1.582886,0.113447,1,0.801654,2026-10-18
-NG-BY,Bayelsa,4.9268,0.0644,6.44,2,0.0429,4.29,LL,"Better off than average, neighbours better off",0.565153,1.209692,0.226397,1,1,2026-10-18
-NG-CR,Cross River,4.9589,0.0775,7.75,4,0.05905,5.91,LL,"Better off than average, neighbours better off",0.423227,1.522328,0.127927,1,0.80674,2026-10-18
-NG-DE,Delta,6.1982,0.0507,5.07,5,0.04158,4.16,LL,"Better off than average, neighbours better off",0.651426,2.034995,0.0418514,1,0.421816,2026-10-18
-NG-EB,Ebonyi,6.3248,0.0341,3.41,4,0.06625,6.62,LL,"Better off than average, neighbours better off",0.595355,1.444947,0.148473,1,0.824335,2026-10-18
-NG-ED,Edo,6.3381,0.0358,3.58,4,0.046775,4.68,LL,"Better off than average, neighbours better off",0.706659,1.726463,0.0842642,1,0.680559,2026-10-18
-NG-EK,Ekiti,7.6233,0.0532,5.32,4,0.0638,6.38,LL,"Better off than average, neighbours better off",0.519537,1.468245,0.142038,1,0.824335,2026-10-18
-NG-EN,Enugu,6.4413,0.03,3,5,0.05286,5.29,LL,"Better off than average, neighbours better off",0.700124,1.865398,0.0621256,1,0.568116,2026-10-18
-NG-FC,FCT,9.0579,0.0414,4.14,4,0.1597,15.97,LL,"Better off than average, neighbours better off",0.014782,0.085301,0.932022,1,1,2026-10-18
-NG-GO,Gombe,10.2897,0.3345,33.45,5,0.30566,30.57,HH,"Poorer than average, neighbours poorer too",1.196284,2.466715,0.0136359,0.504528,0.211982,2026-10-18
-NG-IM,Imo,5.4836,0.0183,1.83,3,0.028633,2.86,LL,"Better off than average, neighbours better off",0.930886,1.708439,0.0875549,1,0.680559,2026-10-18
-NG-JI,Jigawa,11.7562,0.4377,43.77,4,0.341675,34.17,HH,"Poorer than average, neighbours poorer too",2.393237,2.83447,0.00459018,0.169837,0.193746,2026-10-18
-NG-KD,Kaduna,10.5264,0.1671,16.71,8,0.257375,25.74,HH,"Poorer than average, neighbours poorer too",0.022447,2.068037,0.0386365,1,0.421816,2026-10-18
-NG-KE,Kebbi,12.4539,0.4373,43.73,3,0.3492,34.92,HH,"Poorer than average, neighbours poorer too",2.489975,2.513905,0.0119402,0.441789,0.206246,2026-10-18
-NG-KN,Kano,12.0001,0.2497,24.97,4,0.34475,34.48,HH,"Poorer than average, neighbours poorer too",0.772965,2.668888,0.00761028,0.28158,0.193746,2026-10-18
-NG-KO,Kogi,7.7969,0.0638,6.38,10,0.08527,8.53,LL,"Better off than average, neighbours better off",0.366717,2.019944,0.0433892,1,0.421816,2026-10-18
-NG-KT,Katsina,12.9908,0.3331,33.31,4,0.31145,31.14,HH,"Poorer than average, neighbours poorer too",1.234461,2.255051,0.0241301,0.892814,0.312603,2026-10-18
-NG-KW,Kwara,8.4966,0.0962,9.62,5,0.0897,8.97,LL,"Better off than average, neighbours better off",0.231841,1.216173,0.223919,1,1,2026-10-18
-NG-LA,Lagos,6.5965,0.0044,0.44,1,0.0918,9.18,LL,"Better off than average, neighbours better off",0.538132,0.522275,0.601479,1,1,2026-10-18
-NG-NA,Nasarawa,8.4939,0.1888,18.88,6,0.1421,14.21,HL,"Poorer than average, neighbours better off",-0.025893,-0.352243,0.724656,1,1,2026-10-18
-NG-NI,Niger,9.6152,0.2191,21.91,6,0.199517,19.95,HH,"Poorer than average, neighbours poorer too",0.102674,0.707357,0.479345,1,1,2026-10-18
-NG-OG,Ogun,7.1557,0.0918,9.18,4,0.045125,4.51,LL,"Better off than average, neighbours better off",0.399275,1.714891,0.0863652,1,0.680559,2026-10-18
-NG-ON,Ondo,7.2526,0.0637,6.37,6,0.054467,5.45,LL,"Better off than average, neighbours better off",0.514023,2.019707,0.0434138,1,0.421816,2026-10-18
-NG-OS,Osun,7.771,0.0315,3.15,5,0.07716,7.72,LL,"Better off than average, neighbours better off",0.538387,1.463312,0.143382,1,0.824335,2026-10-18
-NG-OY,Oyo,7.3776,0.0809,8.09,3,0.073167,7.32,LL,"Better off than average, neighbours better off",0.350661,1.122989,0.261442,1,1,2026-10-18
-NG-PL,Plateau,9.9285,0.1945,19.45,4,0.2668,26.68,HH,"Poorer than average, neighbours poorer too",0.16339,1.515146,0.129735,1,0.80674,2026-10-18
-NG-RI,Rivers,4.7774,0.0351,3.51,6,0.038133,3.81,LL,"Better off than average, neighbours better off",0.763758,2.3431,0.0191243,0.707598,0.270276,2026-10-18
-NG-SO,Sokoto,13.0627,0.4372,43.72,2,0.4143,41.43,HH,"Poorer than average, neighbours poorer too",3.355711,2.698483,0.00696564,0.257729,0.193746,2026-10-18
-NG-TA,Taraba,8.8937,0.2702,27.02,6,0.24275,24.27,HH,"Poorer than average, neighbours poorer too",0.420923,1.528681,0.126343,1,0.80674,2026-10-18
-NG-YO,Yobe,11.747,0.3428,34.28,4,0.376375,37.64,HH,"Poorer than average, neighbours poorer too",1.872125,3.217581,0.00129276,0.0478323,0.193746,2026-10-18
-NG-ZA,Zamfara,12.1702,0.3913,39.13,5,0.31876,31.88,HH,"Poorer than average, neighbours poorer too",1.735993,2.755337,0.00586316,0.216937,0.193746,2026-10-18
+NG-AB,Abia,5.5249,0.0419,4.19,7,0.0355,3.55,LL,"Better off than average, neighbours better off",0.738245,2.620376,0.00878328,0.324981,0.193746,2026-10-22
+NG-AD,Adamawa,9.2084,0.182,18.2,3,0.298967,29.9,HH,"Poorer than average, neighbours poorer too",0.130898,1.681209,0.0927223,1,0.686404,2026-10-22
+NG-AK,Akwa Ibom,5.0513,0.0446,4.46,3,0.0515,5.15,LL,"Better off than average, neighbours better off",0.630564,1.408752,0.158909,1,0.851853,2026-10-22
+NG-AN,Anambra,6.2127,0.0089,0.89,7,0.039371,3.94,LL,"Better off than average, neighbours better off",0.911973,2.576857,0.00997031,0.368901,0.193746,2026-10-22
+NG-BA,Bauchi,10.3103,0.4411,44.11,7,0.285214,28.52,HH,"Poorer than average, neighbours poorer too",1.660484,2.756097,0.00584956,0.216434,0.193746,2026-10-22
+NG-BE,Benue,7.7337,0.1156,11.56,6,0.110733,11.07,LL,"Better off than average, neighbours better off",0.116241,0.959979,0.337066,1,1,2026-10-22
+NG-BO,Borno,11.8469,0.2922,29.22,3,0.286433,28.64,HH,"Poorer than average, neighbours poorer too",0.781565,1.582886,0.113447,1,0.801654,2026-10-22
+NG-BY,Bayelsa,4.9268,0.0644,6.44,2,0.0429,4.29,LL,"Better off than average, neighbours better off",0.565153,1.209692,0.226397,1,1,2026-10-22
+NG-CR,Cross River,4.9589,0.0775,7.75,4,0.05905,5.91,LL,"Better off than average, neighbours better off",0.423227,1.522328,0.127927,1,0.80674,2026-10-22
+NG-DE,Delta,6.1982,0.0507,5.07,5,0.04158,4.16,LL,"Better off than average, neighbours better off",0.651426,2.034995,0.0418514,1,0.421816,2026-10-22
+NG-EB,Ebonyi,6.3248,0.0341,3.41,4,0.06625,6.62,LL,"Better off than average, neighbours better off",0.595355,1.444947,0.148473,1,0.824335,2026-10-22
+NG-ED,Edo,6.3381,0.0358,3.58,4,0.046775,4.68,LL,"Better off than average, neighbours better off",0.706659,1.726463,0.0842642,1,0.680559,2026-10-22
+NG-EK,Ekiti,7.6233,0.0532,5.32,4,0.0638,6.38,LL,"Better off than average, neighbours better off",0.519537,1.468245,0.142038,1,0.824335,2026-10-22
+NG-EN,Enugu,6.4413,0.03,3,5,0.05286,5.29,LL,"Better off than average, neighbours better off",0.700124,1.865398,0.0621256,1,0.568116,2026-10-22
+NG-FC,FCT,9.0579,0.0414,4.14,4,0.1597,15.97,LL,"Better off than average, neighbours better off",0.014782,0.085301,0.932022,1,1,2026-10-22
+NG-GO,Gombe,10.2897,0.3345,33.45,5,0.30566,30.57,HH,"Poorer than average, neighbours poorer too",1.196284,2.466715,0.0136359,0.504528,0.211982,2026-10-22
+NG-IM,Imo,5.4836,0.0183,1.83,3,0.028633,2.86,LL,"Better off than average, neighbours better off",0.930886,1.708439,0.0875549,1,0.680559,2026-10-22
+NG-JI,Jigawa,11.7562,0.4377,43.77,4,0.341675,34.17,HH,"Poorer than average, neighbours poorer too",2.393237,2.83447,0.00459018,0.169837,0.193746,2026-10-22
+NG-KD,Kaduna,10.5264,0.1671,16.71,8,0.257375,25.74,HH,"Poorer than average, neighbours poorer too",0.022447,2.068037,0.0386365,1,0.421816,2026-10-22
+NG-KE,Kebbi,12.4539,0.4373,43.73,3,0.3492,34.92,HH,"Poorer than average, neighbours poorer too",2.489975,2.513905,0.0119402,0.441789,0.206246,2026-10-22
+NG-KN,Kano,12.0001,0.2497,24.97,4,0.34475,34.48,HH,"Poorer than average, neighbours poorer too",0.772965,2.668888,0.00761028,0.28158,0.193746,2026-10-22
+NG-KO,Kogi,7.7969,0.0638,6.38,10,0.08527,8.53,LL,"Better off than average, neighbours better off",0.366717,2.019944,0.0433892,1,0.421816,2026-10-22
+NG-KT,Katsina,12.9908,0.3331,33.31,4,0.31145,31.14,HH,"Poorer than average, neighbours poorer too",1.234461,2.255051,0.0241301,0.892814,0.312603,2026-10-22
+NG-KW,Kwara,8.4966,0.0962,9.62,5,0.0897,8.97,LL,"Better off than average, neighbours better off",0.231841,1.216173,0.223919,1,1,2026-10-22
+NG-LA,Lagos,6.5965,0.0044,0.44,1,0.0918,9.18,LL,"Better off than average, neighbours better off",0.538132,0.522275,0.601479,1,1,2026-10-22
+NG-NA,Nasarawa,8.4939,0.1888,18.88,6,0.1421,14.21,HL,"Poorer than average, neighbours better off",-0.025893,-0.352243,0.724656,1,1,2026-10-22
+NG-NI,Niger,9.6152,0.2191,21.91,6,0.199517,19.95,HH,"Poorer than average, neighbours poorer too",0.102674,0.707357,0.479345,1,1,2026-10-22
+NG-OG,Ogun,7.1557,0.0918,9.18,4,0.045125,4.51,LL,"Better off than average, neighbours better off",0.399275,1.714891,0.0863652,1,0.680559,2026-10-22
+NG-ON,Ondo,7.2526,0.0637,6.37,6,0.054467,5.45,LL,"Better off than average, neighbours better off",0.514023,2.019707,0.0434138,1,0.421816,2026-10-22
+NG-OS,Osun,7.771,0.0315,3.15,5,0.07716,7.72,LL,"Better off than average, neighbours better off",0.538387,1.463312,0.143382,1,0.824335,2026-10-22
+NG-OY,Oyo,7.3776,0.0809,8.09,3,0.073167,7.32,LL,"Better off than average, neighbours better off",0.350661,1.122989,0.261442,1,1,2026-10-22
+NG-PL,Plateau,9.9285,0.1945,19.45,4,0.2668,26.68,HH,"Poorer than average, neighbours poorer too",0.16339,1.515146,0.129735,1,0.80674,2026-10-22
+NG-RI,Rivers,4.7774,0.0351,3.51,6,0.038133,3.81,LL,"Better off than average, neighbours better off",0.763758,2.3431,0.0191243,0.707598,0.270276,2026-10-22
+NG-SO,Sokoto,13.0627,0.4372,43.72,2,0.4143,41.43,HH,"Poorer than average, neighbours poorer too",3.355711,2.698483,0.00696564,0.257729,0.193746,2026-10-22
+NG-TA,Taraba,8.8937,0.2702,27.02,6,0.24275,24.27,HH,"Poorer than average, neighbours poorer too",0.420923,1.528681,0.126343,1,0.80674,2026-10-22
+NG-YO,Yobe,11.747,0.3428,34.28,4,0.376375,37.64,HH,"Poorer than average, neighbours poorer too",1.872125,3.217581,0.00129276,0.0478323,0.193746,2026-10-22
+NG-ZA,Zamfara,12.1702,0.3913,39.13,5,0.31876,31.88,HH,"Poorer than average, neighbours poorer too",1.735993,2.755337,0.00586316,0.216937,0.193746,2026-10-22

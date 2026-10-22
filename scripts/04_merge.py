@@ -5,6 +5,7 @@ Produces:
   data/processed/mpi_trends_panel.csv  148 rows, 37 states x 4 survey rounds
   data/processed/mpi_polygons.csv      ADM1 ring vertices (simplified), for the Tableau filled map
   data/processed/atlas_vintages.csv    per-round scale anchors and headline stats
+  data/processed/mpi_pairs_148.csv     148 panel rows + atlas constants (the pairs board extract)
   docs/normalisation.md                how every derived index is defined and scaled
   docs/data_quality.md                 the caveats a reader has to be told about
 
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import sys
 from pathlib import Path
 from statistics import median
@@ -29,6 +31,7 @@ from typing import Any, cast
 from scipy.stats import spearmanr
 from shapely.geometry import shape as shapely_shape
 
+import atlas_text
 from common import (DOCS, INTERIM, PROCESSED, RAW, REFERENCE, minmax, read_capitals,
                     read_lookup, write_csv)
 
@@ -272,6 +275,26 @@ def main() -> int:
     for i, r in enumerate(poor_order, start=1):
         r["mpi_poor_rank"] = i
 
+    # ---- the composition sheet's pre-formatted hover strings -----------------
+    # Tableau's tooltip cannot build a sentence, so the composition line is
+    # composed here once per state, in atlas_text.DIMENSION_SHARES' stacking
+    # order, and carried verbatim by the atlas table, the polygon table (both
+    # maps' hovers) and the composition sheet's extract. The three shares are
+    # an identity and always sum to 100 (asserted below), so two decimals of it
+    # is presentation, not precision.
+    for r in atlas_rows:
+        shares = sorted(
+            ((name, r[field]) for field, name, _colour in atlas_text.DIMENSION_SHARES),
+            key=lambda t: -t[1],
+        )
+        r["dim_hover"] = " \u00b7 ".join(f"{name} {value:.1f}%" for name, value in shares)
+        r["mpi_label"] = f"{r['mpi'] * 100:.1f}%"
+    for r in atlas_rows:
+        assert abs(sum(r[f] for f, _n, _c in atlas_text.DIMENSION_SHARES) - 100) < 0.5, (
+            f"{r['state']}: the three dimension shares must total 100, got "
+            f"{sum(r[f] for f, _n, _c in atlas_text.DIMENSION_SHARES):.2f}"
+        )
+
     atlas_fields = [
         "pcode", "state", "capital", "lat", "lon",
         "mpi", "mpi_se", "mpi_ci_lo", "mpi_ci_hi", "mpi_rank",
@@ -284,6 +307,7 @@ def main() -> int:
         "conflict_exposure_index",
         "temp_mean_c", "precip_total_mm", "temp_anomaly_c", "precip_anomaly_pct",
         "baseline_temp_c", "baseline_precip_mm", "mpi_band", "poverty_group",
+        "mpi_label", "dim_hover",
         "n_indicators", "indicators_missing", "survey", "survey_year",
     ]
     n_atlas = write_csv(PROCESSED / "mpi_atlas_2021.csv", atlas_rows, atlas_fields)
@@ -407,13 +431,16 @@ def main() -> int:
                             "mpi_ci_lo_pct": round(f(a, "mpi_ci_lo") * 100, 1),
                             "mpi_ci_hi_pct": round(f(a, "mpi_ci_hi") * 100, 1),
                             "gov_party": gov_party[pcode],
+                            # The composition line both maps' hovers print;
+                            # composed above with the atlas table's.
+                            "dim_hover": a["dim_hover"],
                         }
                     )
     poly_fields = [
         "state", "pcode", "ring", "point_order", "lon", "lat",
         "mpi_band", "poverty_group", "mpi", "mpi_se", "mpi_ci_lo", "mpi_ci_hi",
         "headcount_ratio_pct", "intensity_pct", "mpi_poor_thousands",
-        "mpi_pct", "mpi_ci_lo_pct", "mpi_ci_hi_pct", "gov_party",
+        "mpi_pct", "mpi_ci_lo_pct", "mpi_ci_hi_pct", "gov_party", "dim_hover",
     ]
     n_poly = write_csv(PROCESSED / "mpi_polygons.csv", poly_rows, poly_fields)
     assert {r["pcode"] for r in poly_rows} == set(by_pcode), "polygon pcodes drifted"
@@ -453,20 +480,128 @@ def main() -> int:
                 "temp_mean_c": round(f(cl, "temp_mean_c"), 2),
                 "temp_anomaly_c": round(f(cl, "temp_anomaly_c"), 2),
                 "precip_anomaly_pct": round(f(cl, "precip_anomaly_pct"), 1),
+                # The pairs board's two panes split on the state's 2021 poverty
+                # group, stamped here onto all four rounds (docs/SHEET_PAIRS.md;
+                # rank persistence 0.87-0.92 is what makes the 2021 cut
+                # defensible for pooled rounds). "Poorest states vs the rest",
+                # never "north vs south".
+                "poverty_group": by_pcode[pcode]["poverty_group"],
             }
             # The first round has no preceding round, so there is no change to report.
             ch = change_by_key.get((pcode, year))
-            row["mpi_change_since_prev"] = round(f(ch, "annualised_change"), 5) if ch else ""
+            change = round(f(ch, "annualised_change"), 5) if ch else ""
+            row["mpi_change_since_prev"] = change
             row["mpi_change_significant"] = ch["significance"] if ch else ""
+            # The hover's two numeric annotations ship as PRE-FORMATTED STRINGS
+            # (mpi_change_label / deaths_high_label): the extract's only measures
+            # must be the six ranks, so a numeric annotation measure would re-enter
+            # the Measure Names domain, and the 2026-10-21 amendment removes every
+            # non-rank variable from the extract. Formatting happens here, once,
+            # where the pipeline's conventions live; the workbook prints the string.
+            row["mpi_change_label"] = f"{change:+.4f}" if change != "" else ""
+            high = row["fatalities_per_100k_high"]
+            row["deaths_high_label"] = f"{high:.2f}" if high != "" else ""
             panel_rows.append(row)
+    # ---- the panel's rank columns -------------------------------------------
+    # The sheet "A state over time" draws the state's RANK in each round, not its
+    # raw value (an amendment to docs/SHEET_TIME_PANEL.md, 2026-10-21): the mark
+    # labels print the bare integer -- the state's position on that measure among
+    # the 37 states in that round -- and the direction key rides the row-header
+    # captions ("... rank (1 = highest)") and the sheet subtitle. A literal "R"
+    # prefix was tried in the field's own number format and did not render from
+    # XML in Tableau Public 2026.2 (the load-only part of the format did: the
+    # old two-decimal "36.00" misprint is gone with the integer declared
+    # quantitative), so R-wording stays prose, not formatting. Direction is fixed
+    # to match the sheet's key: R1 = the
+    # HIGHEST value of that measure (poorest MPI, most conflict events, hottest
+    # capital), so a rising R means the state moves away from the extreme. Ties
+    # are competition-ranked: equal values share the better (lower) rank, which is
+    # what the ten zero-event 2021 states need — they all share R28, not an
+    # arbitrary ordering among them.
+    #
+    # The list below is also the sheet's whitelist: 06_build_twb.py's Measure
+    # Values shelf and stage 5's gate are both driven from it, so gate and sheet
+    # cannot disagree on which position a mark shows.
+    RANK_FIELDS: dict[str, str] = {
+        "rank_mpi": "mpi",
+        "rank_headcount": "headcount_ratio_pct",
+        "rank_intensity": "intensity_pct",
+        "rank_events": "events_per_100k",
+        "rank_deaths": "fatalities_per_100k",
+        "rank_temp": "temp_mean_c",
+    }
+    for rank_field, source_field in RANK_FIELDS.items():
+        for year in SURVEY_ROUNDS:
+            yr_rows = [r for r in panel_rows if r["survey_year"] == year]
+            yr_rows.sort(key=lambda r: r[source_field], reverse=True)
+            rank = 0
+            for i, row in enumerate(yr_rows):
+                if i and row[source_field] != yr_rows[i - 1][source_field]:
+                    rank = i
+                row[rank_field] = rank + 1
+        values = [r[rank_field] for r in panel_rows]
+        assert all(1 <= v <= 37 for v in values), (
+            f"{rank_field} produced a rank outside 1-37"
+        )
+        # The max-rank sanity bound: with no ties at the extreme, the state with
+        # the highest value of the measure must hold R1.
+        for year in SURVEY_ROUNDS:
+            yr_rows = [r for r in panel_rows if r["survey_year"] == year]
+            top = max(r[source_field] for r in yr_rows)
+            assert {r[rank_field] for r in yr_rows if r[source_field] == top} == {1}, (
+                f"{rank_field} did not give the highest {source_field} rank 1 in {year}"
+            )
+
     panel_fields = [
         "pcode", "state", "survey_year", "survey", "mpi", "headcount_ratio_pct",
         "intensity_pct", "mpi_change_since_prev", "mpi_change_significant",
         "events", "fatalities", "fatalities_low", "fatalities_high",
         "events_per_100k", "fatalities_per_100k", "fatalities_per_100k_high",
+        "log1p_events_per_100k", "log1p_fatalities_per_100k",
+        "log1p_fatalities_per_100k_high",
+        "mpi_change_label", "deaths_high_label",
         "conflict_exposure_index", "temp_mean_c", "temp_anomaly_c", "precip_anomaly_pct",
+        "poverty_group",
+        "rank_mpi", "rank_headcount", "rank_intensity", "rank_events",
+        "rank_deaths", "rank_temp",
     ]
     n_panel = write_csv(PROCESSED / "mpi_trends_panel.csv", panel_rows, panel_fields)
+
+    # ---- the pairs board extract (docs/SHEET_PAIRS.md) ----------------------
+    # The bivariate exploration sheet reads these 148 rows plus the atlas's
+    # per-state constants, joined here once so stage 6 packs a single extract.
+    # The log columns are log(1+rate): the ten (2021) zero-event states sit at
+    # exactly 0, on the axis gridline, all 37 visible -- not dropped by a log().
+    # `poverty_group` rides every row (2021 stamp; rank persistence 0.87-0.92
+    # justifies pooling the rounds for a pane split whose only job is
+    # headline grouping, never a comparison or test).
+    for r in panel_rows:
+        r["log1p_events_per_100k"] = round(math.log1p(r["events_per_100k"]), 5)
+        r["log1p_fatalities_per_100k"] = round(math.log1p(r["fatalities_per_100k"]), 5)
+        r["log1p_fatalities_per_100k_high"] = round(
+            math.log1p(r["fatalities_per_100k_high"]), 5
+        )
+        # log1p of exactly 0 must be exactly 0 -- the zero gridline is the point.
+        # log1p of exactly 0 must be exactly 0 -- the zero gridline is the point.
+        if r["events_per_100k"] == 0:
+            assert r["log1p_events_per_100k"] == 0.0, "log1p lost the zero gridline"
+
+    pairs_atlas_fields = [
+        "lat", "lon", "mpi_se", "headcount_se", "vulnerable_pct", "severe_pct",
+        "contrib_health_pct", "contrib_education_pct",
+        "contrib_living_standards_pct", "population_thousands",
+        "mpi_poor_thousands", "precip_total_mm", "baseline_temp_c",
+        "baseline_precip_mm",
+    ]
+    pairs_rows: list[dict[str, Any]] = []
+    for r in panel_rows:
+        a = by_pcode[r["pcode"]]
+        pairs_rows.append({**r, **{k: a[k] for k in pairs_atlas_fields}})
+    pairs_fields = panel_fields + pairs_atlas_fields
+    n_pairs = write_csv(PROCESSED / "mpi_pairs_148.csv", pairs_rows, pairs_fields)
+    assert {x["pcode"] for x in pairs_rows} == set(by_pcode), "pairs pcodes drifted"
+    groups_by_state = {x["state"]: x["poverty_group"] for x in pairs_rows}
+    assert len(groups_by_state) == 37, "poverty_group stamp is inconsistent per state"
 
     # ---- per-round summary -------------------------------------------------
     print("\npoverty vs conflict, matched survey years (Spearman, n=37):")

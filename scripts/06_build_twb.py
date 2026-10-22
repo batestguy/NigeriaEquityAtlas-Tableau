@@ -26,9 +26,33 @@ Sheet inventory
                                    national average), with the four assigned
                                    type colours and the pre-registered spatial
                                    result in the hover
-  3  What the words mean           reference table, part 1 of 3: the 24 words
-  4  The list of basic needs       reference table, part 2 of 3: the 11 needs
-  5  How we did it                 reference table, part 3 of 3: the 9 steps
+  3  How poverty is made up        one stacked bar per state: the three dimension
+                                   shares of the MPI (an identity, the bar
+                                   always totals 100), bars listed in
+                                   hand-computed MPI order, which the subtitle
+                                   says is not a ranking
+                                   (docs/SHEET_DIMENSIONS.md)
+  4  A state over time             the Measure Names / Measure Values panel: the
+                                   reader picks a state, ticks measures off a
+                                   checklist, and each measure draws its own
+                                   RANK line over the four harmonised rounds --
+                                   rank variables only (the 2026-10-21 user
+                                   amendment: every non-rank measure is out of
+                                   the extract), R1 = highest of that measure,
+                                   labels carry the field's own "R0" number
+                                   format, no fitted trend line, no red-list
+                                   measure,
+                                   (docs/SHEET_TIME_PANEL.md)
+  5  What the words mean           reference table, part 1 of 3: the 24 words
+  6  The list of basic needs       reference table, part 2 of 3: the 11 needs
+  7  How we did it                 reference table, part 3 of 3: the 9 steps
+
+  8  How measures pair             the bivariate exploration board: any two of
+                                   the extract's measures as one point per
+                                   state-round, both axes driven by parameter
+                                   dropdowns (docs/SHEET_PAIRS.md). Kept on the
+                                   last tab on purpose: it is for looking, not
+                                   the atlas's story.
 
   The three reference tabs are one table cut into its own three groups, because
   rendered as a single dashboard it measured 2000 x 8720 px -- thirteen screens on
@@ -42,10 +66,20 @@ What is *not* here, and why: this workbook used to carry five more chart sheets
 intensity, party alignment) plus the Moran scatter, the "Equity Atlas" dashboard
 and an offline HTML map built by stage 7. The user withdrew all of them on
 2026-10-18 -- "I only care about MPI bands we built and the [spatial] sheet" -- and
-they are recoverable from git. The analyses behind them did not go: stages 02, 03
-and 08 still run, because the party test is pre-registered and its result, the
-conflict undercount and the climate overlap are the evidence behind the sentences
-the reference tabs now carry.
+they are recoverable from git. One of them came back on 2026-10-20, deliberately
+rebuilt rather than restored: "A state over time" is not the withdrawn
+"Poverty over time" (a 37-coloured-trend sheet), but a per-state measure panel
+whose fitted trend -- the part that sheet could not support -- is excluded by
+design. A second came back on 2026-10-22: the composition sheet is the withdrawn
+"dimension breakdown" rebuilt as one stacked bar per state to a frozen design
+(docs/SHEET_DIMENSIONS.md), instead of the three-pane defect it died with; one
+lesson carried over, the Measure Names union filter that would have de-duplicated
+the old sheet's 18,000-tall bar. The pairs board joined on 2026-10-21
+(docs/SHEET_PAIRS.md) and brought its own extract. The analyses behind the
+withdrawal did not go: stages 02, 03 and 08 still
+run, because the party test is pre-registered and its result, the conflict
+undercount and the climate overlap are the evidence behind the sentences the
+reference tabs now carry.
 """
 
 from __future__ import annotations
@@ -82,7 +116,8 @@ def ref(column: str, kind: str, ds: str) -> str:
 
 
 def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
-              default_agg: str = "", caption: str = "") -> str:
+              default_agg: str = "", caption: str = "",
+              number_format: str = "") -> str:
     """One <column> declaration.
 
     Two schema rules learned the hard way, by loading the workbook in Tableau:
@@ -100,6 +135,13 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
     legend used to read the internal name ``mpi_band``.
     """
     extra = f" default-aggregation-type='{default_agg}'" if default_agg else ""
+    # ``number_format`` is the field's own number format, serialised the way the
+    # application stores one (verified 2026-10-21, V4 load test): the attribute is
+    # ``default-format`` ON THE COLUMN -- sheet-level <style-rule> format rules
+    # reject attr='number-format' outright ("value 'number-format' not in
+    # enumeration", error D2E8DA72) because it is not in the <format> attr enum at
+    # all. Tableau applies it to the field's aggregate marks and its axis ticks.
+    fmt = f" default-format='{number_format}'" if number_format else ""
     # Captions go into a single-quoted attribute, so quotes have to be escaped and
     # not just &/</>. A caption containing an apostrophe -- "this state's poverty"
     # -- otherwise produces well-formed-looking markup that fails to parse
@@ -115,6 +157,19 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
         type_attr = "ordinal"
     else:
         type_attr = "quantitative"
+    # A MEASURE is always type='quantitative', whatever its datatype. The zip of
+    # datatype->type above exists for the dimensions (survey_year is an ordinal
+    # dimension); applied blindly to measures it made the integer rank fields
+    # type='ordinal' measures, and an ordinal measure is not a member of the
+    # quantitative Measure Names domain: the field's own domain key is then not
+    # the [sum:X:qk] the filter members and palette buckets reference, so the
+    # whole Measure Names microcosm -- union filter, colour palette, tick state --
+    # silently failed to bind and the sheet drew Tableau's defaults (all-ticked,
+    # pastel palette, generated "Count of Migrated Data" drawn as a pane). Seen
+    # in Tableau Public 2026.2, 2026-10-21. verified by the render test that
+    # re-drew six assigned colours and a six-ticked filter after this change.
+    if role == "measure":
+        type_attr = "quantitative"
     # The coordinate columns need their own semantic roles. Verified in the
     # application 2026-10-06: with [Geographical].[Latitude] and
     # [Geographical].[Longitude] absent, Tableau treats lat and lon as two
@@ -128,7 +183,7 @@ def col_block(name: str, datatype: str, role: str, *, geographic: bool = False,
     else:
         semantic_role = ""
     return (
-        f"      <column{cap} datatype='{datatype}' name='[{escape(name)}]' "
+        f"      <column{cap} datatype='{datatype}'{fmt} name='[{escape(name)}]' "
         f"role='{role}' type='{type_attr}'{semantic_role}{extra} />\n"
     )
 
@@ -198,7 +253,8 @@ def build_hyper(csv_path: Path, out_path: Path,
     return len(rows)
 
 
-def palette_block(field: str, entries: list[tuple[str, str]]) -> str:
+def palette_block(field: str, entries: list[tuple[str, str]],
+                  field_ref: str | None = None) -> str:
     """The datasource's colour-palette style rule: one colour per member.
 
     A discrete field on Colour gets Tableau's *default categorical* palette unless
@@ -218,6 +274,16 @@ def palette_block(field: str, entries: list[tuple[str, str]]) -> str:
       as ``&quot;`` -- the bucket holds the *data value*, the same string the
       extract stores.
 
+    Two variants exist in the real workbooks, and which one a colour field uses
+    depends on what it is: a normal column on Colour takes ``[none:field:nk]``
+    (the default here), while Tableau's generated **Measure Names** field takes the
+    bare ``[:Measure Names]`` with no derivation, no kind and no column prefix --
+    that is how ``ClimatechangeprofileNigeria`` (via the Tableau MCP server)
+    serialises its per-measure colours. Its buckets are not labels either: they are
+    the quoted *field references* that make up the measure set, so the caller
+    passes those strings as the labels. Both forms end up quoted the same way,
+    which is why the one implementation carries both.
+
     ``type='palette'`` is the discrete form. The continuous form is a sibling of
     this one (``type='interpolated'``, or ``type='custom-interpolated'`` with a
     nested ``<color-palette>`` of hex stops and a ``max`` attribute); it does not
@@ -232,7 +298,7 @@ def palette_block(field: str, entries: list[tuple[str, str]]) -> str:
     return (
         "      <style>\n"
         "        <style-rule element='mark'>\n"
-        f"          <encoding attr='color' field='[none:{escape(field)}:nk]' type='palette'>\n"
+        f"          <encoding attr='color' field='{field_ref or f'[none:{escape(field)}:nk]'}' type='palette'>\n"
         f"{maps}"
         "          </encoding>\n"
         "        </style-rule>\n"
@@ -244,7 +310,8 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
                    ds_name: str, ds_caption: str, conn_name: str,
                    instances: str = "",
                    palette: tuple[str, list[tuple[str, str]]] | None = None,
-                   captions: dict[str, str] | None = None) -> str:
+                   captions: dict[str, str] | None = None,
+                   default_formats: dict[str, str] | None = None) -> str:
     """One datasource over a packaged Hyper extract, with every column declared.
 
     Tableau Public refuses any workbook whose datasource is not an extract
@@ -267,10 +334,12 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
     surfaces the indirection is pure risk, so each one states its own identity.
     """
     captions = captions or {}
+    formats = default_formats or {}
     cols = []
     for name, datatype, role in columns:
         cols.append(col_block(name, datatype, role, geographic=(name == "state"),
-                              caption=captions.get(name, "")))
+                              caption=captions.get(name, ""),
+                              number_format=formats.get(name, "")))
 
     col_blocks = "".join(cols)
     dbname = f"Data/{hyper_filename}"
@@ -339,7 +408,8 @@ def column_instances(*texts: str) -> str:
 
 
 def deps_xml(columns: list[tuple[str, str, str]],
-             captions: dict[str, str] | None = None) -> str:
+             captions: dict[str, str] | None = None,
+             default_formats: dict[str, str] | None = None) -> str:
     """The per-worksheet column block real Tableau writes.
 
     Tableau repeats the datasource's columns inside every worksheet that uses it
@@ -350,12 +420,16 @@ def deps_xml(columns: list[tuple[str, str, str]],
     a field's caption in both places, and a workbook whose worksheet copies disagree
     with its datasource is a state Tableau never produces itself; which of the two
     the shelf pill and the colour legend read is not established here, so the two
-    are made to agree rather than argued about.
+    are made to agree rather than argued about. ``default_formats`` follows the
+    same rule for the field number formats (a V4 packet matched Tableau's own
+    serialization, which repeats default-format in the worksheet copy too).
     """
     captions = captions or {}
+    formats = default_formats or {}
     body = "".join(
         col_block(name, datatype, role, geographic=(name == "state"),
-                  caption=captions.get(name, ""))
+                  caption=captions.get(name, ""),
+                  number_format=formats.get(name, ""))
         for name, datatype, role in columns
     )
     return f"""          <datasource-dependencies>
@@ -366,13 +440,27 @@ def deps_xml(columns: list[tuple[str, str, str]],
 def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
                   encodings: str = "", ds_name: str, ds_caption: str,
                   deps: str = "", subtitle: str = "", tooltip: str = "",
-                  mark_formats: tuple[tuple[str, str], ...] = ()) -> str:
+                  mark_formats: tuple[tuple[str, str], ...] = (),
+                  filters: str = "", table_style: str = "",
+                  label_colour: str = "") -> str:
     """A tooltip, when given, is Tableau's "customized tooltip": it replaces the
     default field list entirely, so fields that exist only to draw the mark stop
     appearing to the reader. Grammar taken from a real Tableau-authored workbook
     -- field references live in CDATA, wrapped in angle brackets.
 
-    Position matters, and is not guessable: the element belongs *after*
+    ``filters`` are worksheet-level filters, placed inside <view> after the
+    datasource-dependencies -- the position ``ClimatechangeprofileNigeria`` and
+    ``ClinicPerformanceDashboard`` (both via the Tableau MCP server) always use:
+    before <slices>/<aggregation>, never inside <panes>. A quick-filter card in the
+    window strip needs a worksheet filter behind it, or the card lists members but
+    filters nothing.
+
+    ``table_style`` adds format rules to the worksheet's table-level <style> --
+    used by the measure chart to hide its "Multiple Values" axis title, the way
+    real serialise the axis they turned off (an <style-rule element='axis'> with an
+    attr='display' format naming the field.
+
+    Position matters, and is not guessable: the tooltip element belongs *after*
     </encodings>, not between <mark> and <encodings>. Placed before the encodings
     it parses but fails the whole workbook load ("Errors occurred while trying to
     load the workbook"), with nothing in the log naming the element. Bisected
@@ -385,6 +473,14 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
     worksheet-level <style>, after </view>, where a real Tableau-authored workbook
     puts mark formats; the pane has its own <style> too, but nothing there has been
     observed to take effect.
+
+    ``label_colour`` sets the mark LABELS' text colour, when a sheet's numbers sit
+    on its own dark fills (the composition sheet's shares sit on the dark
+    green/orange/blue segments; the first render, 2026-10-22, printed them in the
+    default ink and they were unreadable). Grammar not guessed: GlobeMap_17915413395900
+    sets its label text with a worksheet-level <style-rule element='label'> whose
+    <format attr='color'> rides beside the mark rule, and the label rule comes
+    BEFORE the mark rule in that workbook's <style>.
     """
     tooltip_block = (
         "          <customized-tooltip show-buttons='false'>\n"
@@ -395,6 +491,28 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
         if tooltip
         else ""
     )
+    pane_style = ""
+    if label_colour:
+        # THE label-colour grammar, proven and landed 2026-10-22. The hunt,
+        # one variable per packet in Tableau Public 2026.2: worksheet-level
+        # plain <style-rule element='label'> has effect but whitens every
+        # label in the sheet (row headers white-on-white, render_dim2);
+        # worksheet-level field-scoped on Measure Values (render_dim3) and
+        # pane-level field-scoped (render_dim4) are inert; pane-level plain
+        # element='label' is inert too (render_dim5). The real serialisation
+        # of the Label card's custom colour is element='datalabel' with
+        # color-mode='user', copied byte-shape from
+        # Try-UmphantStartGallagherPremOpeningWeekend.twbx, which also rides
+        # in the pane's <style> -- cell rule, datalabel rule, then mark rule,
+        # in that order -- and labels its points white on dark fills. Scoped
+        # to data labels only, so the row headers keep their ink.
+        pane_style = (
+            "            <style-rule element='datalabel'>\n"
+            "              <format attr='color-mode' value='user' />\n"
+            f"              <format attr='color' value='{label_colour}' />\n"
+            "              <format attr='font-weight' value='bold' />\n"
+            "            </style-rule>\n"
+        )
     pane = f"""      <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -404,7 +522,7 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
           <encodings>
 {encodings}          </encodings>
 {tooltip_block}          <style>
-            <style-rule element='mark'>
+{pane_style}            <style-rule element='mark'>
               <format attr='mark-labels-show' value='true' />
             </style-rule>
           </style>
@@ -438,9 +556,9 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
           <datasources>
             <datasource caption='{ds_caption}' name='{ds_name}' />
           </datasources>
-{deps}          <aggregation value='true' />
+{deps}{filters}          <aggregation value='true' />
         </view>
-        <style>{style_block}</style>
+        <style>{table_style}{style_block}</style>
 {pane}        <rows>{rows}</rows>
         <cols>{cols}</cols>
       </table>
@@ -480,6 +598,9 @@ POLY_COLUMNS: list[tuple[str, str, str]] = [
     ("mpi_ci_lo_pct", "real", "measure"),
     ("mpi_ci_hi_pct", "real", "measure"),
     ("gov_party", "string", "dimension"),
+    # The composition line both maps' hovers print: how the state's MPI splits
+    # across OPHI's three areas, pre-composed by stage 4 in stacking order.
+    ("dim_hover", "string", "dimension"),
 ]
 
 
@@ -499,6 +620,442 @@ SPATIAL_POLY_COLUMNS: list[tuple[str, str, str]] = POLY_COLUMNS + [
     ("spatial_lag_mpi_pct", "real", "measure"),
     ("neighbours", "integer", "measure"),
 ]
+
+
+# --- The time panel's extract (stage 2/4, mpi_trends_panel.csv) ----------------
+# Sheet "A state over time": one state picked, any set of measures ticked, the four
+# harmonised survey rounds as a line each. Design freeze: docs/SHEET_TIME_PANEL.md.
+#
+# The extract's schema *is* the enforceable half of the freeze: the red-list fields
+# (the within-year relative conflict index, the weather anomalies) are simply not
+# columns, so a later edit cannot put them on a shelf. The raw event/death counts
+# are excluded the same way -- the per-100k pair is the defensible form, and the
+# freeze's open decision ("raw counts hidden or not at all") is settled as "not at
+# all".
+#
+# The 2026-10-21 amendment extends the red list to every raw value column: the
+# marks are ranks, and the user asked that the sheet carry rank variables only, so
+# the value measures are not in the extract at all -- the Measure Names domain can
+# only list the six ranks (plus the application's generated "Count of Migrated
+# Data", which no XML can remove). The hover's two numeric annotations ride as
+# PRE-FORMATTED STRINGS (mpi_change_label, deaths_high_label; 04_merge.py formats
+# them), because a numeric annotation measure would re-enter the Measure Names
+# domain the amendment just cleaned. The full values live in
+# data/processed/mpi_trends_panel.csv, which the pipeline's later stages read.
+PANEL_DS_NAME = "federated.0mpitrends"
+PANEL_DS_CAPTION = "A state over time"
+PANEL_CONN = "hyper.0mpitrends"
+PANEL_HYPER = "mpi_trends_panel.hyper"
+# The tab name is also the sheet's title; the subtitle is a Worksheet argument.
+SHEET_TIME_TITLE = "A state over time"
+PANEL_EXCLUDED = {
+    "conflict_exposure_index", "temp_anomaly_c", "precip_anomaly_pct",
+    "events", "fatalities", "fatalities_low", "fatalities_high",
+    # The amendment's half of the red list: the raw values the marks replaced.
+    "mpi", "headcount_ratio_pct", "intensity_pct",
+    "events_per_100k", "fatalities_per_100k", "fatalities_per_100k_high",
+    "mpi_change_since_prev", "temp_mean_c",
+}
+PANEL_COLUMNS: list[tuple[str, str, str]] = [
+    ("pcode", "string", "dimension"),
+    ("state", "string", "dimension"),
+    ("survey_year", "integer", "dimension"),
+    ("survey", "string", "dimension"),
+    ("mpi_change_significant", "string", "dimension"),
+    # The hover annotations as strings, so the only measures in the domain are
+    # ranks. 04_merge.py writes the formatted text; the tooltip prints it verbatim.
+    ("mpi_change_label", "string", "dimension"),
+    ("deaths_high_label", "string", "dimension"),
+    # The ranks the marks draw (04_merge.py RANK_FIELDS): integer, one per
+    # whitelisted measure. These are the ONLY measures the extract declares, so a
+    # bare value can no longer reach a mark -- or the checklist.
+    ("rank_mpi", "integer", "measure"),
+    ("rank_headcount", "integer", "measure"),
+    ("rank_intensity", "integer", "measure"),
+    ("rank_events", "integer", "measure"),
+    ("rank_deaths", "integer", "measure"),
+    ("rank_temp", "integer", "measure"),
+]
+
+
+# --- The pairs board's extract (stage 4, mpi_pairs_148.csv) -------------------
+# Sheet "How measures pair" (docs/SHEET_PAIRS.md, frozen 2026-10-21): any two of
+# the four-round measures or the atlas's per-state constants as one point per
+# state-round, split into the two 2021 poverty-group panes. Two selectors make
+# the environment dynamic; their grammar was proven in packets A1-A6
+# (docs/FIX_LEDGER.md section P): parameters are an inline pseudo-datasource,
+# the deck shelf is a paren-plus rows expression, and the axes are CASE calc
+# columns that switch on the bound member.
+#
+# This extract carries NO extraction-time promise the departs from the panel's:
+# it is the panel CSV joined to the atlas's per-state constants (joined once in
+# stage 4) and the three log(1+rate) columns -- a logged rate is a shipped
+# column, not a LOG() inside the CASE, because the log columns need to act as
+# ordinary members of the menu that the parameter-driven CASE differentiates;
+# the packet proved the extract column drives the payload (packet A6).
+PAIRS_DS_NAME = "federated.0mpipairs"
+PAIRS_DS_CAPTION = "Pairs board"
+PAIRS_CONN = "hyper.0mpipairs"
+PAIRS_HYPER = "pairs_board.hyper"
+SHEET_PAIRS_TITLE = "How measures pair"
+PAIRS_X_CALC = "pair_x_sel"
+PAIRS_Y_CALC = "pair_y_sel"
+PAIRS_X_CALC_CAPTION = "Pair X position"
+PAIRS_Y_CALC_CAPTION = "Pair Y position"
+PAIRS_PARAM_X = "X axis measure"
+PAIRS_PARAM_Y = "Y axis measure"
+
+# The menu is what both dropdowns list and what the CASE differentiates; the
+# captions double as the fields' display names (docs/SHEET_PAIRS.md froze the
+# list). No order in the menu: the dropdown sorts alphabetically.
+PAIRS_MENU: list[tuple[str, str]] = [
+    ("H (% poor)", "headcount_ratio_pct"),
+    ("MPI", "mpi"),
+    ("Depth (avg deprivation among the poor, %)", "intensity_pct"),
+    ("Capital temperature in the round (C)", "temp_mean_c"),
+    ("UCDP events per 100k", "events_per_100k"),
+    ("UCDP events per 100k, log(1+rate)", "log1p_events_per_100k"),
+    ("UCDP deaths per 100k", "fatalities_per_100k"),
+    ("UCDP deaths per 100k, log(1+rate)", "log1p_fatalities_per_100k"),
+    ("UCDP deaths per 100k, upper estimate", "fatalities_per_100k_high"),
+    ("UCDP deaths per 100k, upper, log(1+rate)", "log1p_fatalities_per_100k_high"),
+    ("MPI standard error (2021)", "mpi_se"),
+    ("H standard error (2021)", "headcount_se"),
+    ("Vulnerable to poverty, % of population (2021)", "vulnerable_pct"),
+    ("In severe poverty, % of population (2021)", "severe_pct"),
+    ("Health share of the MPI (2021)", "contrib_health_pct"),
+    ("Education share of the MPI (2021)", "contrib_education_pct"),
+    ("Living standards share of the MPI (2021)", "contrib_living_standards_pct"),
+    ("Population (thousands)", "population_thousands"),
+    ("People in MPI poverty (thousands)", "mpi_poor_thousands"),
+    ("Capital rainfall in the survey year (mm)", "precip_total_mm"),
+    ("Capital temperature, 1991-2020 mean (C)", "baseline_temp_c"),
+    ("Capital rainfall, 1991-2020 mean (mm/yr)", "baseline_precip_mm"),
+    ("Latitude (capital)", "lat"),
+    ("Longitude (capital)", "lon"),
+]
+PAIRS_DEFAULT_X = "H (% poor)"          # headcount_ratio_pct
+PAIRS_DEFAULT_Y = "UCDP events per 100k, log(1+rate)"   # log1p_events_per_100k
+assert PAIRS_DEFAULT_X in {label for label, _f in PAIRS_MENU}
+assert PAIRS_DEFAULT_Y in {label for label, _f in PAIRS_MENU}
+assert len({field for _l, field in PAIRS_MENU}) == len(PAIRS_MENU), (
+    "the pairs menu repeats a field"
+)
+assert len(PAIRS_MENU) == 24, f"the menu has 24 entries, wrote {len(PAIRS_MENU)}"
+
+# ids + panes + hover fields the extract carries besides the menu measures.
+# The red-listed family (the within-year conflict index, the anomaly columns)
+# is absent BY the freeze -- an exploration space is not an exemption, and the
+# two anomaly columns are not in the extract they would have re-entered
+# (this extract holds per-STATE constants, not the round-wise anomalies).
+PAIRS_COLUMNS: list[tuple[str, str, str]] = [
+    ("pcode", "string", "dimension"),
+    ("state", "string", "dimension"),
+    ("poverty_group", "string", "dimension"),
+    ("survey_year", "integer", "dimension"),
+    ("survey", "string", "dimension"),
+] + [(field, "real", "measure") for _label, field in PAIRS_MENU]
+
+
+# --- The composition sheet's extract (stage 4, mpi_atlas_2021.csv subset) -----
+# Sheet "How poverty is made up" (docs/SHEET_DIMENSIONS.md, frozen 2026-10-22):
+# the three dimension shares as one stacked bar per state, bars listed by each
+# state's 2021 MPI. The shares are an identity (they are the MPI by construction
+# and total 100 per state), which is the one claim the atlas makes without a
+# standard error attached.
+#
+# Measure discipline is the panel's lesson kept: the extract declares exactly
+# the three shares as measures, so the Measure Names domain -- which the Colour
+# encoding reads and an axis aggregate would stack -- cannot contain anything
+# else. The MPI value does NOT enter the extract: the sort it drives is
+# hand-computed in main() from the atlas table and serialised as a MANUAL sort
+# dictionary (class='manual', quoted buckets, the grammar the
+# RegionalSalesDashboard workbook ships byte-for-byte), computed at build time
+# so the data file owns the order and the workbook owns no copy of the values.
+# The hover's MPI phrase rides as a pre-formatted string (mpi_label, stage 4),
+# the same trick the time panel's amendment ships.
+DIM_DS_NAME = "federated.0mpidimshare"
+DIM_DS_CAPTION = "Poverty composition"
+DIM_CONN = "hyper.0mpidimshare"
+DIM_HYPER = "dimension_shares.hyper"
+SHEET_DIM_TITLE = atlas_text.DIMENSIONS_TITLE
+# The short captions are the Measure Names members' display names -- what the
+# colour legend, the stacked segments and the tooltip's area name print.
+DIM_COLUMNS: list[tuple[str, str, str]] = [
+    ("pcode", "string", "dimension"),
+    ("state", "string", "dimension"),
+    ("poverty_group", "string", "dimension"),
+    ("mpi_label", "string", "dimension"),
+] + [(field, "real", "measure") for field, _caption, _colour in atlas_text.DIMENSION_SHARES]
+
+
+def pairs_case_formula(param: str) -> str:
+    """The axis-picking calc column's CASE, from the frozen menu.
+
+    Both axis columns take the same WHEN list (each arm = one menu entry); the
+    packet proved Tableau evaluates thearm at load from the parameter's bound
+    value (packets A3/A4: axis = H vs MPI decided the sheet sum exactly).
+    """
+    whens = "&#10;".join(
+        f"WHEN &quot;{escape(label)}&quot; THEN [{field}]"
+        for label, field in PAIRS_MENU
+    )
+    return f"CASE [Parameters].[{param}]&#10;{whens}&#10;END"
+
+
+def parameter_column_xml(caption: str, pname: str, menu: list[str], default: str) -> str:
+    """One parameter, serialised as a column of the inline Parameters datasource.
+
+    Simplification: the caption, the internal name and the tooltip are the same
+    string; the packet A5 workbook -- the one that rendered and resolved -- used
+    the exact layout this function emits (caption/id both the menu's PVCAM). The
+    default must be identical in the datasource and in the sheet-level deps
+    mirror: A4 proved the sheet mirror is the one that binds the value.
+    """
+    return (
+        f"      <column caption='{escape(caption)}' datatype='string' name='[{pname}]' "
+        f"param-domain-type='list' role='measure' type='nominal' value='&quot;{escape(default)}&quot;'>\n"
+        f"        <calculation class='tableau' formula='&quot;{escape(default)}&quot;' />\n"
+        f"        <members>\n"
+        + "".join(
+            f"          <member value='&quot;{escape(label)}&quot;' />\n" for label in menu
+        )
+        + f"        </members>\n"
+        f"      </column>\n"
+    )
+
+
+def parameters_ds_xml(def_x: str, def_y: str) -> str:
+    """The Parameters pseudo-datasource the workbook-level <datasources> carries.
+
+    Grammar from packet A1/A2 (loads, cards render off it). It is appended
+    after the extract datasources so the inline (connection-less) block does
+    not confuse the two extract-backed reads; inspection of the shipped
+    serialized KPI workbook shows parameters first, but the packet had them
+    last and loaded, so either position binds.
+    """
+    labels = [label for label, _field in PAIRS_MENU]
+    return (
+        "    <datasource hasconnection='false' inline='true' name='Parameters' "
+        f"version='{VERSION}'>\n"
+        "      <aliases enabled='yes' />\n"
+        + parameter_column_xml(PAIRS_PARAM_X, PAIRS_PARAM_X, labels, def_x)
+        + parameter_column_xml(PAIRS_PARAM_Y, PAIRS_PARAM_Y, labels, def_y)
+        + "    </datasource>\n"
+    )
+
+
+def parameters_deps_xml(def_x: str, def_y: str) -> str:
+    """The sheet-level mirror of the Parameters columns (packet A4's rule)."""
+    labels = [label for label, _field in PAIRS_MENU]
+    def render(pcaption: str, pdefault: str) -> str:
+        return (
+            f"          <column caption='{escape(pcaption)}' datatype='string' "
+            f"name='[{pcaption}]' param-domain-type='list' role='measure' "
+            f"type='nominal' value='&quot;{escape(pdefault)}&quot;'>\n"
+            f"            <calculation class='tableau' formula='&quot;{escape(pdefault)}&quot;' />\n"
+            f"            <members>\n"
+            + "".join(
+                f"              <member value='&quot;{escape(label)}&quot;' />\n"
+                for label in labels
+            )
+            + f"            </members>\n"
+            f"          </column>\n"
+        )
+    return (
+        "          <datasource-dependencies datasource='Parameters'>\n"
+        + render(PAIRS_PARAM_X, def_x)
+        + render(PAIRS_PARAM_Y, def_y)
+        + "          </datasource-dependencies>\n"
+    )
+
+
+def pairs_captions() -> dict[str, str]:
+    """The pairs extract's captions: the menu label for every measure in it.
+
+    Same two-location rule as the other sheets (datasource + worksheet deps
+    both built from this map), and the menu entry text must equal the caption,
+    because the CASE WHEN compares the member to the caption string.
+    """
+    return {field: label for label, field in PAIRS_MENU}
+
+
+def pairs_tooltip_runs() -> str:
+    """The runs inside the pairs board's customized tooltip.
+
+    Same CDATA grammar as the maps' tooltips, but the value lines come from
+    the two CASE columns' aggregates (they hold the chosen measure's value),
+    then the caveat. Log-aware text: whether either axis is logged is visible
+    in the dropdown, not recomputed here.
+    """
+    ds = PAIRS_DS_NAME
+
+    def fld(text: str, attrs: str = "") -> str:
+        return f"              <run{attrs}><![CDATA[<{text}>]]></run>\n"
+
+    def txt(body: str, attrs: str = "") -> str:
+        return f"              <run{attrs}>{body}</run>\n"
+
+    return (
+        fld(ref("state", "dim", ds), " bold='true' fontsize='13'")
+        + txt(" &#183; ")
+        + fld(ref("survey_year", "ord", ds), " bold='true'")
+        + txt(" round (")
+        + fld(ref("survey", "dim", ds))
+        + txt(")&#10;")
+        + fld(ref("poverty_group", "dim", ds))
+        + txt(" of the 37 states, by 2021 MPI&#10;X value: ")
+        + fld(ref(PAIRS_X_CALC, "avg", ds), " bold='true'")
+        + txt("&#10;Y value: ")
+        + fld(ref(PAIRS_Y_CALC, "avg", ds), " bold='true'")
+        + txt("&#10;&#10;")
+        + txt(escape(atlas_text.PAIRS_TOOLTIP_CAVEAT) + "&#10;", " italic='true'")
+    )
+
+
+def pairs_instance_xml() -> str:
+    """The <column-instance> block the pairs schema needs, wherever columns go.
+
+    Hand-written: the pairs shelves reference mixed datasources (extract AND
+    Parameters) and the pair calc columns, whose instances
+    column_instances() cannot derive from a shelf scan (its parser only reads
+    [agg:field:kind] refs -- which actually would resolve here, but the
+    parameters' pseudo-datasource column-instances do not exist to scan, and
+    the packet's proven block is copied verbatim instead).
+    """
+    return (
+        f"      <column-instance column='[{PAIRS_X_CALC}]' derivation='Avg' "
+        f"name='[avg:{PAIRS_X_CALC}:qk]' pivot='key' type='quantitative' />\n"
+        f"      <column-instance column='[{PAIRS_Y_CALC}]' derivation='Avg' "
+        f"name='[avg:{PAIRS_Y_CALC}:qk]' pivot='key' type='quantitative' />\n"
+        "      <column-instance column='[poverty_group]' derivation='None' "
+        "name='[none:poverty_group:nk]' pivot='key' type='nominal' />\n"
+        "      <column-instance column='[state]' derivation='None' "
+        "name='[none:state:nk]' pivot='key' type='nominal' />\n"
+        "      <column-instance column='[survey_year]' derivation='None' "
+        "name='[none:survey_year:ok]' pivot='key' type='ordinal' />\n"
+        "      <column-instance column='[pcode]' derivation='None' "
+        "name='[none:pcode:nk]' pivot='key' type='nominal' />\n"
+        "      <column-instance column='[survey]' derivation='None' "
+        "name='[none:survey:nk]' pivot='key' type='nominal' />\n"
+    )
+
+
+def pairs_calc_columns_xml() -> str:
+    """The two <column> blocks for the axis-picking CASE columns.
+
+    Both live at workbook level in the pairs datasource AND mirrored inside the
+    sheet's deps block (the two-location rule the KPI reference workbook
+    serialises everywhere).
+    """
+    return (
+        f"      <column caption='{escape(PAIRS_X_CALC_CAPTION)}' datatype='real' "
+        f"name='[{PAIRS_X_CALC}]' role='measure' type='quantitative'>\n"
+        f"        <calculation class='tableau' formula='{pairs_case_formula(PAIRS_PARAM_X)}' />\n"
+        f"      </column>\n"
+        f"      <column caption='{escape(PAIRS_Y_CALC_CAPTION)}' datatype='real' "
+        f"name='[{PAIRS_Y_CALC}]' role='measure' type='quantitative'>\n"
+        f"        <calculation class='tableau' formula='{pairs_case_formula(PAIRS_PARAM_Y)}' />\n"
+        f"      </column>\n"
+    )
+
+
+def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
+    """The 'How measures pair' worksheet and its window cards.
+
+    Built on the packet-A5/A6 serialization rather than worksheet_xml: the
+    shelves mix two datasources (the extract AND Parameters), and worksheet_xml
+    assumes one. Kept close to the packet, which loaded and drew both times.
+    """
+    ds = PAIRS_DS_NAME
+    deps = (
+        "          <datasource-dependencies>\n"
+        + deps_xml(PAIRS_COLUMNS, pairs_captions())
+                     .replace("          <datasource-dependencies>\n", "")
+                     .replace("          </datasource-dependencies>\n", "")
+        + pairs_calc_columns_xml().replace("      <column", "            <column")
+        + pairs_instance_xml()
+        + "          </datasource-dependencies>\n"
+        + parameters_deps_xml(def_x, def_y)
+    )
+    tooltip = pairs_tooltip_runs()
+    worksheet = (
+        f"    <worksheet name='{escape(SHEET_PAIRS_TITLE)}'>\n"
+        f"      <layout-options>\n"
+        f"        <title>\n"
+        f"          <formatted-text>\n"
+        f"            <run bold='true' fontsize='13'>{escape(SHEET_PAIRS_TITLE)}</run>"
+        f"<run fontsize='9'>  {escape(atlas_text.PAIRS_SUBTITLE)}</run>\n"
+        f"          </formatted-text>\n"
+        f"        </title>\n"
+        f"      </layout-options>\n"
+        f"      <table>\n"
+        f"        <view>\n"
+        f"          <datasources>\n"
+        f"            <datasource caption='{escape(PAIRS_DS_CAPTION)}' name='{ds}' />\n"
+        f"          </datasources>\n"
+        f"{deps}"
+        f"          <aggregation value='true' />\n"
+        f"        </view>\n"
+        f"        <style />\n"
+        f"      <panes>\n"
+        f"        <pane selection-relaxation-option='selection-relaxation-allow'>\n"
+        f"          <view>\n"
+        f"            <breakdown value='auto' />\n"
+        f"          </view>\n"
+        f"          <mark class='Circle' />\n"
+        f"          <encodings>\n"
+        f"            <lod column='[{ds}].[none:state:nk]' />\n"
+        f"            <lod column='[{ds}].[none:survey_year:ok]' />\n"
+        f"          </encodings>\n"
+        f"          <customized-tooltip show-buttons='false'>\n"
+        f"            <formatted-text>\n"
+        f"{tooltip}"
+        f"            </formatted-text>\n"
+        f"          </customized-tooltip>\n"
+        f"          <style>\n"
+        f"            <style-rule element='mark'>\n"
+        f"              <format attr='mark-labels-show' value='false' />\n"
+        f"            </style-rule>\n"
+        f"          </style>\n"
+        f"        </pane>\n"
+        f"      </panes>\n"
+        f"        <rows>([{ds}].[none:poverty_group:nk] + [{ds}].[avg:{PAIRS_Y_CALC}:qk])</rows>\n"
+        f"        <cols>[{ds}].[avg:{PAIRS_X_CALC}:qk]</cols>\n"
+        f"      </table>\n"
+        f"    </worksheet>\n"
+    )
+    window = (
+        f"    <!-- The pairs board: its two parameter dropdowns. The cards carry the\n"
+        f"         Parameters datasource (packet A2: the card renders off that block,\n"
+        f"         unused parameters included); both sit on the left rail with the\n"
+        f"         pages/filters/marks stack, the edge the time panel proved draws. -->\n"
+        f"    <window class='worksheet' name='{escape(SHEET_PAIRS_TITLE)}'>\n"
+        f"      <cards>\n"
+        f"        <edge name='left'>\n"
+        f"          <strip size='160'>\n"
+        f"            <card mode='compact' param='[Parameters].[{PAIRS_PARAM_X}]' type='parameter' />\n"
+        f"            <card mode='compact' param='[Parameters].[{PAIRS_PARAM_Y}]' type='parameter' />\n"
+        f"            <card type='pages' />\n"
+        f"            <card type='filters' />\n"
+        f"            <card type='marks' />\n"
+        f"          </strip>\n"
+        f"        </edge>\n"
+        f"        <edge name='top'>\n"
+        f"          <strip size='2147483647'>\n"
+        f"            <card type='columns' />\n"
+        f"          </strip>\n"
+        f"          <strip size='31'>\n"
+        f"            <card type='title' />\n"
+        f"          </strip>\n"
+        f"        </edge>\n"
+        f"      </cards>\n"
+        f"      <viewpoint>\n"
+        f"        <zoom type='entire-view' />\n"
+        f"      </viewpoint>\n"
+        f"    </window>\n"
+    )
+    return worksheet, window
 
 
 # --- The reference tab: plain-language text from scripts/atlas_text.py ---------
@@ -706,13 +1263,23 @@ def table_dashboards() -> list[tuple[str, str]]:
 
 
 def build_workbook(spatial_technical: str,
-                   poly_rows: int, spatial_poly_rows: int) -> str:
-    """The workbook: two maps drawn from the same rings, and the reference table.
+                   poly_rows: int, spatial_poly_rows: int, panel_rows: int,
+                   pairs_rows: int, dim_bar_order: list[str],
+                   dim_rows: int) -> str:
+    """The workbook: two maps drawn from the same rings, the composition bar, the
+    time panel, the pairs board, and the reference table.
 
-    Two extracts, two datasources. The atlas, trends-panel, party-alignment and
+    Five extracts, five datasources, plus the inline Parameters pseudo-datasource
+    the pairs board's two dropdowns read. The atlas, party-alignment and
     spatial-diagnostic extracts were withdrawn on 2026-10-18 with the sheets that
-    drew them (module docstring), so those four hyper files are neither built nor
-    packaged any more.
+    drew them (module docstring); the trends panel is the one extract that came
+    back, in 2026-10-20, for the frozen time-panel sheet
+    (docs/SHEET_TIME_PANEL.md) -- its red-list fields are not in the schema at
+    all (they are asserted against, not filtered out of the sheet). The pairs
+    board is the seventh sheet, 2026-10-21 (docs/SHEET_PAIRS.md). The
+    composition sheet is the eighth, 2026-10-22 (docs/SHEET_DIMENSIONS.md):
+    the three dimension shares stacked, bars in hand-computed MPI order carried
+    as a manual sort dictionary, the MPI value itself not in the extract.
     """
     # The colour field's caption is the legend's title text, so it has to say what
     # the reader is looking at -- the internal name "mpi_band" is not that. A legend
@@ -767,6 +1334,8 @@ def build_workbook(spatial_technical: str,
             + txt("Poverty score: ", " bold='true'")
             + fld("mpi_pct", "sum", " bold='true'")
             + txt("%", " bold='true'")
+            + txt("&#10;Made up of: ")
+            + fld("dim_hover", "dim")
             + txt("&#10;Average of the ")
             + fld("neighbours")
             + txt(" states it borders: ")
@@ -857,6 +1426,9 @@ def build_workbook(spatial_technical: str,
             + txt("Poor people: ")
             + fld("mpi_poor_thousands")
             + txt(" thousand&#10;")
+            + txt("Made up of: ")
+            + fld("dim_hover", "dim")
+            + txt("&#10;")
             + txt("Governorship 1999&#8211;2021: ")
             + fld("gov_party", "dim")
             + txt("&#10;&#10;MPI ", " bold='true'")
@@ -960,6 +1532,396 @@ def build_workbook(spatial_technical: str,
         mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
     )
 
+    # ---- sheet 2b: the time panel, "A state over time" ----------------------
+    # The frozen design (docs/SHEET_TIME_PANEL.md, amended 2026-10-21): the reader
+    # picks ONE state from a dropdown and ticks ANY SET of measures from a
+    # checklist; each measure draws its own line over the four survey rounds, and
+    # since the amendment the mark's number is that state's RANK of the 37 in that
+    # round, and the extract carries rank variables ONLY -- the raw value columns
+    # left the schema the same day (see PANEL_COLUMNS' comment). Labels carry the
+    # field's own "R0" number format; the direction key rides the row headers and
+    # the subtitle. A fitted trend line is deliberately never added to this sheet
+    # -- four points per line cannot support a slope, and a trend sheet is exactly
+    # what was withdrawn in W1.
+    #
+    # The construct is the Measure Names / Measure Values pair, copied from a real
+    # Tableau-authored workbook rather than invented: ``ClimatechangeprofileNigeria``
+    # (via the Tableau MCP server) draws exactly this pair as a stacked area, and
+    # "KPI - Progress -Status" places the same composition `([a] + [b])` on shelves.
+    # Here Measure NAMES is on Rows with Measure VALUES under it, so each selected
+    # measure small-multiples into its own pane and its own axis -- the one construct
+    # where "tick any combination of measures" does not force a shared axis (MPI at
+    # 0-0.45 dies against H at 0-75 on one axis, and normalising would reintroduce
+    # the within-year relativity the conflict index demonstrates the danger of).
+    # Note how Tableau serialises the pair: Measure Values is the generated field
+    # [Multiple Values], Measure Names the generated [Measure Names] with no
+    # derivation and no kind, referenced as [:Measure Names].
+    #
+    # The earlier attempt (the old dimension-breakdown sheet) failed at this pair --
+    # it drew one 18,000-tall bar because it lacked the <filter> over Measure Names
+    # that de-duplicates the shelf. The real workbooks settle it: the filter is a
+    # categorical <groupfilter function='union' user:op='manual'> whose members are
+    # the quoted field references of the measures, and the default member set is
+    # everything on the whitelist (the reader un-ticks from the checklist card).
+    #
+    # State is filtered once, worksheet-level, to a single member -- the sheet
+    # cannot open blank because Bauchi (the hover example everywhere else) is the
+    # default; the dropdown card narrows it. The customized tooltip carries the
+    # honest per-point annotations -- the annualised change since the previous
+    # round, the star flag, the survey source. No customized tooltip would be
+    # needed to show values: there are none on the sheet any more, the marks print
+    # ranks, and the generated [Multiple Values] field has no proven tooltip
+    # serialization in any workbook on hand.
+    panel_captions = {field: caption for field, caption, _colour in atlas_text.PANEL_MEASURES}
+    panel_captions.update({
+        "mpi_change_significant": "Movement OPHI's change test calls significant (*, **, ***)",
+        "mpi_change_label": "Mean annual change since the previous round (MPI points/yr)",
+        "deaths_high_label": "Conflict deaths per 100,000 (upper estimate)",
+        "survey": "Survey the round comes from",
+    })
+    # The six rank measures carry the sheet's own number format: the custom format
+    # "R"0 (escaped) on the FIELD -- see col_block for the serialization finding.
+    panel_formats = {name: "&quot;R&quot;0" for name, _c, _k in atlas_text.PANEL_MEASURES}
+    panel_deps = deps_xml(PANEL_COLUMNS, panel_captions, panel_formats)
+
+    def panel_filters() -> str:
+        """Worksheet-level filters, copied from the real workbooks' grammar.
+
+        The Measure Names filter's members are the quoted field references of the
+        six whitelist measures (that is what a member of Measure Names *is*); the
+        union with user:op='manual' is the default-checked set. The state filter is
+        a single member, the freeze's "default state on load".
+        """
+        members = "".join(
+            "          <groupfilter function='member' level='[:Measure Names]' "
+            f"member=\"&quot;[{PANEL_DS_NAME}].[sum:{name}:qk]&quot;\" />\n"
+            for name, _caption, _colour in atlas_text.PANEL_MEASURES
+        )
+        state = escape(atlas_text.PANEL_DEFAULT_STATE)
+        return (
+            f"          <filter class='categorical' column='[{PANEL_DS_NAME}].[:Measure Names]'>\n"
+            "            <groupfilter function='union' user:op='manual'>\n"
+            f"{members}"
+            "            </groupfilter>\n"
+            "          </filter>\n"
+            f"          <filter class='categorical' column='[{PANEL_DS_NAME}].[none:state:nk]'>\n"
+            "            <groupfilter function='member' level='[none:state:nk]' "
+            f"member=\"&quot;{state}&quot;\" />\n"
+            "          </filter>\n"
+        )
+
+    def panel_table_style() -> str:
+        """Hide the meaningless axis title ``Multiple Values``.
+
+        The reader names the panes by the row headers (the measure captions);
+        leaving the generated field's title in the axis would print "Multiple
+        Values" beside each pane. This is how the real workbooks turn an axis off:
+        a table-level axis rule with an attr='display' format naming the field.
+
+        The rank labels' prefix comes from the field, not from a style rule: the
+        question of where a mark's number format serialises is settled
+        (2026-10-21, four bisected packets in Tableau Public 2026.2). A
+        ``<style-rule>``-level ``attr='number-format'`` -- field-scoped or
+        mark-scoped -- fails the whole workbook load with D2E8DA72, "value
+        'number-format' not in enumeration": the 2026.2 schema's <format> attr
+        enum (read out of tabfileformat.dll) does not contain it at all. The
+        number format lives on the <column> as ``default-format='"R"0'``; with
+        that attribute present the workbook loads and the labels print bare
+        integers (the old two-decimal misprint gone with it). The "R" prefix
+        itself did not render from XML in the verification load, so the direction
+        key rides in the row-header captions and the sheet subtitle
+        (atlas_text.PANEL_SUBTITLE) -- docs/SHEET_TIME_PANEL.md records it.
+        """
+        return (
+            "          <style-rule element='axis'>\n"
+            f"            <format attr='display' class='0' field='[{PANEL_DS_NAME}].[Multiple Values]' "
+            "scope='rows' value='false' />\n"
+            "          </style-rule>\n"
+        )
+
+    panel_encodings = (
+        f"            <color column='[{PANEL_DS_NAME}].[:Measure Names]' />\n"
+    )
+    # Deliberately NO <lod> fields on the mark. The first render (2026-10-20,
+    # review_time_only.twbx in Tableau Public 2026.2) drew six panes x four rounds
+    # of isolated points, no connecting lines: of the hover's supporting fields,
+    # `survey` and `mpi_change_significant` are DIMENSIONS, and a dimension on
+    # detail is part of the mark's identity, so a value that changes from round to
+    # round (DHS -> MICS, blank -> **) splits the pane's four marks into four
+    # one-point "lines". Since the 2026-10-21 amendment every annotation field is a
+    # string dimension that rides in the customized tooltip only -- nothing sits on
+    # detail -- so the four rounds of each rank line remain one line per pane.
+    # Tableau's tooltip refs of off-view fields resolve to the mark's own context,
+    # which for this sheet is exactly one (state, round) row. The default tooltip
+    # would have carried nothing but the measure name and value.
+
+    def panel_tooltip_runs(ds: str) -> str:
+        """The runs inside the time panel's customized tooltip.
+
+        Same CDATA grammar as the maps' tooltips (declared columns in angle
+        brackets), and only fields that exist in the extract. The movement
+        annotation and the deaths estimate print STRING dimensions
+        (mpi_change_label / deaths_high_label -- 04_merge.py pre-formats them):
+        numeric annotation measures would re-enter the Measure Names domain, which
+        the 2026-10-21 amendment empties of everything but the six ranks.
+        """
+
+        def fld(column: str, kind: str = "sum", attrs: str = "") -> str:
+            return f"              <run{attrs}><![CDATA[<{ref(column, kind, ds)}>]]></run>\n"
+
+        def txt(body: str, attrs: str = "") -> str:
+            return f"              <run{attrs}>{body}</run>\n"
+
+        return (
+            fld("state", "dim", " bold='true' fontsize='13'")
+            + txt(" &#183; ")
+            + fld("survey_year", "dim", " bold='true'")
+            + txt("&#10;Survey the round comes from: ")
+            + fld("survey", "dim")
+            + txt("&#10;Mean annual change since the previous round (MPI points/yr): ")
+            + fld("mpi_change_label", "dim", " bold='true'")
+            + txt("&#10;Movement the OPHI change test calls significant: ")
+            + fld("mpi_change_significant", "dim", " bold='true'")
+            + txt("&#10;Conflict deaths per 100,000 people (upper estimate): ")
+            + fld("deaths_high_label", "dim")
+            + txt("&#10;&#10;")
+            + txt(
+                "Line, not a trend: four harmonised rounds per measure (2013 DHS, "
+                "2016 and 2018 MICS, 2021 DHS). Neighbouring states' intervals "
+                "overlap at 95%, so read movement within this state only.",
+                " italic='true'",
+            )
+        )
+    sheet_time = worksheet_xml(
+        SHEET_TIME_TITLE,
+        subtitle=atlas_text.PANEL_SUBTITLE,
+        rows=f"([{PANEL_DS_NAME}].[:Measure Names] + [{PANEL_DS_NAME}].[Multiple Values])",
+        cols=f"[{PANEL_DS_NAME}].[none:survey_year:ok]",
+        mark="Line",
+        encodings=panel_encodings,
+        ds_name=PANEL_DS_NAME,
+        ds_caption=PANEL_DS_CAPTION,
+        deps=panel_deps,
+        filters=panel_filters(),
+        table_style=panel_table_style(),
+        tooltip=panel_tooltip_runs(PANEL_DS_NAME),
+    )
+
+    # ---- sheet 2b: the composition sheet, "How poverty is made up" ----------
+    # The frozen design (docs/SHEET_DIMENSIONS.md, built 2026-10-22): one bar
+    # per state, each stacked into the three dimension shares, bars listed by
+    # each state's 2021 MPI. The shares are an identity -- the bar totals 100
+    # everywhere -- and the claim the sheet carries is the dimension CONTRAST
+    # the reference table already publishes (education 39.9% of the MPI in the
+    # poorest 12 vs 22.3% in the rest), never the MPI ordering itself: the
+    # subtitle, the caveat in the hover and the reference table all say order
+    # is not a ranking. The construct is the same Measure Names / Measure
+    # Values pair the time panel proved renders from hand-written XML, with the
+    # names on Colour and the values on Columns so the measures STACK instead
+    # of pane-ing, and the Measure Names union filter de-duplicating the shelf
+    # (the old withdrawn dimension sheet's 18,000-tall-bar defect, without
+    # which the filter let the aggregate in). The bar order is hand-computed in
+    # main() from the atlas table and shipped as a class='manual' sort
+    # dictionary, copied byte-for-byte from RegionalSalesDashboard -- a
+    # computed sort would need an MPI measure in the extract, and the extract
+    # declares the three shares and nothing else.
+    def dim_filters(order: list[str]) -> str:
+        """The Measure Names whitelist, the manual bar order, and the state
+        filter's default-checked set.
+
+        The default view's membership is the reading of the user's request
+        (2026-10-22: "show five states in poorest and 12 in other, give me the
+        option of adding more states"): ranks 1-5 (the five poorest states)
+        and ranks 13-24 (the first twelve states of the Other 25, MPI-adjacent
+        to the poorest group). Every state stays on the checklist card, so the
+        reader can add or remove any of the 37. The bar order is MPI
+        descending, so ``order[:12]`` is the Poorest 12 by construction.
+        """
+        members = "".join(
+            "          <groupfilter function='member' level='[:Measure Names]' "
+            f"member=\"&quot;[{DIM_DS_NAME}].[sum:{field}:qk]&quot;\" />\n"
+            for field, _caption, _colour in atlas_text.DIMENSION_SHARES
+        )
+        buckets = "".join(
+            f"            <bucket>&quot;{escape(state)}&quot;</bucket>\n"
+            for state in order
+        )
+        # The multi-member default: union user:op='manual' over member
+        # groupfilters, the Measure Names filter's own proven shape, applied
+        # to the state column (the single-member state filter of the time
+        # panel has no union because it ticks one member).
+        state_members = "".join(
+            f"            <groupfilter function='member' level='[none:state:nk]' "
+            f"member=\"&quot;{escape(state)}&quot;\" />\n"
+            for state in order[:5] + order[12:24]
+        )
+        return (
+            f"          <filter class='categorical' column='[{DIM_DS_NAME}].[:Measure Names]'>\n"
+            "            <groupfilter function='union' user:op='manual'>\n"
+            f"{members}"
+            "            </groupfilter>\n"
+            "          </filter>\n"
+            f"          <filter class='categorical' column='[{DIM_DS_NAME}].[none:state:nk]'>\n"
+            "            <groupfilter function='union' user:op='manual'>\n"
+            f"{state_members}"
+            "            </groupfilter>\n"
+            "          </filter>\n"
+            f"          <sort class='manual' column='[{DIM_DS_NAME}].[none:state:nk]' "
+            "direction='ASC'>\n"
+            "            <dictionary>\n"
+            f"{buckets}"
+            "            </dictionary>\n"
+            "          </sort>\n"
+            # The group's block order: "Poorest 12" first, MPI order, not
+            # alphabetically. Manual sort with string buckets is the proven
+            # dictionary shape (real workbooks sort dimensions exactly this
+            # way; the state sort above rides the same grammar on titles).
+            f"          <sort class='manual' column='[{DIM_DS_NAME}].[none:poverty_group:nk]' "
+            "direction='ASC'>\n"
+            "            <dictionary>\n"
+            f"            <bucket>&quot;{escape(atlas_text.POVERTY_GROUP_TOP)}&quot;</bucket>\n"
+            f"            <bucket>&quot;{escape(atlas_text.POVERTY_GROUP_REST)}&quot;</bucket>\n"
+            "            </dictionary>\n"
+            "          </sort>\n"
+        )
+
+    def dim_table_style() -> str:
+        # The generated field's axis title would print "Multiple Values" on the
+        # shared axis; hide it the way panel_table_style hides the rows copy.
+        # The second rule widens the nested group header so "Poorest 12"/
+        # "Other 25" print on one line -- the field-scoped width rule is the
+        # ClinicPerformanceDashboard/FinanceDashboard grammar
+        # (<style-rule element='header'><format attr='width' field=... />).
+        return (
+            "          <style-rule element='axis'>\n"
+            f"            <format attr='display' class='0' field='[{DIM_DS_NAME}].[Multiple Values]' "
+            "scope='cols' value='false' />\n"
+            "          </style-rule>\n"
+            "          <style-rule element='header'>\n"
+            f"            <format attr='width' field='[{DIM_DS_NAME}].[none:poverty_group:nk]' "
+            "value='92' />\n"
+            "          </style-rule>\n"
+        )
+
+    dim_captions = {
+        field: caption for field, caption, _colour in atlas_text.DIMENSION_SHARES
+    }
+    dim_captions.update({
+        "mpi_label": "MPI (as a % of the index)",
+        # The nested group header's caption: without it the axis strip prints
+        # the raw field name and truncates. States its meaning plainly.
+        "poverty_group": "Poverty group",
+    })
+    dim_deps = deps_xml(DIM_COLUMNS, dim_captions)
+
+    def dim_tooltip_runs(ds: str) -> str:
+        """The runs inside the composition sheet's customized tooltip."""
+
+        def fld(column: str, attrs: str = "") -> str:
+            return f"              <run{attrs}><![CDATA[<{ref(column, 'dim', ds)}>]]></run>\n"
+
+        def fldnames(attrs: str = "") -> str:
+            return (
+                f"              <run{attrs}><![CDATA[<[{ds}].[:Measure Names]>]]></run>\n"
+            )
+
+        def txt(body: str, attrs: str = "") -> str:
+            return f"              <run{attrs}>{body}</run>\n"
+
+        return (
+            fld("state", " bold='true' fontsize='13'")
+            + txt(" &#183; MPI ")
+            + fld("mpi_label", " bold='true'")
+            + txt("&#10;Area being shown: ")
+            + fldnames(" bold='true'")
+            + txt("&#10;")
+            + txt(escape(atlas_text.DIMENSION_HOVER_PREFIX))
+            + fld("dim_hover")
+            + txt("&#10;&#10;")
+            + txt(escape(atlas_text.DIMENSIONS_CAVEAT), " italic='true'")
+        )
+
+    sheet_dim = worksheet_xml(
+        SHEET_DIM_TITLE,
+        subtitle=atlas_text.DIMENSIONS_SUBTITLE,
+        # Nested rows: the poverty group above the state, so the sheet prints
+        # two header blocks -- "Poorest 12" then "Other 25" -- separated by the
+        # pane divider: the "clear axis marker between poor states and others"
+        # the user asked for (2026-10-22). Same shelf grammar as the pairs
+        # board's pane split (FIX_LEDGER P5: dim + field in a paren-plus rows
+        # shelf). The group order below in dim_filters pins "Poorest 12" first,
+        # since alphabetical order would put "Other 25" on top.
+        rows=(f"([{DIM_DS_NAME}].[none:poverty_group:nk] + "
+              f"[{DIM_DS_NAME}].[none:state:nk])"),
+        cols=f"[{DIM_DS_NAME}].[Multiple Values]",
+        mark="Bar",
+        encodings=(f"            <color column='[{DIM_DS_NAME}].[:Measure Names]' />\n"),
+        ds_name=DIM_DS_NAME,
+        ds_caption=DIM_DS_CAPTION,
+        deps=dim_deps,
+        # The Measure Names whitelist (three members only: everything else with
+        # a measure role was kept out of the extract at birth) and the manual
+        # bar order, both computed above from the frozen lists / main().
+        filters=dim_filters(dim_bar_order),
+        table_style=dim_table_style(),
+        tooltip=dim_tooltip_runs(DIM_DS_NAME),
+        # The segment numbers sit on the dark green/orange/blue fills; the first
+        # render printed them in the default ink on those fills and they were
+        # unreadable. White on all three Okabe-Ito hues is legible (2026-10-22).
+        label_colour="#FFFFFF",
+    )
+    dim_window = (
+        "    <!-- The composition sheet: its colour card carries the three\n"
+        "         dimension colours; the grammar is the cluster map's, which is\n"
+        "         the one right-edge colour card this generator has proven\n"
+        "         renders (sheet 1's identical declaration never has; keep\n"
+        "         the Analysis, then Legends, then Colour Legend fallback in\n"
+        "         mind). -->\n"
+        f"    <window class='worksheet' name='{escape(SHEET_DIM_TITLE)}'>\n"
+        "      <cards>\n"
+        "        <edge name='left'>\n"
+        "          <strip size='160'>\n"
+        "            <card type='pages' />\n"
+        "            <card type='filters' />\n"
+        "            <!-- the interactive state checklist: 37 members, 17\n"
+        "                 pre-ticked (5 poorest + first 12 of the rest). Grammar\n"
+        "                 is the time panel's proven filter-card shape, checklist\n"
+        "                 mode because the reader ticks several states. -->\n"
+        f"            <card mode='checklist' param='[{DIM_DS_NAME}].[none:state:nk]' type='filter' values='database' />\n"
+        "            <card type='marks' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "        <edge name='top'>\n"
+        "          <strip size='2147483647'>\n"
+        "            <card type='columns' />\n"
+        "          </strip>\n"
+        "          <strip size='31'>\n"
+        "            <card type='title' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "        <edge name='right'>\n"
+        "          <strip size='160'>\n"
+        f"            <card pane-specification-id='0' param='[{DIM_DS_NAME}].[:Measure Names]' type='color' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "      </cards>\n"
+        "      <viewpoint>\n"
+        "        <zoom type='entire-view' />\n"
+        "      </viewpoint>\n"
+        "    </window>\n"
+    )
+
+    # ---- sheet 3b: the pairs board, after the time panel --------------------
+    # The frozen exploration sheet (docs/SHEET_PAIRS.md): any two continuous
+    # measures as one point per state-round, split into the two 2021
+    # poverty-group panes, both axes driven by parameter dropdowns. It computes
+    # nothing and carries no claim -- the pane cut is on the outcome (the 2021
+    # MPI), so slope-like readings within a pane are range-restricted; the
+    # subtitle and the hover both say so, and the freeze's "may not say" list
+    # is what no future edit can cross. The workbook built here was proven by
+    # the packet sequence A1-A6 reported in docs/FIX_LEDGER.md section P.
+    sheet_pairs, pairs_window = pairs_worksheet_xml(PAIRS_DEFAULT_X, PAIRS_DEFAULT_Y)
+
     # ---- sheets 3-5: the reference tab, in three parts ----------------------
     # Where the five spec sheets (dimension breakdown, poverty vs conflict, poverty
     # over time, incidence x intensity) and the party-alignment panel used to be.
@@ -1032,12 +1994,53 @@ def build_workbook(spatial_technical: str,
         </edge>
       </cards>
     </window>
-{tab_windows}  </windows>
+{dim_window}    <!-- The time panel: its two interactive cards. The checklist over the generated
+         Measure Names field is the "measures to watch" picker; the dropdown over
+         state is the state picker (the worksheet filter pins Bauchi as the default
+         member, so the sheet cannot open blank). The pair is standard grammar:
+         <card mode='checklist'/'dropdown' param='[ds].[field]' type='filter' /> as
+         ClinicPerformanceDashboard and HRAnalytics serialise it. But the
+         Measure Names card had no instance to copy from: no downloaded workbook
+         showed the generated field named in a card, so the render test decides.
+         The cards declare on the LEFT edge, not the right, after the first render
+         proved the point the map's colour-card defect already suggested: in
+         packets built by this script, left-edge strips draw and right-edge strips
+         do not (Pages/Filters/Marks drew on the map; the declared right colour
+         card never has). Which side the rail sits on is cosmetic; that the
+         interaction exists is not. The top edge gains the title card so the
+         sheet's frozen subtitle line renders. -->
+    <window class='worksheet' name='{escape(SHEET_TIME_TITLE)}'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card mode='checklist' param='[{PANEL_DS_NAME}].[:Measure Names]' type='filter' values='database' />
+            <card mode='dropdown' param='[{PANEL_DS_NAME}].[none:state:nk]' type='filter' values='database' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='title' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <zoom type='entire-view' />
+      </viewpoint>
+    </window>
+{tab_windows}{pairs_window}  </windows>
 """
 
-    # Two extracts, two datasources, and each declares the instances of its own
-    # sheet only: a datasource must not declare an instance for a field that lives
-    # in the other extract (it loads as "the field does not exist", 9CA7205B).
+    # Six datasources: five extract-backed and the inline Parameters
+    # pseudo-datasource the pairs board's dropdowns read. Each declares the
+    # instances of its own sheet only: a datasource must not declare an
+    # instance for a field that lives in the other extract (it loads as "the
+    # field does not exist", 9CA7205B).
     poly_ds = datasource_xml(
         POLY_COLUMNS, POLY_HYPER, poly_rows, POLY_DS_NAME, POLY_DS_CAPTION, POLY_CONN,
         instances=column_instances(sheet_map),
@@ -1062,6 +2065,62 @@ def build_workbook(spatial_technical: str,
             [(words, colour) for _code, words, colour in atlas_text.SPATIAL_QUADRANTS],
         ),
     )
+    # The time panel's datasource: same shape, with a palette for the generated
+    # Measure Names field -- its buckets are the quoted field references of the six
+    # whitelist measures, not labels, and the field is referenced bare
+    # ([:Measure Names]). Both forms were copied from ClimatechangeprofileNigeria.
+    # The row header per pane is the measure caption (panel_captions), so the same
+    # single source names the measure in the workbook and in the stage 5 gate.
+    panel_ds = datasource_xml(
+        PANEL_COLUMNS, PANEL_HYPER, panel_rows,
+        PANEL_DS_NAME, PANEL_DS_CAPTION, PANEL_CONN,
+        instances=column_instances(sheet_time),
+        captions=panel_captions,
+        default_formats=panel_formats,
+        palette=(
+            "Measure Names",
+            [(f"[{PANEL_DS_NAME}].[sum:{name}:qk]", colour)
+             for name, _caption, colour in atlas_text.PANEL_MEASURES],
+            "[:Measure Names]",
+        ),
+    )
+    # The composition sheet's datasource: the same Measure Names palette shape
+    # the panel's carries -- quoted column-instance keys for the three share
+    # measures, the bare generated-field reference, one colour per area sourced
+    # from atlas_text.DIMENSION_SHARES so the workbook and the stage 5 gate
+    # cannot disagree. The captions are the Measure Names members' display
+    # names (Education / Health / Living standards).
+    dim_ds = datasource_xml(
+        DIM_COLUMNS, DIM_HYPER, dim_rows,
+        DIM_DS_NAME, DIM_DS_CAPTION, DIM_CONN,
+        instances=column_instances(sheet_dim),
+        captions=dim_captions,
+        palette=(
+            "Measure Names",
+            [(f"[{DIM_DS_NAME}].[sum:{name}:qk]", colour)
+             for name, _caption, colour in atlas_text.DIMENSION_SHARES],
+            "[:Measure Names]",
+        ),
+    )
+    # The pairs board's datasource: the panel-atlas join plus the two CASE
+    # columns appended to the field list (their <column> blocks carry a
+    # <calculation> child, which datasource_xml's plain columns don't emit).
+    pairs_ds = datasource_xml(
+        PAIRS_COLUMNS, PAIRS_HYPER, pairs_rows,
+        PAIRS_DS_NAME, PAIRS_DS_CAPTION, PAIRS_CONN,
+        # The ds-level instance list is the same block the worksheet deps
+        # mirror; every field the sheet places gets its instance in both
+        # places, the way the shipped datasources carry them.
+        instances=pairs_instance_xml(),
+        captions=pairs_captions(),
+    )
+    # Append the two calc <column> blocks right after the plain ones, before the
+    # <extract> element: datasource_xml emits <column/>s between <aliases/> and
+    # <extract/>. Same two-location rule as the captions.
+    aliases_marker = "      <aliases enabled='yes' />\n"
+    calc_at_ds = pairs_calc_columns_xml()
+    pairs_ds = pairs_ds.replace(aliases_marker, aliases_marker + calc_at_ds, 1)
+    parameters_ds = parameters_ds_xml(PAIRS_DEFAULT_X, PAIRS_DEFAULT_Y)
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -1070,9 +2129,9 @@ def build_workbook(spatial_technical: str,
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{poly_ds}{spatial_poly_ds}  </datasources>
+{poly_ds}{spatial_poly_ds}{panel_ds}{dim_ds}{pairs_ds}{parameters_ds}  </datasources>
   <worksheets>
-{sheet_map}{sheet_cluster}  </worksheets>
+{sheet_map}{sheet_cluster}{sheet_dim}{sheet_time}{sheet_pairs}  </worksheets>
 {dashboards}{windows}</workbook>
 """
 
@@ -1108,7 +2167,18 @@ def validate(xml: str, declared: set[str]) -> list[str]:
         parts = tail.group(1).split(":")
         # Tableau's generated geographic fields are synthesised, not columns in
         # the extract, so they cannot resolve against `declared` either.
+        # [Parameters].[X axis measure] style references name the inline
+        # pseudo-datasource, whose columns are not extract fields; a window card
+        # carries the same reference. Both are defined by their own blocks, not
+        # by `declared`, so neither can resolve here.
+        if token.startswith("[Parameters]."):
+            continue
         if parts[0] in {"Multiple Fields", "Multiple Values"} or "generated" in parts[1]:
+            continue
+        # Measure Names, Tableau's other generated field, is referenced bare --
+        # [ds].[:Measure Names], no derivation, no kind. It is declared by
+        # Tableau itself, so it cannot resolve against `declared`.
+        if parts[0] == "" and parts[1] == "Measure Names":
             continue
         if len(parts) < 2:
             problems.append(f"unparseable field reference {token}")
@@ -1126,7 +2196,9 @@ def validate(xml: str, declared: set[str]) -> list[str]:
             problems.append(f"unknown aggregation {agg!r} in {token}")
         if name not in declared:
             problems.append(f"field reference to undeclared column {name!r} in {token}")
-    for ds in ("[federated.0mpipolygons]", "[federated.0mpispatialpoly]"):
+    for ds in ("[federated.0mpipolygons]", "[federated.0mpispatialpoly]",
+               "[federated.0mpitrends]", "[federated.0mpipairs]",
+               "[Parameters]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
     return problems
@@ -1186,13 +2258,17 @@ def check_hyper_schema(
 
 
 def main() -> int:
+    import collections
+
     atlas_path = PROCESSED / "mpi_atlas_2021.csv"
     poly_path = PROCESSED / "mpi_polygons.csv"
     spatial_path = PROCESSED / "spatial_diagnostics.csv"
     spatial_poly_path = PROCESSED / "spatial_polygons.csv"
     spatial_global_path = PROCESSED / "spatial_global.csv"
+    panel_path = PROCESSED / "mpi_trends_panel.csv"
+    pairs_path = PROCESSED / "mpi_pairs_148.csv"
     for path in (atlas_path, poly_path, spatial_path, spatial_poly_path,
-                 spatial_global_path):
+                 spatial_global_path, panel_path, pairs_path):
         if not path.exists():
             raise SystemExit(
                 f"missing {path}; run scripts/04_merge.py and "
@@ -1208,12 +2284,35 @@ def main() -> int:
     spatial_reader = read(spatial_path)
     spatial_poly_reader = read(spatial_poly_path)
     spatial_global = read(spatial_global_path)
+    panel_reader = read(panel_path)
+    pairs_reader = read(pairs_path)
 
     # The atlas table is drawn by no sheet any more, but it stays the reference both
     # maps are checked against: it is the source of the band labels, and its 37
     # pcodes are what proves each extract covers the whole country.
     assert len(atlas_reader) == 37, f"atlas has {len(atlas_reader)} rows, expected 37"
     atlas_pcodes = {r["pcode"] for r in atlas_reader}
+
+    # The composition sheet's bar order: states sorted by descending 2021 MPI,
+    # computed HERE from the atlas table and shipped as a manual sort
+    # dictionary. The MPI value itself is deliberately NOT in the extract --
+    # the sort is the only thing it drives. Stage 4 already asserts the
+    # shares' identity; re-asserted here against the packaged rows because
+    # this extract is what the sheet's whole story rests on.
+    dim_bar_order = [
+        r["state"]
+        for r in sorted(atlas_reader, key=lambda r: -float(r["mpi"]))
+    ]
+    dim_rows = len(atlas_reader)
+    assert len(set(dim_bar_order)) == 37, "the composition bar order lost states"
+    for row in atlas_reader:
+        shares = [float(row[field]) for field, _cap, _col in atlas_text.DIMENSION_SHARES]
+        assert all(0 <= s <= 100 for s in shares), (
+            f"{row['state']}: a dimension share outside 0-100"
+        )
+        assert abs(sum(shares) - 100) < 0.5, (
+            f"{row['state']}: dimension shares total {sum(shares):.2f}, expected 100"
+        )
     assert len(spatial_reader) == 37, (
         f"spatial table has {len(spatial_reader)} rows, expected 37"
     )
@@ -1277,12 +2376,134 @@ def main() -> int:
         "atlas_text.MPI_BANDS repeats a colour; the ramp must step monotonically"
     )
 
+    # ---- the time panel (docs/SHEET_TIME_PANEL.md is the freeze) -------------
+    # 148 rows = 37 states x 4 harmonised rounds. The panel is what the sheet
+    # draws, so anything off here would draw wrong: a missing state-year is a
+    # broken line, a wrong year set silently re-plots the axis.
+    assert len(panel_reader) == 148, f"panel has {len(panel_reader)} rows, expected 148"
+    assert {r["survey_year"] for r in panel_reader} == {"2013", "2016", "2018", "2021"}, (
+        "the panel's survey years are not the four harmonised rounds"
+    )
+    assert {r["pcode"] for r in panel_reader} == atlas_pcodes, (
+        "the panel does not cover the same 37 states as the atlas"
+    )
+    per_state = collections.Counter(r["pcode"] for r in panel_reader)
+    assert set(per_state.values()) == {4}, (
+        "each state must have exactly one row per round in the panel"
+    )
+    # The whitelist and the red list are the freeze's two halves: every measure
+    # the sheet offers must be a real, always-populated column, and none of the
+    # fields the freeze excludes may exist in the extract's schema at all.
+    panel_header = set(panel_reader[0])
+    schema_fields = {name for name, _dt, _role in PANEL_COLUMNS}
+    for name, _caption, _colour in atlas_text.PANEL_MEASURES:
+        assert name in panel_header, f"{name!r} missing from the panel CSV"
+        assert name in schema_fields, f"{name!r} missing from the extract schema"
+        for row in panel_reader:
+            value = float(row[name])  # raises if a measure cell is blank
+            assert value == value, f"NaN in {name} for {row['state']} {row['survey_year']}"
+    assert not (schema_fields & PANEL_EXCLUDED), (
+        "the freeze's red-list fields must not exist in the extract schema; "
+        f"{sorted(schema_fields & PANEL_EXCLUDED)}"
+    )
+    for hover_field in ("survey", "state", "survey_year",
+                        "mpi_change_label", "mpi_change_significant",
+                        "deaths_high_label"):
+        assert hover_field in panel_header and hover_field in schema_fields, (
+            f"hover field {hover_field!r} missing from the panel extract"
+        )
+    assert atlas_text.PANEL_DEFAULT_STATE in {r["state"] for r in panel_reader}, (
+        f"default state {atlas_text.PANEL_DEFAULT_STATE} is not in the panel"
+    )
+    # The rank columns are recomputed here from the panel's own value columns and
+    # compared against what stage 4 stored -- an independent read of the same
+    # numbers, so a stage-4 edit that re-points a rank at the wrong source field,
+    # or a whitelist that names a column that is not a rank, cannot reach the
+    # workbook. The mapping is 04_merge.py's RANK_FIELDS, copied on purpose: a
+    # stage-4 change without this copy is exactly what this assert wants to catch.
+    RANK_FIELDS: dict[str, str] = {
+        "rank_mpi": "mpi",
+        "rank_headcount": "headcount_ratio_pct",
+        "rank_intensity": "intensity_pct",
+        "rank_events": "events_per_100k",
+        "rank_deaths": "fatalities_per_100k",
+        "rank_temp": "temp_mean_c",
+    }
+    assert set(RANK_FIELDS) == {name for name, _c, _col in atlas_text.PANEL_MEASURES}, (
+        "the sheet's whitelist and the rank map must name the same columns"
+    )
+    for rank_name, value_name in RANK_FIELDS.items():
+        for year in ("2013", "2016", "2018", "2021"):
+            yr_rows = [r for r in panel_reader if r["survey_year"] == year]
+            yr_rows.sort(key=lambda r: float(r[value_name]), reverse=True)
+            recomputed = 0
+            for i, row in enumerate(yr_rows):
+                if i and float(row[value_name]) != float(yr_rows[i - 1][value_name]):
+                    recomputed = i
+                assert int(row[rank_name]) == recomputed + 1, (
+                    f"{rank_name} in {row['state']} {year} is "
+                    f"{row[rank_name]}, recomputation says {recomputed + 1}"
+                )
+
+    # ---- the pairs board (docs/SHEET_PAIRS.md is the freeze) ----------------
+    # 148 rows: the panel plus the joined atlas constants (stage 4). The menu
+    # fields must be populated (a blank cell would draw a state with a missing
+    # dot and nothing upstream complains); the group stamp must agree with the
+    # atlas; the log columns must satisfy the zero-gridline rule.
+    assert len(pairs_reader) == 148, f"pairs CSV has {len(pairs_reader)} rows, expected 148"
+    assert {r["pcode"] for r in pairs_reader} == atlas_pcodes, (
+        "the pairs CSV does not cover the same 37 states as the atlas"
+    )
+    group_by_state: dict[str, str] = {}
+    for row in pairs_reader:
+        previous = group_by_state.setdefault(row["state"], row["poverty_group"])
+        assert previous == row["poverty_group"], (
+            f"{row['state']} carries two poverty groups: {previous!r}, "
+            f"{row['poverty_group']!r}"
+        )
+    atlas_group = {r["state"]: r["poverty_group"] for r in atlas_reader}
+    assert group_by_state == atlas_group, (
+        "the pairs CSV's 2021 group stamp disagrees with the atlas table"
+    )
+    assert len({r["state"] for r in pairs_reader
+                if r["poverty_group"] == "Poorest 12"}) == 12, (
+        "the pairs panes do not split 12/25"
+    )
+    schema_pairs = {name for name, _dt, _role in PAIRS_COLUMNS}
+    for label, field in PAIRS_MENU:
+        assert field in schema_pairs, f"{field!r} on the pairs menu is not in the extract"
+        for row in pairs_reader:
+            value = float(row[field])   # raises if a menu cell is blank
+            assert value == value, (
+                f"NaN in {field} for {row['state']} {row['survey_year']}"
+            )
+    import math as _math
+    for row in pairs_reader:
+        for raw in ("events_per_100k", "fatalities_per_100k",
+                    "fatalities_per_100k_high"):
+            logged = "log1p_" + raw
+            expected = round(_math.log1p(float(row[raw])), 5)
+            assert float(row[logged]) == expected, (
+                f"{logged} recompute drifted for {row['state']} {row['survey_year']}"
+            )
+            if float(row[raw]) == 0:
+                assert float(row[logged]) == 0.0, (
+                    f"{logged} lost the zero gridline for {row['state']} "
+                    f"{row['survey_year']}"
+                )
+
     declared = (
         {name for name, _type, _role in POLY_COLUMNS}
         | {name for name, _type, _role in SPATIAL_POLY_COLUMNS}
+        | {name for name, _type, _role in PANEL_COLUMNS}
+        | {name for name, _type, _role in PAIRS_COLUMNS}
+        | {name for name, _type, _role in DIM_COLUMNS}
+        | {PAIRS_X_CALC, PAIRS_Y_CALC}
     )
     xml = build_workbook(
-        spatial_context_line(spatial_global), len(poly_reader), len(spatial_poly_reader),
+        spatial_context_line(spatial_global), len(poly_reader),
+        len(spatial_poly_reader), len(panel_reader), len(pairs_reader),
+        dim_bar_order, dim_rows,
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1290,16 +2511,28 @@ def main() -> int:
     poly_n = build_hyper(poly_path, poly_hyper, POLY_COLUMNS)
     spatial_poly_hyper = OUT_DIR / SPATIAL_POLY_HYPER
     spatial_poly_n = build_hyper(spatial_poly_path, spatial_poly_hyper, SPATIAL_POLY_COLUMNS)
+    panel_hyper = OUT_DIR / PANEL_HYPER
+    panel_n = build_hyper(panel_path, panel_hyper, PANEL_COLUMNS)
+    pairs_hyper = OUT_DIR / PAIRS_HYPER
+    pairs_n = build_hyper(pairs_path, pairs_hyper, PAIRS_COLUMNS)
+    dim_hyper = OUT_DIR / DIM_HYPER
+    dim_n = build_hyper(atlas_path, dim_hyper, DIM_COLUMNS)
 
     problems = validate(xml, declared)
     problems += check_hyper_schema(
         [
             (POLY_HYPER, poly_hyper, POLY_COLUMNS),
             (SPATIAL_POLY_HYPER, spatial_poly_hyper, SPATIAL_POLY_COLUMNS),
+            (PANEL_HYPER, panel_hyper, PANEL_COLUMNS),
+            (PAIRS_HYPER, pairs_hyper, PAIRS_COLUMNS),
+            (DIM_HYPER, dim_hyper, DIM_COLUMNS),
         ],
         {
             POLY_HYPER: poly_n,
             SPATIAL_POLY_HYPER: spatial_poly_n,
+            PANEL_HYPER: panel_n,
+            PAIRS_HYPER: pairs_n,
+            DIM_HYPER: dim_n,
         },
     )
     if problems:
@@ -1317,11 +2550,17 @@ def main() -> int:
         # The .twb references the extracts relative to the package root.
         zf.write(poly_hyper, f"Data/{POLY_HYPER}")
         zf.write(spatial_poly_hyper, f"Data/{SPATIAL_POLY_HYPER}")
+        zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
+        zf.write(pairs_hyper, f"Data/{PAIRS_HYPER}")
+        zf.write(dim_hyper, f"Data/{DIM_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(
         f"Extracts validated: {POLY_HYPER} ({poly_n} rows), "
-        f"{SPATIAL_POLY_HYPER} ({spatial_poly_n} rows) match the declared columns"
+        f"{SPATIAL_POLY_HYPER} ({spatial_poly_n} rows), "
+        f"{PANEL_HYPER} ({panel_n} rows), "
+        f"{DIM_HYPER} ({dim_n} rows), "
+        f"{PAIRS_HYPER} ({pairs_n} rows) match the declared columns"
     )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")

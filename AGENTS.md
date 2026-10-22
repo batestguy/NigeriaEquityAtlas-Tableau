@@ -32,8 +32,8 @@ themselves are green. Adding a config that states the intended rule set is an op
 | 2 | `02_acquire_conflict.py` | UCDP GED attributed to 37 states, method recorded per event |
 | 3 | `03_acquire_climate.py` | Open-Meteo daily 1990-2024 for 37 capitals, QC'd on contributing-day count |
 | 4 | `04_merge.py` | the three processed tables + `mpi_polygons.csv` (simplified ADM1 ring vertices for the map, area-checked) + `docs/normalisation.md`, `docs/data_quality.md` |
-| 5 | `05_preview.py` | the workbook's visuals as PNGs — the pre-Tableau QA gate (5 now, one per published view: the two maps and the three reference tabs) |
-| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — **five views and two Hyper extracts** (`mpi_polygons.hyper`, `spatial_polygons.hyper`); `Where poverty sits` and `Where poverty clusters` are **real filled choropleths** (Polygon mark + Path) with **thick white state strokes**, the first banded on the five-step red ramp; `What the words mean` / `The list of basic needs` / `How we did it` are one reference table shipped as three text-zone tabs. All five open and render in Tableau Public 2026.2 |
+| 5 | `05_preview.py` | the workbook's visuals as PNGs — the pre-Tableau QA gate (7 now, one per published view: the two maps, the composition bar, the time panel and the three reference tabs) |
+| 6 | `06_build_twb.py` | `tableau/Nigeria-MPI-Equity-Atlas.twbx` — **eight views and five Hyper extracts** (`mpi_polygons.hyper`, `spatial_polygons.hyper`, `mpi_trends_panel.hyper`, `pairs_board.hyper`, `dimension_shares.hyper`); `Where poverty sits` and `Where poverty clusters` are **real filled choropleths** (Polygon mark + Path) with **thick white state strokes**, the first banded on the five-step red ramp; `A state over time` is the Measure-Names small-multiple panel (one pane per monitored measure × four rounds, Bauchi default, six-measure whitelist, interactive cards on the **left** rail — right-edge cards do not draw in packets this script builds, FIX_LEDGER §H); the 2026-10-21 amendment (FIX_LEDGER §H2) makes it a **rank** panel: the marks draw each state's rank of 37 on those measures (1 = highest, bare-integer labels via the field's `default-format` number format, direction key in the captions and subtitle), and no other variables are in the extract — the hover annotations are pre-formatted string dimensions; the field number format goes on the `<column>` (`default-format`, since a sheet-level `attr='number-format'` rule is rejected by the 2026.2 schema, D2E8DA72) and an integer measure must stay `type='quantitative'` to keep its Measure-Names domain key; `How poverty is made up` (tab 3, 2026-10-22, `docs/SHEET_DIMENSIONS.md`) stacks the three dimension shares per state — its segment numbers are **bold white** via a pane-level `<style-rule element='datalabel'>` (`color-mode='user'`, FIX_LEDGER D-051; the five failed shapes are recorded there), defaults to **17 of 37 bars** (5 poorest + first 12 of the Other 25, all 37 on a left-rail `state` checklist card, D-052) and Rows nest `poverty_group` above `state` so the two blocks read with a pane divider (D-053); `How measures pair` is the pairs board, parameter-driven, looking only (`docs/SHEET_PAIRS.md`); `What the words mean` / `The list of basic needs` / `How we did it` are one reference table shipped as three text-zone tabs. Full workbook opens with no error dialog (2026-10-22); the two newest tabs are packet-verified, publish-time interaction checks pending |
 | 8 | `08_party_alignment.py` | pre-registered federal-alignment test (`docs/party_alignment.md`): `party_alignment_{panel,state,result}.csv`, fills §4. Runs after 04; 05 reads its outputs |
 | 9 | `09_spatial_diagnostics.py` | pre-registered spatial diagnostic (`docs/spatial_analysis.md`, freeze in `docs/spatial_preregistration.md`): shells to `scripts/spatial_diagnostics.R` (sf/spdep/spatialreg), verifies Moran's I, the lag and the neighbourhood types independently in Python, writes `spatial_global.csv` + `spatial_diagnostics.csv` + `spatial_polygons.csv` (the map's rings joined to the types, for the cluster map), fills §3. Runs after 08; 05–06 read its outputs |
 
@@ -67,12 +67,17 @@ It records the five decisions (D1 harmonised series, D2 climate layer, D3 confli
 layer, D4 no causal claim, D5 orderings withdrawn), what the Tableau render test
 found, and what is deliberately left to the GUI.
 
-**Next sheet (agreed, not built):** \docs/SHEET_TIME_PANEL.md\ — "A state over time",
-the Measure-Names small-multiple panel view. Freeze design on build.
+**Latest sheet (built 2026-10-20, pending publish-time interaction checks):**
+\docs/SHEET_TIME_PANEL.md\ — "A state over time", the Measure-Names small-multiple
+panel view. Built to the freeze; the grammar findings and the two remaining manual
+checks (hover annotations, checklist ticking) are recorded there and in
+`docs/PUBLISH.md`. Changes against the freeze are in the doc's "Built" section,
+not silently absorbed.
 
 **Session docs.** \docs/SESSION_HANDOFF.md\ (current state, next steps),
-\docs/CAUSAL_DECISION.md\, \docs/CLAIMS.md\, \docs/FIX_LEDGER.md\,
-\docs/SHEET_TIME_PANEL.md\ (the next sheet's design freeze).
+\docs/CAUSAL_DECISION.md\, \docs/CLAIMS.md\, \docs/FIX_LEDGER.md\ (§H = the time
+panel's render findings),
+\docs/SHEET_TIME_PANEL.md\ (the time panel's design freeze + build record).
 
 **Before publishing, read `docs/CLAIMS.md`, `docs/FIX_LEDGER.md` and
 `docs/CAUSAL_DECISION.md`.** They supersede the earlier assumption that the open
@@ -81,8 +86,8 @@ support, and OPHI's standard errors — published in a file the pipeline already
 downloads — show that **all 36 adjacent state rank pairs overlap at 95%**. So
 "Bauchi has the highest MPI" is not available, and neither is a causal claim.
 
-**The workbook is five views, as of 2026-10-18** — the two maps and the three reference
-tabs (`docs/FIX_LEDGER.md` W1, W2). Where the old defect list stands:
+**The workbook is six views, as of 2026-10-20** — the two maps, the time panel and the
+three reference tabs (`docs/FIX_LEDGER.md` W1, §H). Where the old defect list stands:
 
 - The map was never a map (it drew 74 bar charts) and is now a real filled choropleth
   called `Where poverty sits` — drawn with a Polygon mark + Path field from

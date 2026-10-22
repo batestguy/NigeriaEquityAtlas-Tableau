@@ -36,6 +36,7 @@
       <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
       <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
       <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='dim_hover' datatype='string' name='[dim_hover]' role='dimension' type='nominal' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
@@ -49,6 +50,7 @@
       <column-instance column='[mpi_ci_lo_pct]' derivation='Sum' name='[sum:mpi_ci_lo_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[mpi_ci_hi_pct]' derivation='Sum' name='[sum:mpi_ci_hi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[gov_party]' derivation='None' name='[none:gov_party:nk]' pivot='key' type='nominal' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
       <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
       <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <extract count='-1' enabled='true' units='records'>
@@ -113,9 +115,10 @@
       <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
       <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
       <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='dim_hover' datatype='string' name='[dim_hover]' role='dimension' type='nominal' />
       <column caption='Neighbourhood type (this state&apos;s poverty, beside the states it borders&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
       <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
-      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='quantitative' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
@@ -124,6 +127,7 @@
       <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
       <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
       <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <extract count='-1' enabled='true' units='records'>
@@ -153,6 +157,254 @@
       <semantic-values>
         <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
       </semantic-values>
+    </datasource>
+    <datasource caption='A state over time' inline='true' name='federated.0mpitrends' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0mpitrends'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_trends_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0mpitrends' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='Survey the round comes from' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='Movement OPHI&apos;s change test calls significant (*, **, ***)' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
+      <column caption='Mean annual change since the previous round (MPI points/yr)' datatype='string' name='[mpi_change_label]' role='dimension' type='nominal' />
+      <column caption='Conflict deaths per 100,000 (upper estimate)' datatype='string' name='[deaths_high_label]' role='dimension' type='nominal' />
+      <column caption='MPI · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_mpi]' role='measure' type='quantitative' />
+      <column caption='H % poor · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_headcount]' role='measure' type='quantitative' />
+      <column caption='Intensity A · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_intensity]' role='measure' type='quantitative' />
+      <column caption='Conflict events/100k · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_events]' role='measure' type='quantitative' />
+      <column caption='Conflict deaths/100k · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_deaths]' role='measure' type='quantitative' />
+      <column caption='Capital temp · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_temp]' role='measure' type='quantitative' />
+      <column-instance column='[rank_mpi]' derivation='Sum' name='[sum:rank_mpi:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[rank_headcount]' derivation='Sum' name='[sum:rank_headcount:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[rank_intensity]' derivation='Sum' name='[sum:rank_intensity:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[rank_events]' derivation='Sum' name='[sum:rank_events:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[rank_deaths]' derivation='Sum' name='[sum:rank_deaths:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[rank_temp]' derivation='Sum' name='[sum:rank_temp:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_label]' derivation='None' name='[none:mpi_change_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_significant]' derivation='None' name='[none:mpi_change_significant:nk]' pivot='key' type='nominal' />
+      <column-instance column='[deaths_high_label]' derivation='None' name='[none:deaths_high_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_trends_panel.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[:Measure Names]' type='palette'>
+            <map to='#d62728'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_mpi:qk]&quot;</bucket>
+            </map>
+            <map to='#1f77b4'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_headcount:qk]&quot;</bucket>
+            </map>
+            <map to='#ff7f0e'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_intensity:qk]&quot;</bucket>
+            </map>
+            <map to='#2ca02c'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_events:qk]&quot;</bucket>
+            </map>
+            <map to='#9467bd'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_deaths:qk]&quot;</bucket>
+            </map>
+            <map to='#17becf'>
+              <bucket>&quot;[federated.0mpitrends].[sum:rank_temp:qk]&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
+    <datasource caption='Poverty composition' inline='true' name='federated.0mpidimshare' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0mpidimshare'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/dimension_shares.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0mpidimshare' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='Poverty group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='MPI (as a % of the index)' datatype='string' name='[mpi_label]' role='dimension' type='nominal' />
+      <column caption='Education' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='Health' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='Living standards' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column-instance column='[contrib_education_pct]' derivation='Sum' name='[sum:contrib_education_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_health_pct]' derivation='Sum' name='[sum:contrib_health_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[contrib_living_standards_pct]' derivation='Sum' name='[sum:contrib_living_standards_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_label]' derivation='None' name='[none:mpi_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/dimension_shares.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[:Measure Names]' type='palette'>
+            <map to='#0072B2'>
+              <bucket>&quot;[federated.0mpidimshare].[sum:contrib_education_pct:qk]&quot;</bucket>
+            </map>
+            <map to='#E69F00'>
+              <bucket>&quot;[federated.0mpidimshare].[sum:contrib_health_pct:qk]&quot;</bucket>
+            </map>
+            <map to='#009E73'>
+              <bucket>&quot;[federated.0mpidimshare].[sum:contrib_living_standards_pct:qk]&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
+    <datasource caption='Pairs board' inline='true' name='federated.0mpipairs' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='Extract' name='hyper.0mpipairs'>
+            <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/pairs_board.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+              <relation name='Extract' table='[Extract].[Extract]' type='table' />
+            </connection>
+          </named-connection>
+        </named-connections>
+        <relation connection='hyper.0mpipairs' name='Extract' table='[Extract].[Extract]' type='table' />
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='Pair X position' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='CASE [Parameters].[X axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
+      </column>
+      <column caption='Pair Y position' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='CASE [Parameters].[Y axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
+      </column>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='H (% poor)' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='MPI' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='Depth (avg deprivation among the poor, %)' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='Capital temperature in the round (C)' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='UCDP events per 100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP events per 100k, log(1+rate)' datatype='real' name='[log1p_events_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, log(1+rate)' datatype='real' name='[log1p_fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, upper estimate' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, upper, log(1+rate)' datatype='real' name='[log1p_fatalities_per_100k_high]' role='measure' type='quantitative' />
+      <column caption='MPI standard error (2021)' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='H standard error (2021)' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
+      <column caption='Vulnerable to poverty, % of population (2021)' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='In severe poverty, % of population (2021)' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='Health share of the MPI (2021)' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='Education share of the MPI (2021)' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='Living standards share of the MPI (2021)' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='Population (thousands)' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='People in MPI poverty (thousands)' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='Capital rainfall in the survey year (mm)' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='Capital temperature, 1991-2020 mean (C)' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='Capital rainfall, 1991-2020 mean (mm/yr)' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='Latitude (capital)' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='Longitude (capital)' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
+      <column-instance column='[pair_x_sel]' derivation='Avg' name='[avg:pair_x_sel:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[pair_y_sel]' derivation='Avg' name='[avg:pair_y_sel:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
+      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/pairs_board.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;Nigeria&quot;' />
+      </semantic-values>
+    </datasource>
+    <datasource hasconnection='false' inline='true' name='Parameters' version='18.1'>
+      <aliases enabled='yes' />
+      <column caption='X axis measure' datatype='string' name='[X axis measure]' param-domain-type='list' role='measure' type='nominal' value='&quot;H (% poor)&quot;'>
+        <calculation class='tableau' formula='&quot;H (% poor)&quot;' />
+        <members>
+          <member value='&quot;H (% poor)&quot;' />
+          <member value='&quot;MPI&quot;' />
+          <member value='&quot;Depth (avg deprivation among the poor, %)&quot;' />
+          <member value='&quot;Capital temperature in the round (C)&quot;' />
+          <member value='&quot;UCDP events per 100k&quot;' />
+          <member value='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+          <member value='&quot;UCDP deaths per 100k&quot;' />
+          <member value='&quot;UCDP deaths per 100k, log(1+rate)&quot;' />
+          <member value='&quot;UCDP deaths per 100k, upper estimate&quot;' />
+          <member value='&quot;UCDP deaths per 100k, upper, log(1+rate)&quot;' />
+          <member value='&quot;MPI standard error (2021)&quot;' />
+          <member value='&quot;H standard error (2021)&quot;' />
+          <member value='&quot;Vulnerable to poverty, % of population (2021)&quot;' />
+          <member value='&quot;In severe poverty, % of population (2021)&quot;' />
+          <member value='&quot;Health share of the MPI (2021)&quot;' />
+          <member value='&quot;Education share of the MPI (2021)&quot;' />
+          <member value='&quot;Living standards share of the MPI (2021)&quot;' />
+          <member value='&quot;Population (thousands)&quot;' />
+          <member value='&quot;People in MPI poverty (thousands)&quot;' />
+          <member value='&quot;Capital rainfall in the survey year (mm)&quot;' />
+          <member value='&quot;Capital temperature, 1991-2020 mean (C)&quot;' />
+          <member value='&quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot;' />
+          <member value='&quot;Latitude (capital)&quot;' />
+          <member value='&quot;Longitude (capital)&quot;' />
+        </members>
+      </column>
+      <column caption='Y axis measure' datatype='string' name='[Y axis measure]' param-domain-type='list' role='measure' type='nominal' value='&quot;UCDP events per 100k, log(1+rate)&quot;'>
+        <calculation class='tableau' formula='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+        <members>
+          <member value='&quot;H (% poor)&quot;' />
+          <member value='&quot;MPI&quot;' />
+          <member value='&quot;Depth (avg deprivation among the poor, %)&quot;' />
+          <member value='&quot;Capital temperature in the round (C)&quot;' />
+          <member value='&quot;UCDP events per 100k&quot;' />
+          <member value='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+          <member value='&quot;UCDP deaths per 100k&quot;' />
+          <member value='&quot;UCDP deaths per 100k, log(1+rate)&quot;' />
+          <member value='&quot;UCDP deaths per 100k, upper estimate&quot;' />
+          <member value='&quot;UCDP deaths per 100k, upper, log(1+rate)&quot;' />
+          <member value='&quot;MPI standard error (2021)&quot;' />
+          <member value='&quot;H standard error (2021)&quot;' />
+          <member value='&quot;Vulnerable to poverty, % of population (2021)&quot;' />
+          <member value='&quot;In severe poverty, % of population (2021)&quot;' />
+          <member value='&quot;Health share of the MPI (2021)&quot;' />
+          <member value='&quot;Education share of the MPI (2021)&quot;' />
+          <member value='&quot;Living standards share of the MPI (2021)&quot;' />
+          <member value='&quot;Population (thousands)&quot;' />
+          <member value='&quot;People in MPI poverty (thousands)&quot;' />
+          <member value='&quot;Capital rainfall in the survey year (mm)&quot;' />
+          <member value='&quot;Capital temperature, 1991-2020 mean (C)&quot;' />
+          <member value='&quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot;' />
+          <member value='&quot;Latitude (capital)&quot;' />
+          <member value='&quot;Longitude (capital)&quot;' />
+        </members>
+      </column>
     </datasource>
   </datasources>
   <worksheets>
@@ -189,6 +441,7 @@
       <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
       <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
       <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='dim_hover' datatype='string' name='[dim_hover]' role='dimension' type='nominal' />
       <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
       <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
@@ -204,6 +457,7 @@
       <column-instance column='[mpi_ci_lo_pct]' derivation='Sum' name='[sum:mpi_ci_lo_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[mpi_ci_hi_pct]' derivation='Sum' name='[sum:mpi_ci_hi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[gov_party]' derivation='None' name='[none:gov_party:nk]' pivot='key' type='nominal' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -246,6 +500,9 @@
               <run>Poor people: </run>
               <run><![CDATA[<[federated.0mpipolygons].[sum:mpi_poor_thousands:qk]>]]></run>
               <run> thousand&#10;</run>
+              <run>Made up of: </run>
+              <run><![CDATA[<[federated.0mpipolygons].[none:dim_hover:nk]>]]></run>
+              <run>&#10;</run>
               <run>Governorship 1999&#8211;2021: </run>
               <run><![CDATA[<[federated.0mpipolygons].[none:gov_party:nk]>]]></run>
               <run bold='true'>&#10;&#10;MPI </run>
@@ -304,9 +561,10 @@
       <column caption='mpi_ci_lo_pct' datatype='real' name='[mpi_ci_lo_pct]' role='measure' type='quantitative' />
       <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
       <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
+      <column caption='dim_hover' datatype='string' name='[dim_hover]' role='dimension' type='nominal' />
       <column caption='Neighbourhood type (this state&apos;s poverty, beside the states it borders&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
       <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
-      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='ordinal' />
+      <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='quantitative' />
       <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
       <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
@@ -317,6 +575,7 @@
       <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -349,6 +608,8 @@
               <run bold='true'>Poverty score: </run>
               <run bold='true'><![CDATA[<[federated.0mpispatialpoly].[sum:mpi_pct:qk]>]]></run>
               <run bold='true'>%</run>
+              <run>&#10;Made up of: </run>
+              <run><![CDATA[<[federated.0mpispatialpoly].[none:dim_hover:nk]>]]></run>
               <run>&#10;Average of the </run>
               <run><![CDATA[<[federated.0mpispatialpoly].[sum:neighbours:qk]>]]></run>
               <run> states it borders: </run>
@@ -372,6 +633,404 @@
       </panes>
         <rows>[federated.0mpispatialpoly].[avg:lat:qk]</rows>
         <cols>[federated.0mpispatialpoly].[avg:lon:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='How poverty is made up'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>How poverty is made up</run><run fontsize='9'>  each bar: one state's MPI split across OPHI's three areas · the split is exact, and the bar always totals 100% · shown by default: the five poorest states and the first twelve of the rest · add any other state from the state checklist card on the left rail · bars listed in MPI order, which is not a ranking · health is child mortality only (nutrition is excluded for every state), so it carries the full one-third weight</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='Poverty composition' name='federated.0mpidimshare' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='Poverty group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='MPI (as a % of the index)' datatype='string' name='[mpi_label]' role='dimension' type='nominal' />
+      <column caption='Education' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='Health' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='Living standards' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_label]' derivation='None' name='[none:mpi_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0mpidimshare].[:Measure Names]'>
+            <groupfilter function='union' user:op='manual'>
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpidimshare].[sum:contrib_education_pct:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpidimshare].[sum:contrib_health_pct:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpidimshare].[sum:contrib_living_standards_pct:qk]&quot;" />
+            </groupfilter>
+          </filter>
+          <filter class='categorical' column='[federated.0mpidimshare].[none:state:nk]'>
+            <groupfilter function='union' user:op='manual'>
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Bauchi&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Jigawa&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Kebbi&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Sokoto&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Zamfara&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Plateau&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Nasarawa&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Adamawa&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Kaduna&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Benue&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Kwara&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Ogun&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Oyo&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Cross River&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Bayelsa&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Kogi&quot;" />
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Ondo&quot;" />
+            </groupfilter>
+          </filter>
+          <sort class='manual' column='[federated.0mpidimshare].[none:state:nk]' direction='ASC'>
+            <dictionary>
+            <bucket>&quot;Bauchi&quot;</bucket>
+            <bucket>&quot;Jigawa&quot;</bucket>
+            <bucket>&quot;Kebbi&quot;</bucket>
+            <bucket>&quot;Sokoto&quot;</bucket>
+            <bucket>&quot;Zamfara&quot;</bucket>
+            <bucket>&quot;Yobe&quot;</bucket>
+            <bucket>&quot;Gombe&quot;</bucket>
+            <bucket>&quot;Katsina&quot;</bucket>
+            <bucket>&quot;Borno&quot;</bucket>
+            <bucket>&quot;Taraba&quot;</bucket>
+            <bucket>&quot;Kano&quot;</bucket>
+            <bucket>&quot;Niger&quot;</bucket>
+            <bucket>&quot;Plateau&quot;</bucket>
+            <bucket>&quot;Nasarawa&quot;</bucket>
+            <bucket>&quot;Adamawa&quot;</bucket>
+            <bucket>&quot;Kaduna&quot;</bucket>
+            <bucket>&quot;Benue&quot;</bucket>
+            <bucket>&quot;Kwara&quot;</bucket>
+            <bucket>&quot;Ogun&quot;</bucket>
+            <bucket>&quot;Oyo&quot;</bucket>
+            <bucket>&quot;Cross River&quot;</bucket>
+            <bucket>&quot;Bayelsa&quot;</bucket>
+            <bucket>&quot;Kogi&quot;</bucket>
+            <bucket>&quot;Ondo&quot;</bucket>
+            <bucket>&quot;Ekiti&quot;</bucket>
+            <bucket>&quot;Delta&quot;</bucket>
+            <bucket>&quot;Akwa Ibom&quot;</bucket>
+            <bucket>&quot;Abia&quot;</bucket>
+            <bucket>&quot;FCT&quot;</bucket>
+            <bucket>&quot;Edo&quot;</bucket>
+            <bucket>&quot;Rivers&quot;</bucket>
+            <bucket>&quot;Ebonyi&quot;</bucket>
+            <bucket>&quot;Osun&quot;</bucket>
+            <bucket>&quot;Enugu&quot;</bucket>
+            <bucket>&quot;Imo&quot;</bucket>
+            <bucket>&quot;Anambra&quot;</bucket>
+            <bucket>&quot;Lagos&quot;</bucket>
+            </dictionary>
+          </sort>
+          <sort class='manual' column='[federated.0mpidimshare].[none:poverty_group:nk]' direction='ASC'>
+            <dictionary>
+            <bucket>&quot;Poorest 12&quot;</bucket>
+            <bucket>&quot;Other 25&quot;</bucket>
+            </dictionary>
+          </sort>
+          <aggregation value='true' />
+        </view>
+        <style>          <style-rule element='axis'>
+            <format attr='display' class='0' field='[federated.0mpidimshare].[Multiple Values]' scope='cols' value='false' />
+          </style-rule>
+          <style-rule element='header'>
+            <format attr='width' field='[federated.0mpidimshare].[none:poverty_group:nk]' value='92' />
+          </style-rule>
+</style>
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Bar' />
+          <encodings>
+            <color column='[federated.0mpidimshare].[:Measure Names]' />
+          </encodings>
+          <customized-tooltip show-buttons='false'>
+            <formatted-text>
+              <run bold='true' fontsize='13'><![CDATA[<[federated.0mpidimshare].[none:state:nk]>]]></run>
+              <run> &#183; MPI </run>
+              <run bold='true'><![CDATA[<[federated.0mpidimshare].[none:mpi_label:nk]>]]></run>
+              <run>&#10;Area being shown: </run>
+              <run bold='true'><![CDATA[<[federated.0mpidimshare].[:Measure Names]>]]></run>
+              <run>&#10;</run>
+              <run>of the state's MPI: </run>
+              <run><![CDATA[<[federated.0mpidimshare].[none:dim_hover:nk]>]]></run>
+              <run>&#10;&#10;</run>
+              <run italic='true'>Read the split, not the bar order. The bars follow each state's MPI, but neighbouring states' MPI intervals overlap at 95%, so the order is the point estimate's, not a finding.</run>
+            </formatted-text>
+          </customized-tooltip>
+          <style>
+            <style-rule element='datalabel'>
+              <format attr='color-mode' value='user' />
+              <format attr='color' value='#FFFFFF' />
+              <format attr='font-weight' value='bold' />
+            </style-rule>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='true' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>([federated.0mpidimshare].[none:poverty_group:nk] + [federated.0mpidimshare].[none:state:nk])</rows>
+        <cols>[federated.0mpidimshare].[Multiple Values]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='A state over time'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>A state over time</run><run fontsize='9'>  labels are the state's rank of 37 in that round: 1 = the measure's highest value (poorest MPI, most conflict, hottest capital), higher = away from the extreme · stars flag OPHI-significant movement · not a trend; ranks don't separate at 95%</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='A state over time' name='federated.0mpitrends' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='Survey the round comes from' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='Movement OPHI&apos;s change test calls significant (*, **, ***)' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
+      <column caption='Mean annual change since the previous round (MPI points/yr)' datatype='string' name='[mpi_change_label]' role='dimension' type='nominal' />
+      <column caption='Conflict deaths per 100,000 (upper estimate)' datatype='string' name='[deaths_high_label]' role='dimension' type='nominal' />
+      <column caption='MPI · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_mpi]' role='measure' type='quantitative' />
+      <column caption='H % poor · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_headcount]' role='measure' type='quantitative' />
+      <column caption='Intensity A · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_intensity]' role='measure' type='quantitative' />
+      <column caption='Conflict events/100k · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_events]' role='measure' type='quantitative' />
+      <column caption='Conflict deaths/100k · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_deaths]' role='measure' type='quantitative' />
+      <column caption='Capital temp · rank (1 = highest)' datatype='integer' default-format='&quot;R&quot;0' name='[rank_temp]' role='measure' type='quantitative' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_label]' derivation='None' name='[none:mpi_change_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_significant]' derivation='None' name='[none:mpi_change_significant:nk]' pivot='key' type='nominal' />
+      <column-instance column='[deaths_high_label]' derivation='None' name='[none:deaths_high_label:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0mpitrends].[:Measure Names]'>
+            <groupfilter function='union' user:op='manual'>
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_mpi:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_headcount:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_intensity:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_events:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_deaths:qk]&quot;" />
+          <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_temp:qk]&quot;" />
+            </groupfilter>
+          </filter>
+          <filter class='categorical' column='[federated.0mpitrends].[none:state:nk]'>
+            <groupfilter function='member' level='[none:state:nk]' member="&quot;Bauchi&quot;" />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style>          <style-rule element='axis'>
+            <format attr='display' class='0' field='[federated.0mpitrends].[Multiple Values]' scope='rows' value='false' />
+          </style-rule>
+</style>
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Line' />
+          <encodings>
+            <color column='[federated.0mpitrends].[:Measure Names]' />
+          </encodings>
+          <customized-tooltip show-buttons='false'>
+            <formatted-text>
+              <run bold='true' fontsize='13'><![CDATA[<[federated.0mpitrends].[none:state:nk]>]]></run>
+              <run> &#183; </run>
+              <run bold='true'><![CDATA[<[federated.0mpitrends].[none:survey_year:nk]>]]></run>
+              <run>&#10;Survey the round comes from: </run>
+              <run><![CDATA[<[federated.0mpitrends].[none:survey:nk]>]]></run>
+              <run>&#10;Mean annual change since the previous round (MPI points/yr): </run>
+              <run bold='true'><![CDATA[<[federated.0mpitrends].[none:mpi_change_label:nk]>]]></run>
+              <run>&#10;Movement the OPHI change test calls significant: </run>
+              <run bold='true'><![CDATA[<[federated.0mpitrends].[none:mpi_change_significant:nk]>]]></run>
+              <run>&#10;Conflict deaths per 100,000 people (upper estimate): </run>
+              <run><![CDATA[<[federated.0mpitrends].[none:deaths_high_label:nk]>]]></run>
+              <run>&#10;&#10;</run>
+              <run italic='true'>Line, not a trend: four harmonised rounds per measure (2013 DHS, 2016 and 2018 MICS, 2021 DHS). Neighbouring states' intervals overlap at 95%, so read movement within this state only.</run>
+            </formatted-text>
+          </customized-tooltip>
+          <style>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='true' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>([federated.0mpitrends].[:Measure Names] + [federated.0mpitrends].[Multiple Values])</rows>
+        <cols>[federated.0mpitrends].[none:survey_year:ok]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='How measures pair'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontsize='13'>How measures pair</run><run fontsize='9'>  choose any two measures; points, not a test · panes cut on the 2021 poorest-12 split, so pane slopes are range-restricted · logged axes are log(1+rate) and keep zero-event states on the zero line</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='Pairs board' name='federated.0mpipairs' />
+          </datasources>
+          <datasource-dependencies>
+      <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
+      <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
+      <column caption='poverty_group' datatype='string' name='[poverty_group]' role='dimension' type='nominal' />
+      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='survey' datatype='string' name='[survey]' role='dimension' type='nominal' />
+      <column caption='H (% poor)' datatype='real' name='[headcount_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='MPI' datatype='real' name='[mpi]' role='measure' type='quantitative' />
+      <column caption='Depth (avg deprivation among the poor, %)' datatype='real' name='[intensity_pct]' role='measure' type='quantitative' />
+      <column caption='Capital temperature in the round (C)' datatype='real' name='[temp_mean_c]' role='measure' type='quantitative' />
+      <column caption='UCDP events per 100k' datatype='real' name='[events_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP events per 100k, log(1+rate)' datatype='real' name='[log1p_events_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k' datatype='real' name='[fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, log(1+rate)' datatype='real' name='[log1p_fatalities_per_100k]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, upper estimate' datatype='real' name='[fatalities_per_100k_high]' role='measure' type='quantitative' />
+      <column caption='UCDP deaths per 100k, upper, log(1+rate)' datatype='real' name='[log1p_fatalities_per_100k_high]' role='measure' type='quantitative' />
+      <column caption='MPI standard error (2021)' datatype='real' name='[mpi_se]' role='measure' type='quantitative' />
+      <column caption='H standard error (2021)' datatype='real' name='[headcount_se]' role='measure' type='quantitative' />
+      <column caption='Vulnerable to poverty, % of population (2021)' datatype='real' name='[vulnerable_pct]' role='measure' type='quantitative' />
+      <column caption='In severe poverty, % of population (2021)' datatype='real' name='[severe_pct]' role='measure' type='quantitative' />
+      <column caption='Health share of the MPI (2021)' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
+      <column caption='Education share of the MPI (2021)' datatype='real' name='[contrib_education_pct]' role='measure' type='quantitative' />
+      <column caption='Living standards share of the MPI (2021)' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
+      <column caption='Population (thousands)' datatype='real' name='[population_thousands]' role='measure' type='quantitative' />
+      <column caption='People in MPI poverty (thousands)' datatype='real' name='[mpi_poor_thousands]' role='measure' type='quantitative' />
+      <column caption='Capital rainfall in the survey year (mm)' datatype='real' name='[precip_total_mm]' role='measure' type='quantitative' />
+      <column caption='Capital temperature, 1991-2020 mean (C)' datatype='real' name='[baseline_temp_c]' role='measure' type='quantitative' />
+      <column caption='Capital rainfall, 1991-2020 mean (mm/yr)' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
+      <column caption='Latitude (capital)' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
+      <column caption='Longitude (capital)' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
+            <column caption='Pair X position' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='CASE [Parameters].[X axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
+      </column>
+            <column caption='Pair Y position' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='CASE [Parameters].[Y axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
+      </column>
+      <column-instance column='[pair_x_sel]' derivation='Avg' name='[avg:pair_x_sel:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[pair_y_sel]' derivation='Avg' name='[avg:pair_y_sel:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <datasource-dependencies datasource='Parameters'>
+          <column caption='X axis measure' datatype='string' name='[X axis measure]' param-domain-type='list' role='measure' type='nominal' value='&quot;H (% poor)&quot;'>
+            <calculation class='tableau' formula='&quot;H (% poor)&quot;' />
+            <members>
+              <member value='&quot;H (% poor)&quot;' />
+              <member value='&quot;MPI&quot;' />
+              <member value='&quot;Depth (avg deprivation among the poor, %)&quot;' />
+              <member value='&quot;Capital temperature in the round (C)&quot;' />
+              <member value='&quot;UCDP events per 100k&quot;' />
+              <member value='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+              <member value='&quot;UCDP deaths per 100k&quot;' />
+              <member value='&quot;UCDP deaths per 100k, log(1+rate)&quot;' />
+              <member value='&quot;UCDP deaths per 100k, upper estimate&quot;' />
+              <member value='&quot;UCDP deaths per 100k, upper, log(1+rate)&quot;' />
+              <member value='&quot;MPI standard error (2021)&quot;' />
+              <member value='&quot;H standard error (2021)&quot;' />
+              <member value='&quot;Vulnerable to poverty, % of population (2021)&quot;' />
+              <member value='&quot;In severe poverty, % of population (2021)&quot;' />
+              <member value='&quot;Health share of the MPI (2021)&quot;' />
+              <member value='&quot;Education share of the MPI (2021)&quot;' />
+              <member value='&quot;Living standards share of the MPI (2021)&quot;' />
+              <member value='&quot;Population (thousands)&quot;' />
+              <member value='&quot;People in MPI poverty (thousands)&quot;' />
+              <member value='&quot;Capital rainfall in the survey year (mm)&quot;' />
+              <member value='&quot;Capital temperature, 1991-2020 mean (C)&quot;' />
+              <member value='&quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot;' />
+              <member value='&quot;Latitude (capital)&quot;' />
+              <member value='&quot;Longitude (capital)&quot;' />
+            </members>
+          </column>
+          <column caption='Y axis measure' datatype='string' name='[Y axis measure]' param-domain-type='list' role='measure' type='nominal' value='&quot;UCDP events per 100k, log(1+rate)&quot;'>
+            <calculation class='tableau' formula='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+            <members>
+              <member value='&quot;H (% poor)&quot;' />
+              <member value='&quot;MPI&quot;' />
+              <member value='&quot;Depth (avg deprivation among the poor, %)&quot;' />
+              <member value='&quot;Capital temperature in the round (C)&quot;' />
+              <member value='&quot;UCDP events per 100k&quot;' />
+              <member value='&quot;UCDP events per 100k, log(1+rate)&quot;' />
+              <member value='&quot;UCDP deaths per 100k&quot;' />
+              <member value='&quot;UCDP deaths per 100k, log(1+rate)&quot;' />
+              <member value='&quot;UCDP deaths per 100k, upper estimate&quot;' />
+              <member value='&quot;UCDP deaths per 100k, upper, log(1+rate)&quot;' />
+              <member value='&quot;MPI standard error (2021)&quot;' />
+              <member value='&quot;H standard error (2021)&quot;' />
+              <member value='&quot;Vulnerable to poverty, % of population (2021)&quot;' />
+              <member value='&quot;In severe poverty, % of population (2021)&quot;' />
+              <member value='&quot;Health share of the MPI (2021)&quot;' />
+              <member value='&quot;Education share of the MPI (2021)&quot;' />
+              <member value='&quot;Living standards share of the MPI (2021)&quot;' />
+              <member value='&quot;Population (thousands)&quot;' />
+              <member value='&quot;People in MPI poverty (thousands)&quot;' />
+              <member value='&quot;Capital rainfall in the survey year (mm)&quot;' />
+              <member value='&quot;Capital temperature, 1991-2020 mean (C)&quot;' />
+              <member value='&quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot;' />
+              <member value='&quot;Latitude (capital)&quot;' />
+              <member value='&quot;Longitude (capital)&quot;' />
+            </members>
+          </column>
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+      <panes>
+        <pane selection-relaxation-option='selection-relaxation-allow'>
+          <view>
+            <breakdown value='auto' />
+          </view>
+          <mark class='Circle' />
+          <encodings>
+            <lod column='[federated.0mpipairs].[none:state:nk]' />
+            <lod column='[federated.0mpipairs].[none:survey_year:ok]' />
+          </encodings>
+          <customized-tooltip show-buttons='false'>
+            <formatted-text>
+              <run bold='true' fontsize='13'><![CDATA[<[federated.0mpipairs].[none:state:nk]>]]></run>
+              <run> &#183; </run>
+              <run bold='true'><![CDATA[<[federated.0mpipairs].[none:survey_year:ok]>]]></run>
+              <run> round (</run>
+              <run><![CDATA[<[federated.0mpipairs].[none:survey:nk]>]]></run>
+              <run>)&#10;</run>
+              <run><![CDATA[<[federated.0mpipairs].[none:poverty_group:nk]>]]></run>
+              <run> of the 37 states, by 2021 MPI&#10;X value: </run>
+              <run bold='true'><![CDATA[<[federated.0mpipairs].[avg:pair_x_sel:qk]>]]></run>
+              <run>&#10;Y value: </run>
+              <run bold='true'><![CDATA[<[federated.0mpipairs].[avg:pair_y_sel:qk]>]]></run>
+              <run>&#10;&#10;</run>
+              <run italic='true'>Points, not a test. The panes cut on the 2021 MPI poorest-12 split, so slopes read from them are range-restricted and no test is offered. Logged axes are log(1+rate): a state with zero events sits exactly on the zero line, not off the chart. Rank-pair intervals overlap at 95%, so treat positions side-by-side, not as orderings.&#10;</run>
+            </formatted-text>
+          </customized-tooltip>
+          <style>
+            <style-rule element='mark'>
+              <format attr='mark-labels-show' value='false' />
+            </style-rule>
+          </style>
+        </pane>
+      </panes>
+        <rows>([federated.0mpipairs].[none:poverty_group:nk] + [federated.0mpipairs].[avg:pair_y_sel:qk])</rows>
+        <cols>[federated.0mpipairs].[avg:pair_x_sel:qk]</cols>
       </table>
     </worksheet>
   </worksheets>
@@ -1345,6 +2004,83 @@
         </edge>
       </cards>
     </window>
+    <!-- The composition sheet: its colour card carries the three
+         dimension colours; the grammar is the cluster map's, which is
+         the one right-edge colour card this generator has proven
+         renders (sheet 1's identical declaration never has; keep
+         the Analysis, then Legends, then Colour Legend fallback in
+         mind). -->
+    <window class='worksheet' name='How poverty is made up'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <!-- the interactive state checklist: 37 members, 17
+                 pre-ticked (5 poorest + first 12 of the rest). Grammar
+                 is the time panel's proven filter-card shape, checklist
+                 mode because the reader ticks several states. -->
+            <card mode='checklist' param='[federated.0mpidimshare].[none:state:nk]' type='filter' values='database' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='title' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0mpidimshare].[:Measure Names]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <zoom type='entire-view' />
+      </viewpoint>
+    </window>
+    <!-- The time panel: its two interactive cards. The checklist over the generated
+         Measure Names field is the "measures to watch" picker; the dropdown over
+         state is the state picker (the worksheet filter pins Bauchi as the default
+         member, so the sheet cannot open blank). The pair is standard grammar:
+         <card mode='checklist'/'dropdown' param='[ds].[field]' type='filter' /> as
+         ClinicPerformanceDashboard and HRAnalytics serialise it. But the
+         Measure Names card had no instance to copy from: no downloaded workbook
+         showed the generated field named in a card, so the render test decides.
+         The cards declare on the LEFT edge, not the right, after the first render
+         proved the point the map's colour-card defect already suggested: in
+         packets built by this script, left-edge strips draw and right-edge strips
+         do not (Pages/Filters/Marks drew on the map; the declared right colour
+         card never has). Which side the rail sits on is cosmetic; that the
+         interaction exists is not. The top edge gains the title card so the
+         sheet's frozen subtitle line renders. -->
+    <window class='worksheet' name='A state over time'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card mode='checklist' param='[federated.0mpitrends].[:Measure Names]' type='filter' values='database' />
+            <card mode='dropdown' param='[federated.0mpitrends].[none:state:nk]' type='filter' values='database' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='title' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <zoom type='entire-view' />
+      </viewpoint>
+    </window>
     <window class='dashboard' name='What the words mean'>
       <viewpoints />
       <active id='-1' />
@@ -1356,6 +2092,34 @@
     <window class='dashboard' name='How we did it'>
       <viewpoints />
       <active id='-1' />
+    </window>
+    <!-- The pairs board: its two parameter dropdowns. The cards carry the
+         Parameters datasource (packet A2: the card renders off that block,
+         unused parameters included); both sit on the left rail with the
+         pages/filters/marks stack, the edge the time panel proved draws. -->
+    <window class='worksheet' name='How measures pair'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card mode='compact' param='[Parameters].[X axis measure]' type='parameter' />
+            <card mode='compact' param='[Parameters].[Y axis measure]' type='parameter' />
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='title' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <zoom type='entire-view' />
+      </viewpoint>
     </window>
   </windows>
 </workbook>
