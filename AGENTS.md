@@ -67,6 +67,12 @@ It records the five decisions (D1 harmonised series, D2 climate layer, D3 confli
 layer, D4 no causal claim, D5 orderings withdrawn), what the Tableau render test
 found, and what is deliberately left to the GUI.
 
+**The next build phase is pre-documented: \docs/POLISH_PLAN.md\** (2026-10-22)
+-- the cover tab ("One Country. Two Realities.", illustration, cover-only
+faint green-white-green Nigeria watermark), the sheet-by-sheet polish waves,
+their guardlist and unknowns; wave 0 proves the dashboard grammar before any
+of it touches the shipped twb.
+
 **Latest sheet (built 2026-10-20, pending publish-time interaction checks):**
 \docs/SHEET_TIME_PANEL.md\ — "A state over time", the Measure-Names small-multiple
 panel view. Built to the freeze; the grammar findings and the two remaining manual
