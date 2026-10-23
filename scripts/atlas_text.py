@@ -587,6 +587,93 @@ DIMENSION_HOVER_PREFIX = "of the state's MPI: "
 POVERTY_GROUP_TOP = "Poorest 12"
 POVERTY_GROUP_REST = "Other 25"
 
+# ---------------------------------------------------------------------------
+# "Where Nigeria stands" -- the KPI board against WHO / SDG reference standards
+# (docs/SHEET_KPI.md, frozen 2026-10-23). National-level only: it compares
+# Nigeria with published 2021 international reference values, so it touches no
+# state-level claim (documented in docs/kpi_benchmarks.md and stage 7, which
+# fetches the values and asserts them against OPHI's national row).
+#
+# What the sheet is allowed to say is proportionate ("Nigeria sits this far from
+# the standard") and never causal; what it must NOT do, and what the freeze doc
+# pins, is compare Nigeria's Health *dimension share* with other countries
+# (structurally heavier: child mortality alone -- docs/CAUSAL_DECISION.md).
+# The raw under-5 mortality indicator against WHO standards is the comparison
+# that is available. The "world" line for the headcount is UNDP/OPHI's total
+# across 109 developing countries, and every surface must carry that caveat.
+KPI_TITLE = "Where Nigeria stands"
+KPI_SUBTITLE = (
+    "Nigeria beside its 2021 reference points \u00b7 every row has its own "
+    "scale: a mark's number is its share of that row's largest reference "
+    "\u00b7 the actual values, benchmark and source are on hover, at one "
+    "decimal \u00b7 the world line is developing countries (109 of them, "
+    "OPHI/UNDP), not every country \u00b7 point estimates"
+)
+# One shape mark per reference point, three members, the shapes ARE the
+# series identity (a map of Nigeria / Africa / the world -- KPI_SHAPE_FILES
+# below). Members other than Nigeria carried greys (receding reference points)
+# until the 2026-10-23 render pass, whose user pass pinned the three
+# identification hues explicitly: Nigeria green, sub-Saharan Africa the
+# Tableau categorical blue, world the Tableau categorical orange on a globe.
+# The next pass on the same day went further: the world's globe draws in
+# purple with white coastlines and a lat/long grid, so it reads as a globe
+# rather than a flat map cut into a disc.
+# Colours are single-sourced so the workbook's palette block and the stage-5
+# QA gate cannot drift apart, like MPI_BANDS and SPATIAL_QUADRANTS before it.
+KPI_SERIES: list[tuple[str, str]] = [
+    ("Nigeria (2021)", "#009E73"),
+    ("sub-Saharan Africa (2021)", "#4E79A7"),
+    ("World (2021)", "#9467BD"),
+]
+# The marks are map silhouettes (2026-10-23): each member draws as its own
+# shape -- a map of Nigeria, a map of Africa, a map of the world -- so the
+# reader identifies the reference points by geometry, not by hue. The images
+# are stage 7's silhouettes (data/reference/kpi_shapes, drawn from the atlas's
+# own ADM1 rings and Natural Earth 110m, transparent PNGs on one square
+# canvas); stage 6 embeds them in the workbook's <external><shapes> under the
+# KPI_Geo palette and maps them member-by-member, and the stage-5 gate pastes
+# the same files at the same positions. Keyed by member, so the three surfaces
+# cannot disagree on which image belongs to which series.
+KPI_SHAPE_FILES: dict[str, str] = {
+    "Nigeria (2021)": "nigeria.png",
+    "sub-Saharan Africa (2021)": "africa.png",
+    "World (2021)": "world.png",
+}
+# Row labels: what the sheet's row header prints. Keyed to the kpi names the
+# benchmarks CSV carries (stage 7), with the unit written out, because a bare
+# "117.6" means nothing without it and the axis numbers are abstract shares.
+KPI_ROW_LABELS: dict[str, str] = {
+    "Multidimensional poverty headcount (national)": "Poverty headcount (% of people)",
+    "Under-five mortality rate": "Child deaths under 5 (per 1,000 births)",
+    "Open defecation": "Open defecation (% of people)",
+    "Safely managed sanitation": "Safely managed sanitation (% of people)",
+    "At least basic drinking water": "At least basic drinking water (% of people)",
+    "Access to electricity": "Access to electricity (% of people)",
+    "Access to clean cooking fuels and technologies": "Clean cooking fuel (% of people)",
+}
+# Short source names for the hover line, keyed to the WDI code. The full
+# provenance (fetch date, licence, exact series) stays in the benchmarks CSV
+# and docs/kpi_benchmarks.md; the hover carries the one a reader can act on.
+KPI_SOURCE: dict[str, str] = {
+    "SI.POV.MPUN": "OPHI / UNDP global MPI",
+    "SH.DYN.MORT": "UN IGME",
+    "SH.STA.ODFC.ZS": "WHO / UNICEF JMP",
+    "SH.STA.SMSS.ZS": "WHO / UNICEF JMP",
+    "SH.H2O.BASW.ZS": "WHO / UNICEF JMP",
+    "EG.ELC.ACCS.ZS": "SE4All / UN statistics",
+    "EG.CFT.ACCS.ZS": "SE4All / UN statistics",
+}
+# The static second line of the hover: the direction key is on the sheet
+# because interpretation flips row by row, and no per-row flag lifts it: the
+# reader is told the rule, not a per-mark "good/bad" badge. Trimmed hard in
+# the third 2026-10-23 pass ("reduce the amount of words") -- the causal
+# disclaimer stays, because docs/CAUSAL_DECISION.md forbids losing it.
+KPI_TOOLTIP_NOTE = (
+    "First three rows: lower is better \u00b7 the rest: higher is better "
+    "\u00b7 other countries' figures, for comparison only \u2014 no view of "
+    "what makes any row its size."
+)
+
 DIMENSIONS_CAVEAT = (
     "Read the split, not the bar order. The bars follow each state's MPI, but "
     "neighbouring states' MPI intervals overlap at 95%, so the order is the "

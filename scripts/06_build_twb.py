@@ -47,7 +47,14 @@ Sheet inventory
   6  The list of basic needs       reference table, part 2 of 3: the 11 needs
   7  How we did it                 reference table, part 3 of 3: the 9 steps
 
-  8  How measures pair             the bivariate exploration board: any two of
+  8  Where Nigeria stands          the KPI board against WHO / SDG benchmark
+                                    standards: one row per benchmarked KPI, one
+                                    circle per reference point (Nigeria, sub-
+                                    Saharan Africa, world), positions on each
+                                    row's own scale, hover carries the raw
+                                    values (docs/SHEET_KPI.md). National figures
+                                    only; no per-state panel.
+   9 How measures pair             the bivariate exploration board: any two of
                                    the extract's measures as one point per
                                    state-round, both axes driven by parameter
                                    dropdowns (docs/SHEET_PAIRS.md). Kept on the
@@ -84,6 +91,7 @@ reference tabs now carry.
 
 from __future__ import annotations
 
+import base64
 import csv
 import re
 import sys
@@ -93,7 +101,7 @@ from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
 import atlas_text
-from common import PROCESSED, REPO_ROOT, spatial_context_line
+from common import PROCESSED, REFERENCE, REPO_ROOT, spatial_context_line
 
 OUT_DIR = REPO_ROOT / "tableau"
 VERSION = "18.1"
@@ -254,7 +262,8 @@ def build_hyper(csv_path: Path, out_path: Path,
 
 
 def palette_block(field: str, entries: list[tuple[str, str]],
-                  field_ref: str | None = None) -> str:
+                  field_ref: str | None = None,
+                  shape_entries: list[tuple[str, str]] | None = None) -> str:
     """The datasource's colour-palette style rule: one colour per member.
 
     A discrete field on Colour gets Tableau's *default categorical* palette unless
@@ -288,6 +297,16 @@ def palette_block(field: str, entries: list[tuple[str, str]],
     this one (``type='interpolated'``, or ``type='custom-interpolated'`` with a
     nested ``<color-palette>`` of hex stops and a ``max`` attribute); it does not
     apply to a nominal dimension.
+
+    ``shape_entries`` adds a sibling encoding for the Shape mark class in the
+    same style rule: ``<encoding attr='shape' field='…' type='shape'>`` whose
+    ``<map to='Folder/file.png'>`` carries the palette-folder-prefixed FILE NAME
+    (not a colour -- the `toint` is a path). ``type='shape'`` is the observed
+    spelling, not ``type='palette'`` (every real shape rule in
+    ``CH24_BBOD_ChurnTurnover_Updated.twb``, fetched 2026-10-23, uses ``shape``),
+    and the images live in the workbook's ``<external><shapes>`` block,
+    byte-identical to the files on disk. String buckets are quoted the same way
+    the colour buckets are.
     """
     maps = "".join(
         f"            <map to='{colour}'>\n"
@@ -295,12 +314,26 @@ def palette_block(field: str, entries: list[tuple[str, str]],
         f"            </map>\n"
         for label, colour in entries
     )
+    shape_encoding = ""
+    if shape_entries:
+        shape_maps = "".join(
+            f"            <map to='{image}'>\n"
+            f"              <bucket>{escape(chr(34) + label + chr(34), {chr(34): '&quot;', chr(39): '&apos;'})}</bucket>\n"
+            f"            </map>\n"
+            for label, image in shape_entries
+        )
+        shape_encoding = (
+            f"          <encoding attr='shape' field='{field_ref or f'[none:{escape(field)}:nk]'}' type='shape'>\n"
+            f"{shape_maps}"
+            "          </encoding>\n"
+        )
     return (
         "      <style>\n"
         "        <style-rule element='mark'>\n"
         f"          <encoding attr='color' field='{field_ref or f'[none:{escape(field)}:nk]'}' type='palette'>\n"
         f"{maps}"
         "          </encoding>\n"
+        f"{shape_encoding}"
         "        </style-rule>\n"
         "      </style>\n"
     )
@@ -310,6 +343,7 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
                    ds_name: str, ds_caption: str, conn_name: str,
                    instances: str = "",
                    palette: tuple[str, list[tuple[str, str]]] | None = None,
+                   shape_palette: list[tuple[str, str]] | None = None,
                    captions: dict[str, str] | None = None,
                    default_formats: dict[str, str] | None = None) -> str:
     """One datasource over a packaged Hyper extract, with every column declared.
@@ -343,7 +377,7 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
 
     col_blocks = "".join(cols)
     dbname = f"Data/{hyper_filename}"
-    palette_rule = palette_block(*palette) if palette else ""
+    palette_rule = palette_block(*palette, shape_entries=shape_palette) if palette else ""
     return f"""    <datasource caption='{escape(ds_caption)}' inline='true' name='{ds_name}' version='{VERSION}'>
       <connection class='federated'>
         <named-connections>
@@ -441,6 +475,8 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
                   encodings: str = "", ds_name: str, ds_caption: str,
                   deps: str = "", subtitle: str = "", tooltip: str = "",
                   mark_formats: tuple[tuple[str, str], ...] = (),
+                  pane_mark_formats: tuple[tuple[str, str], ...] = (),
+                  pane_datalabel_attrs: tuple[tuple[str, str], ...] = (),
                   filters: str = "", table_style: str = "",
                   label_colour: str = "") -> str:
     """A tooltip, when given, is Tableau's "customized tooltip": it replaces the
@@ -513,6 +549,30 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
             "              <format attr='font-weight' value='bold' />\n"
             "            </style-rule>\n"
         )
+    # Pane-level mark formats: the Shape marks' size factor lives here in the
+    # real serialisation (CH24's Shape panes carry their
+    # `<format attr='size' … />` inside the pane's mark style rule, beside
+    # mark-labels-show). Anything passed rides under the same rule.
+    pane_mark_lines = "".join(
+        f"              <format attr='{attr}' value='{value}' />\n"
+        for attr, value in pane_mark_formats
+    )
+    # Pane-level datalabel font rules, same element as the label_colour rule
+    # above but for anything else a sheet's labels need (the HR reference
+    # workbook's datalabel rules carry `font-size` 8/9/11 beside color-mode /
+    # font-family). colour-mode='auto' is the form the real sheets with a bare
+    # font-size rule carry; labels keep the default ink.
+    pane_datalabel = ""
+    if pane_datalabel_attrs:
+        body = "".join(
+            f"              <format attr='{attr}' value='{value}' />\n"
+            for attr, value in pane_datalabel_attrs
+        )
+        pane_datalabel = (
+            "            <style-rule element='datalabel'>\n"
+            f"{body}"
+            "            </style-rule>\n"
+        )
     pane = f"""      <panes>
         <pane selection-relaxation-option='selection-relaxation-allow'>
           <view>
@@ -522,9 +582,9 @@ def worksheet_xml(name: str, *, rows: str, cols: str, mark: str = "Automatic",
           <encodings>
 {encodings}          </encodings>
 {tooltip_block}          <style>
-{pane_style}            <style-rule element='mark'>
+{pane_datalabel}{pane_style}            <style-rule element='mark'>
               <format attr='mark-labels-show' value='true' />
-            </style-rule>
+{pane_mark_lines}            </style-rule>
           </style>
         </pane>
       </panes>
@@ -787,6 +847,101 @@ DIM_COLUMNS: list[tuple[str, str, str]] = [
     ("poverty_group", "string", "dimension"),
     ("mpi_label", "string", "dimension"),
 ] + [(field, "real", "measure") for field, _caption, _colour in atlas_text.DIMENSION_SHARES]
+
+
+# --- The KPI board's extract (stage 7, kpi_dots.csv) --------------------------# Sheet "Where Nigeria stands" (docs/SHEET_KPI.md, frozen 2026-10-23): one row
+# per benchmarked KPI, one circle per reference point (Nigeria every row, sub-
+# Saharan Africa where WDI publishes it, world every row), each row on its own
+# scale (stage 7 row-normalises: pos = value / the row's largest reference).
+# The hover carries every raw value pre-formatted (stage 7 composes it from the
+# benchmarks table and atlas_text.KPI_SOURCE), so the reader never reads pos as
+# a figure -- it is layout, not data.
+#
+# Palette risk carried from the pairs board (docs/SHEET_PAIRS.md): the PAIRS
+# datasource could not take a ds-level palette (grey shell on load), but the
+# two maps' and the panel's and the composition sheet's ds-level palettes all
+# render, and this datasource has their shape (plain columns, real member
+# strings), not the pairs' param/CASE shape. Packet check at publish time.
+KP_DS_NAME = "federated.0kpiboard"
+KP_DS_CAPTION = "Where Nigeria stands"
+KP_CONN = "hyper.0kpiboard"
+KP_HYPER = "kpi_dots.hyper"
+SHEET_KPI_TITLE = atlas_text.KPI_TITLE
+KP_COLUMNS: list[tuple[str, str, str]] = [
+    ("kpi", "string", "dimension"),
+    ("series", "string", "dimension"),
+    ("hover", "string", "dimension"),
+    ("pos", "real", "measure"),
+    # The mark label: the one-decimal share the sheet prints BESIDE each
+    # silhouette, composed data-side by stage 7 (the twb number-format lanes
+    # leave the label at Tableau's General 4-decimal print; 2026-10-23).
+    ("pos_label", "string", "dimension"),
+]
+
+# --- The KPI board's Shape marks (2026-10-23): silhouettes instead of circles --
+# The marks are map silhouettes: world / Africa / Nigeria. The grammar is copied
+# byte-shape from a real Tableau-authored twb (CH24_BBOD_ChurnTurnover_Updated,
+# shipped as a sample in roemeren/tableau-workbook-extractor, fetched
+# 2026-10-23), which carries all three pieces:
+#
+#   * the datasource-level rule ``<encoding attr='shape' field=… type='shape'>``
+#     with ``<map to='Folder/file.png'>`` under ``<style-rule element='mark'>``
+#     -- the observed type is `shape`, NOT `palette`, and the `to` is the
+#     palette-folder-prefixed file name, matching the pane-level constant form
+#     ``<format attr='shape' value='Other/transparent.png' />`` the same
+#     workbook (and HR #RWFD) serialises;
+#   * the pane ``<encodings><shape column='…' /></encodings>`` binding, beside
+#     the colour encoding, under ``<mark class='Shape' />``;
+#   * the images EMBEDDED in the twb inside ``<external><shapes>`` as
+#     ``<shape name='Folder/file.png'>base64</shape>``, which is what keeps a
+#     saved/published workbook renderable with no Shapes-repository copy (same
+#     finding as the antichaosdata extraction script: the name carries the
+#     palette path, and extracting by that name reproduces the folder tree).
+#
+# The images themselves are stage 7's silhouettes (data/reference/kpi_shapes,
+# drawn from the atlas's own ADM1 rings and Natural Earth 110m). The mapping is
+# derived from atlas_text.KPI_SHAPE_FILES (the single source shared with the
+# stage-5 gate) -- the asserts in shape_pack_xml fail loudly when a member's
+# file is missing.
+KP_SHAPE_PALETTE: list[tuple[str, str]] = [
+    (member, f"KPI_Geo/{fname}")
+    for member, fname in atlas_text.KPI_SHAPE_FILES.items()
+]
+# The mark-box size factor: Shape marks draw at their default scale unless the
+# pane's mark style-rule pins one (CH24's Shape panes carry
+# ``<format attr='size' value='1.109…|1.785…' />`` at pane level). 1.5 read too
+# small in the 2026-10-23 user pass; 2.5 is the follow-up pass's value, and the
+# render decides again.
+KP_SHAPE_SIZE = "4.0"
+
+
+def shape_pack_xml() -> str:
+    """The workbook's <external><shapes> block: the three silhouettes embedded.
+
+    Tableau embeds custom shapes into the .twb as base64 <shape> children under
+    <external><shapes>, with `name` carrying the palette-folder path (the same
+    `Folder/file.png` the rule's `map to` references). Embedding is what makes
+    the packaged workbook self-contained: saving from Tableau serialises every
+    palette the workbook references this way, so nothing outside Data/ is
+    needed at open time, and nothing has to be in My Tableau Repository
+    either. Only the three files the palette maps to are embedded; the
+    repository's default palettes resolve from the install.
+    """
+    source = REFERENCE / "kpi_shapes"
+    shapes_hdr = "  <external>\n    <shapes>\n"
+    shapes_body = ""
+    for _member, image in KP_SHAPE_PALETTE:
+        path = source / image.split("/")[-1]
+        assert path.exists(), (
+            f"missing silhouette {path.name}: run scripts/07_kpi_reference.py first"
+        )
+        payload = path.read_bytes()
+        assert len(payload) > 2000, f"{path.name} is suspiciously small"
+        encoded = base64.b64encode(payload).decode("ascii")
+        wrapped = "\n".join(encoded[i:i + 88] for i in range(0, len(encoded), 88))
+        shapes_body += f"      <shape name='{image}'>{wrapped}</shape>\n"
+    shapes_ftr = "    </shapes>\n  </external>\n"
+    return shapes_hdr + shapes_body + shapes_ftr
 
 
 def pairs_case_formula(param: str) -> str:
@@ -1284,11 +1439,12 @@ def table_dashboards() -> list[tuple[str, str]]:
 def build_workbook(spatial_technical: str,
                    poly_rows: int, spatial_poly_rows: int, panel_rows: int,
                    pairs_rows: int, dim_bar_order: list[str],
-                   dim_rows: int) -> str:
+                   dim_rows: int, kpi_rows: int,
+                   kpi_order: list[str]) -> str:
     """The workbook: two maps drawn from the same rings, the composition bar, the
-    time panel, the pairs board, and the reference table.
+    time panel, the KPI board, the pairs board, and the reference table.
 
-    Five extracts, five datasources, plus the inline Parameters pseudo-datasource
+    Six extracts, six datasources, plus the inline Parameters pseudo-datasource
     the pairs board's two dropdowns read. The atlas, party-alignment and
     spatial-diagnostic extracts were withdrawn on 2026-10-18 with the sheets that
     drew them (module docstring); the trends panel is the one extract that came
@@ -1930,6 +2086,157 @@ def build_workbook(spatial_technical: str,
         "    </window>\n"
     )
 
+    # ---- sheet 3c: the KPI board, between the reference tabs and the pairs --
+    # The frozen national sheet (docs/SHEET_KPI.md): one row per benchmarked
+    # KPI, one Shape mark per reference point (2026-10-23: map silhouettes --
+    # world / Africa / Nigeria -- instead of circles; the shapes identify the
+    # series and the colour pill stays for the legend), shapes mapped by the
+    # ds-level `type='shape'` rule (KP_SHAPE_PALETTE, grammar note there) and
+    # embedded in the workbook by shape_pack_xml. Rows in the CSV's own order
+    # via the same manual sort dictionary the composition sheet proves
+    # (class='manual', quoted buckets, RegionalSalesDashboard's shape). The
+    # hover is one pre-formatted string dimension (stage 7); the second tooltip
+    # line is the static direction key from atlas_text, so no mark draws a
+    # good/bad badge.
+    kpi_captions = {
+        "kpi": "Indicator",
+        "series": "Reference point (2021)",
+        "pos": "Share of this row's largest reference point",
+        "pos_label": "Value beside the map",
+        "hover": "Values behind this mark",
+    }
+    # The field's own one-decimal number format (2026-10-23 user pass): the
+    # printed labels and the axis ticks read 0.0-1.0, not 0.00-1.00. Same lane
+    # as the rank panel's number format -- default-format ON the <column>, in
+    # both copies (worksheet deps + datasource), never a style rule (D2E8DA72).
+    kpi_formats = {"pos": "0.0"}
+    kpi_deps = deps_xml(KP_COLUMNS, kpi_captions, kpi_formats)
+    assert len(kpi_order) == 7, (
+        f"the KPI board's row order has {len(kpi_order)} rows, expected 7"
+    )
+
+    def kpi_filters(order: list[str]) -> str:
+        """The KPI rows in the benchmarks table's own order.
+
+        Alphabetical order would put "Child deaths..." before "Poverty
+        headcount..." and bury the headline row; the manual dictionary pins the
+        CSV's narrative order (poverty first, then health, then living
+        standards), the grammar the composition sheet proves for string
+        dimensions (class='manual').
+        """
+        buckets = "".join(
+            f"            <bucket>&quot;{escape(row)}&quot;</bucket>\n"
+            for row in order
+        )
+        return (
+            f"          <sort class='manual' column='[{KP_DS_NAME}].[none:kpi:nk]' "
+            "direction='ASC'>\n"
+            "            <dictionary>\n"
+            f"{buckets}"
+            "            </dictionary>\n"
+            "          </sort>\n"
+        )
+
+    def kpi_axis_ticks() -> str:
+        """The position axis' major ticks at 0 / 0.5 / 1 (2026-10-23 user pass).
+
+        Grammar from a real Tableau-authored workbook (hr_rwfd.twb), whose axis
+        style-rule carries an `<encoding attr='space' … major-origin='0'
+        major-spacing='800' … type='space' />` beside its tick-color formats --
+        the serialisation of the axis' manual tick spacing, in data units. For
+        a 0-1 share axis the spacing 0.5 should land ticks at 0, 0.5 and 1.
+        This grammar was never exercised in this repo: if the workbook fails to
+        load or the ticks render unchecked, delete this rule and let Tableau
+        pick its default ticks (the fallback documented in SHEET_KPI.md).
+        """
+        return (
+            "          <style-rule element='axis'>\n"
+            f"            <encoding attr='space' class='0' field='{ref('pos', 'avg', KP_DS_NAME)}' "
+            "field-type='quantitative' major-origin='0' major-spacing='0.5' "
+            "scope='cols' type='space' />\n"
+            "          </style-rule>\n"
+        )
+
+    def kpi_tooltip_runs() -> str:
+        """The runs inside the KPI board's customized tooltip.
+
+        Run 1 is the whole pre-formatted line (stage 7): every raw value, the
+        benchmark text and the source, one run, as the time panel ships its
+        annotations. Run 2 is the static direction key -- the interpretation
+        flips row by row, so the reader is told the rule rather than given a
+        per-mark badge. Every run carries at least one character (Tableau
+        drops whitespace-only runs; the newline leads run 2 so it is not an
+        empty run of its own).
+        """
+        return (
+            f"              <run bold='true'><![CDATA[<{ref('hover', 'dim', KP_DS_NAME)}>]]></run>\n"
+            f"              <run italic='true'>&#10;{escape(atlas_text.KPI_TOOLTIP_NOTE)}</run>\n"
+        )
+
+    sheet_kpi = worksheet_xml(
+        SHEET_KPI_TITLE,
+        subtitle=atlas_text.KPI_SUBTITLE,
+        rows=f"[{KP_DS_NAME}].[none:kpi:nk]",
+        cols=ref("pos", "avg", KP_DS_NAME),
+        mark="Shape",
+        encodings=(
+            f"            <lod column='{ref('hover', 'dim', KP_DS_NAME)}' />\n"
+            f"            <color column='{ref('series', 'dim', KP_DS_NAME)}' />\n"
+            f"            <shape column='{ref('series', 'dim', KP_DS_NAME)}' />\n"
+            # The Label pill carries the pre-formatted one-decimal string, the
+            # proven Shape-mark labels-from-a-string-dimension shape (CH24's
+            # Legend sheet: shape + text columns beside the same member). With
+            # a pill on Label, the printed label is THAT string -- the
+            # mark-labels-show rule below just turns the printing on.
+            f"            <text column='{ref('pos_label', 'dim', KP_DS_NAME)}' />\n"
+        ),
+        pane_mark_formats=(("size", KP_SHAPE_SIZE),
+                           ("mark-labels-cull", "true")),
+        pane_datalabel_attrs=(("color-mode", "auto"), ("font-size", "7")),
+        ds_name=KP_DS_NAME,
+        ds_caption=KP_DS_CAPTION,
+        deps=kpi_deps,
+        filters=kpi_filters(kpi_order),
+        tooltip=kpi_tooltip_runs(),
+        table_style=kpi_axis_ticks(),
+    )
+    kpi_window = (
+        "    <!-- The KPI board: left rail (the proven stack) plus the right-edge\n"
+        "         colour card, the composition sheet's shape, which is the one\n"
+        "         right-edge colour card this generator has proven renders (sheet\n"
+        "         1's identical declaration never has; keep the Analysis / Legends\n"
+        "         / Colour Legend fallback in mind, and the pairs-datasource\n"
+        "         palette lesson: this datasource's ds-level palette is a packet\n"
+        "         check at publish time). -->\n"
+        f"    <window class='worksheet' name='{escape(SHEET_KPI_TITLE)}'>\n"
+        "      <cards>\n"
+        "        <edge name='left'>\n"
+        "          <strip size='160'>\n"
+        "            <card type='pages' />\n"
+        "            <card type='filters' />\n"
+        "            <card type='marks' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "        <edge name='right'>\n"
+        "          <strip size='160'>\n"
+        f"            <card pane-specification-id='0' param='[{KP_DS_NAME}].[none:series:nk]' type='color' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "        <edge name='top'>\n"
+        "          <strip size='2147483647'>\n"
+        "            <card type='columns' />\n"
+        "          </strip>\n"
+        "          <strip size='31'>\n"
+        "            <card type='title' />\n"
+        "          </strip>\n"
+        "        </edge>\n"
+        "      </cards>\n"
+        "      <viewpoint>\n"
+        "        <zoom type='entire-view' />\n"
+        "      </viewpoint>\n"
+        "    </window>\n"
+    )
+
     # ---- sheet 3b: the pairs board, after the time panel --------------------
     # The frozen exploration sheet (docs/SHEET_PAIRS.md): any two continuous
     # measures as one point per state-round, split into the two 2021
@@ -2052,10 +2359,10 @@ def build_workbook(spatial_technical: str,
         <zoom type='entire-view' />
       </viewpoint>
     </window>
-{tab_windows}{pairs_window}  </windows>
+{tab_windows}{kpi_window}{pairs_window}  </windows>
 """
 
-    # Six datasources: five extract-backed and the inline Parameters
+    # Seven datasources: six extract-backed and the inline Parameters
     # pseudo-datasource the pairs board's dropdowns read. Each declares the
     # instances of its own sheet only: a datasource must not declare an
     # instance for a field that lives in the other extract (it loads as "the
@@ -2121,8 +2428,26 @@ def build_workbook(spatial_technical: str,
             "[:Measure Names]",
         ),
     )
-    # The pairs board's datasource: the panel-atlas join plus the two CASE
-    # columns appended to the field list (their <column> blocks carry a
+    # The KPI board's datasource: the drawn sheet's 20 marks, with the ds-level
+    # palette on `series` (one colour per member, the map/panel/composition
+    # shape -- NOT the pairs datasource's failed variant; see the constants
+    # block comment). Instances mirror the worksheet's shelves, captions are
+    # the same map the worksheet deps carry.
+    kpi_ds = datasource_xml(
+        KP_COLUMNS, KP_HYPER, kpi_rows,
+        KP_DS_NAME, KP_DS_CAPTION, KP_CONN,
+        instances=column_instances(sheet_kpi),
+        captions=kpi_captions,
+        # The one-decimal field format must match the worksheet deps copy --
+        # same rule as the captions (Tableau repeats it in both places).
+        default_formats=kpi_formats,
+        palette=("series", list(atlas_text.KPI_SERIES)),
+        # The Shape marks' member -> silhouette mapping, in the same
+        # ds-level style rule as the colour palette (grammar note at
+        # KP_SHAPE_PALETTE).
+        shape_palette=KP_SHAPE_PALETTE,
+    )
+    # The pairs board's datasource: the panel-atlas join plus the two CASE    # columns appended to the field list (their <column> blocks carry a
     # <calculation> child, which datasource_xml's plain columns don't emit).
     pairs_ds = datasource_xml(
         PAIRS_COLUMNS, PAIRS_HYPER, pairs_rows,
@@ -2147,6 +2472,10 @@ def build_workbook(spatial_technical: str,
     calc_at_ds = pairs_calc_columns_xml()
     pairs_ds = pairs_ds.replace(aliases_marker, aliases_marker + calc_at_ds, 1)
     parameters_ds = parameters_ds_xml(PAIRS_DEFAULT_X, PAIRS_DEFAULT_Y)
+    # The KPI silhouettes, embedded in the workbook (see shape_pack_xml); the
+    # real tree order puts <external> after the window/dashboard blocks and
+    # before the workbook element closes.
+    shape_pack = shape_pack_xml()
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -2155,10 +2484,10 @@ def build_workbook(spatial_technical: str,
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{poly_ds}{spatial_poly_ds}{panel_ds}{dim_ds}{pairs_ds}{parameters_ds}  </datasources>
+{poly_ds}{spatial_poly_ds}{panel_ds}{dim_ds}{kpi_ds}{pairs_ds}{parameters_ds}  </datasources>
   <worksheets>
-{sheet_map}{sheet_cluster}{sheet_dim}{sheet_time}{sheet_pairs}  </worksheets>
-{dashboards}{windows}</workbook>
+{sheet_map}{sheet_cluster}{sheet_dim}{sheet_time}{sheet_kpi}{sheet_pairs}  </worksheets>
+{dashboards}{windows}{shape_pack}</workbook>
 """
 
 
@@ -2224,7 +2553,7 @@ def validate(xml: str, declared: set[str]) -> list[str]:
             problems.append(f"field reference to undeclared column {name!r} in {token}")
     for ds in ("[federated.0mpipolygons]", "[federated.0mpispatialpoly]",
                "[federated.0mpitrends]", "[federated.0mpipairs]",
-               "[Parameters]"):
+               "[federated.0kpiboard]", "[Parameters]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
     return problems
@@ -2293,8 +2622,9 @@ def main() -> int:
     spatial_global_path = PROCESSED / "spatial_global.csv"
     panel_path = PROCESSED / "mpi_trends_panel.csv"
     pairs_path = PROCESSED / "mpi_pairs_148.csv"
+    kpi_path = PROCESSED / "kpi_dots.csv"
     for path in (atlas_path, poly_path, spatial_path, spatial_poly_path,
-                 spatial_global_path, panel_path, pairs_path):
+                 spatial_global_path, panel_path, pairs_path, kpi_path):
         if not path.exists():
             raise SystemExit(
                 f"missing {path}; run scripts/04_merge.py and "
@@ -2312,6 +2642,7 @@ def main() -> int:
     spatial_global = read(spatial_global_path)
     panel_reader = read(panel_path)
     pairs_reader = read(pairs_path)
+    kpi_reader = read(kpi_path)
 
     # The atlas table is drawn by no sheet any more, but it stays the reference both
     # maps are checked against: it is the source of the band labels, and its 37
@@ -2518,18 +2849,69 @@ def main() -> int:
                     f"{row['survey_year']}"
                 )
 
+    # ---- the KPI board (docs/SHEET_KPI.md is the freeze) --------------------
+    # 20 marks: 7 benchmarked KPIs x their reference points (the headcount row
+    # has no sub-Saharan-Africa WDI figure, so 2 marks there). What this gate
+    # checks is what would draw wrong: a series the palette has no colour for,
+    # a position outside the row's own (0, 1], a row that lost its Nigeria
+    # mark, or a hover line that reached the reader empty.
+    assert len(kpi_reader) == 20, f"kpi_dots.csv has {len(kpi_reader)} rows, expected 20"
+    kp_series = {label for label, _colour in atlas_text.KPI_SERIES}
+    # Every member the extract draws must have a silhouette mapped, and every
+    # mapped file must exist (shape_pack_xml would fail on a build past this
+    # assert anyway, but naming the check here makes the failure read right:
+    # a series with no image is a drawn error, not a missing file).
+    assert kp_series == {member for member, _img in KP_SHAPE_PALETTE}, (
+        "KPI_SERIES members and the shape palette disagree: "
+        f"{sorted(kp_series)} vs {sorted(m for m, _ in KP_SHAPE_PALETTE)}"
+    )
+    kpi_rows_seen: dict[str, set[str]] = {}
+    for mark in kpi_reader:
+        assert mark["series"] in kp_series, (
+            f"series {mark['series']!r} has no colour in atlas_text.KPI_SERIES"
+        )
+        assert mark["kpi"] in atlas_text.KPI_ROW_LABELS.values(), (
+            f"row label {mark['kpi']!r} is not in atlas_text.KPI_ROW_LABELS"
+        )
+        pos = float(mark["pos"])
+        assert 0 < pos <= 1.0, (
+            f"{mark['kpi']} / {mark['series']}: pos {pos:.3f} out of (0, 1]"
+        )
+        assert mark["hover"].strip(), f"{mark['kpi']}: empty hover"
+        kpi_rows_seen.setdefault(mark["kpi"], set()).add(mark["series"])
+    kp_expected = set(atlas_text.KPI_ROW_LABELS.values())
+    assert set(kpi_rows_seen) == kp_expected, (
+        "the KPI board's rows and the frozen row labels disagree: "
+        f"{sorted(set(kpi_rows_seen) ^ kp_expected)}"
+    )
+    for kpi, series in kpi_rows_seen.items():
+        assert "Nigeria (2021)" in series, f"{kpi}: no Nigeria mark"
+        assert len(series) in {2, 3}, f"{kpi}: unexpected mark set {sorted(series)}"
+    # SSA is absent exactly where WDI does not publish it: the headcount row.
+    ssa_absent = [kpi for kpi, series in kpi_rows_seen.items()
+                  if "sub-Saharan Africa (2021)" not in series]
+    assert ssa_absent == [atlas_text.KPI_ROW_LABELS[
+        "Multidimensional poverty headcount (national)"
+    ]], f"unexpected rows without a sub-Saharan Africa mark: {ssa_absent}"
+    # Row order: first appearance in the CSV, which is stage 7's narrative
+    # order (poverty, then health, then living standards). The manual sort
+    # dictionary ships exactly this list.
+    kpi_order = list(dict.fromkeys(r["kpi"] for r in kpi_reader))
+    assert len(kpi_order) == 7, "the KPI board's row order lost a row"
+
     declared = (
         {name for name, _type, _role in POLY_COLUMNS}
         | {name for name, _type, _role in SPATIAL_POLY_COLUMNS}
         | {name for name, _type, _role in PANEL_COLUMNS}
         | {name for name, _type, _role in PAIRS_COLUMNS}
         | {name for name, _type, _role in DIM_COLUMNS}
+        | {name for name, _type, _role in KP_COLUMNS}
         | {PAIRS_X_CALC, PAIRS_Y_CALC}
     )
     xml = build_workbook(
         spatial_context_line(spatial_global), len(poly_reader),
         len(spatial_poly_reader), len(panel_reader), len(pairs_reader),
-        dim_bar_order, dim_rows,
+        dim_bar_order, dim_rows, len(kpi_reader), kpi_order,
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -2543,6 +2925,8 @@ def main() -> int:
     pairs_n = build_hyper(pairs_path, pairs_hyper, PAIRS_COLUMNS)
     dim_hyper = OUT_DIR / DIM_HYPER
     dim_n = build_hyper(atlas_path, dim_hyper, DIM_COLUMNS)
+    kpi_hyper = OUT_DIR / KP_HYPER
+    kpi_n = build_hyper(kpi_path, kpi_hyper, KP_COLUMNS)
 
     problems = validate(xml, declared)
     problems += check_hyper_schema(
@@ -2552,6 +2936,7 @@ def main() -> int:
             (PANEL_HYPER, panel_hyper, PANEL_COLUMNS),
             (PAIRS_HYPER, pairs_hyper, PAIRS_COLUMNS),
             (DIM_HYPER, dim_hyper, DIM_COLUMNS),
+            (KP_HYPER, kpi_hyper, KP_COLUMNS),
         ],
         {
             POLY_HYPER: poly_n,
@@ -2559,6 +2944,7 @@ def main() -> int:
             PANEL_HYPER: panel_n,
             PAIRS_HYPER: pairs_n,
             DIM_HYPER: dim_n,
+            KP_HYPER: kpi_n,
         },
     )
     if problems:
@@ -2579,6 +2965,7 @@ def main() -> int:
         zf.write(panel_hyper, f"Data/{PANEL_HYPER}")
         zf.write(pairs_hyper, f"Data/{PAIRS_HYPER}")
         zf.write(dim_hyper, f"Data/{DIM_HYPER}")
+        zf.write(kpi_hyper, f"Data/{KP_HYPER}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(
@@ -2586,7 +2973,8 @@ def main() -> int:
         f"{SPATIAL_POLY_HYPER} ({spatial_poly_n} rows), "
         f"{PANEL_HYPER} ({panel_n} rows), "
         f"{DIM_HYPER} ({dim_n} rows), "
-        f"{PAIRS_HYPER} ({pairs_n} rows) match the declared columns"
+        f"{PAIRS_HYPER} ({pairs_n} rows), "
+        f"{KP_HYPER} ({kpi_n} rows) match the declared columns"
     )
     print(f"wrote {twb_path.relative_to(REPO_ROOT)} ({twb_path.stat().st_size/1024:.0f} KB)")
     print(f"wrote {twbx_path.relative_to(REPO_ROOT)} ({twbx_path.stat().st_size/1024:.0f} KB)")

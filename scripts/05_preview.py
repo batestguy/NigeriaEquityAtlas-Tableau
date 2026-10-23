@@ -4,9 +4,9 @@ This is the QA gate. A colour that drifts, a state whose type changes, or a tabl
 with a missing cell is caught here, in Python, before the workbook is opened -- which
 is what a gate is for.
 
-Seven previews, in tab order, one per published view (eight sheets since the
-composition bar and pairs board joined; the three reference tabs are one sheet
-in three files):
+Eight previews, in tab order, one per published view (nine sheets since the
+KPI board joined 2026-10-23; the three reference tabs are one sheet in three
+files):
 
 1. Where poverty sits            filled choropleth, the five MPI bands the
                                  workbook draws, in the colours it draws them
@@ -24,14 +24,17 @@ in three files):
 6. The list of basic needs       reference tab 2 of 3, same gate
 7. How we did it                 reference tab 3 of 3 -- the gate for a table
                                  is missing cells and misfiled rows
-8. How measures pair             the pairs board (docs/SHEET_PAIRS.md) on its
+8. Where Nigeria stands          the KPI board (docs/SHEET_KPI.md): one row
+                                 per benchmarked KPI, one dot per reference
+                                 point, in the sheet's three colours
+9. How measures pair             the pairs board (docs/SHEET_PAIRS.md) on its
                                  default pair, green circles, points only
 
 The reference table is one table shipped as three tabs, cut on the three groups it
 already had: as a single dashboard it measured 2000 x 8720 px (docs/FIX_LEDGER.md W2).
 The gate follows the tabs, so the numbering is per-part and not per-table.
 
-Previews 2-6 and 8 used to exist: the conflict overlay, the gradient plot, the
+Previews 2-6 and 9 used to exist: the conflict overlay, the gradient plot, the
 radar, the party panel and the Moran scatter. Their sheets were withdrawn on
 2026-10-18 (docs/FIX_LEDGER.md W1) and the previews went with them -- a gate for
 a sheet that is not in the workbook cannot gate anything. The original dimension
@@ -60,6 +63,8 @@ from matplotlib.axes import Axes
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.image as mtpl_image  # noqa: E402
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage  # noqa: E402
 from matplotlib.patches import Patch, Polygon as MplPolygon  # noqa: E402
 
 import atlas_text  # noqa: E402
@@ -73,6 +78,7 @@ from common import (  # noqa: E402
 PREVIEW = DOCS / "preview"
 ATLAS = PROCESSED / "mpi_atlas_2021.csv"
 PAIRS = PROCESSED / "mpi_pairs_148.csv"
+KPI_DOTS = PROCESSED / "kpi_dots.csv"
 
 INK = "#22252a"
 
@@ -643,8 +649,106 @@ def visual_state_over_time() -> None:
     print("  4_state_over_time.png")
 
 
+def visual_kpi_board() -> None:
+    """8. "Where Nigeria stands" -- the silhouette board against WHO / SDG refs.
+
+    One row per benchmarked KPI, one map silhouette per reference point
+    (Nigeria, sub-Saharan Africa where WDI publishes it, world), at the
+    row-normalised position `pos` from kpi_dots.csv. The silhouettes are the
+    same files the workbook embeds (atlas_text.KPI_SHAPE_FILES ->
+    data/reference/kpi_shapes), pasted with AnnotationBbox -- so the gate
+    catches what the extract can get wrong: a mark out of (0, 1], a series
+    missing, a row whose marks lost their neighbours, or a silhouette file
+    that stopped existing. Marks draw in the CSV's row order per row, so
+    Nigeria's silhouette lands on top exactly as the sheet draws it; colours
+    bind to atlas_text.KPI_SERIES so gate and workbook palette cannot drift.
+    """
+    col = read(KPI_DOTS)
+    assert len(col) == 20, f"KPI dots gate has {len(col)} rows, expected 20"
+    colours = dict(atlas_text.KPI_SERIES)
+    rows: list[tuple[str, list[tuple[str, float]]]] = []
+    for row in col:
+        pos = float(row["pos"])
+        assert 0 < pos <= 1.0, f"{row['kpi']} / {row['series']}: pos {pos:.3f} out of (0, 1]"
+        assert row["series"] in colours, (
+            f"series {row['series']!r} has no colour in atlas_text.KPI_SERIES"
+        )
+        assert row["hover"].strip(), f"{row['kpi']}: empty hover"
+        if not rows or rows[-1][0] != row["kpi"]:
+            rows.append((row["kpi"], []))
+        rows[-1][1].append((row["series"], pos))
+    assert len(rows) == 7, f"KPI dots gate has {len(rows)} rows of marks, expected 7"
+
+    fig, ax = plt.subplots(figsize=(9.6, 6.0))
+    fig.subplots_adjust(left=0.295, right=0.985, top=0.74, bottom=0.11)
+    names = [r[0] for r in rows]
+    shapes_dir = Path(__file__).resolve().parent.parent / "data" / "reference" / "kpi_shapes"
+    assert atlas_text.KPI_SHAPE_FILES and set(atlas_text.KPI_SHAPE_FILES) == set(colours), (
+        "KPI_SHAPE_FILES and KPI_SERIES name different member sets"
+    )
+    images = {}
+    for member, fname in atlas_text.KPI_SHAPE_FILES.items():
+        path = shapes_dir / fname
+        assert path.exists(), (
+            f"missing silhouette {fname}: run scripts/07_kpi_reference.py first"
+        )
+        images[member] = mtpl_image.imread(str(path))
+    handle_seen: set[str] = set()
+    handles = []
+    # zoom tracks the sheet's mark-box feel: at 170 dpi the icon canvas spans
+    # ~70% of a row band (the fourth 2026-10-23 pass made the maps bigger
+    # again, size factor 4.0), so the maps read at row-label scale.
+    zoom = 0.115
+    for i, (_name, marks) in enumerate(rows):
+        y = len(rows) - 1 - i  # first row of the CSV on top, like the sheet
+        prev_pos: float | None = None
+        for series, pos in marks:
+            # A tied position would print the two labels on top of each
+            # other; step the later one aside the way the sheet's marks
+            # stack in draw order anyway.
+            dx = 14 if prev_pos is not None and abs(pos - prev_pos) < 0.03 else 0
+            prev_pos = pos
+            ab = AnnotationBbox(
+                OffsetImage(images[series], zoom=zoom),
+                (pos, y), frameon=False, zorder=3,
+            )
+            ax.add_artist(ab)
+            # The sheet prints each mark's share at one decimal beside it
+            # (the 2026-10-23 label pass); the gate prints the same numbers
+            # from the same column, small, so the two cannot drift apart.
+            ax.annotate(f"{pos:.1f}", (pos, y), xytext=(dx, 15),
+                        textcoords="offset points", ha="center",
+                        fontsize=6.0, color="#555555", zorder=4)
+            if series not in handle_seen:
+                handle_seen.add(series)
+                handles.append(plt.Line2D([], [], marker="o", linestyle="none",
+                                          markersize=8.5,
+                                          markerfacecolor=colours[series],
+                                          markeredgecolor="none", label=series))
+    ax.set_yticks(range(len(rows)), labels=list(reversed(names)), fontsize=8.6)
+    ax.set_xlim(0, 1.04)
+    ax.set_ylim(-0.6, len(rows) - 0.4)
+    # The axis returned in the third 2026-10-23 user pass, with ticks pinned
+    # to 0 / 0.5 / 1 (a manual tick spacing of 0.5 on the sheet); the gate's
+    # matplotlib default happened to match, so the ticks are stated explicitly.
+    ax.set_xticks([0, 0.5, 1.0])
+    ax.set_xlabel("Share of this row's largest reference point (actual values on hover)",
+                  fontsize=8)
+    ax.grid(axis="x", color="#dddddd", linewidth=0.6, zorder=0)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.legend(handles=handles, loc="lower right", fontsize=8, frameon=True,
+              title="Reference point (2021)", title_fontsize=8)
+
+    titles(ax, atlas_text.KPI_TITLE, atlas_text.KPI_SUBTITLE, width=84)
+    # Named 8_: the gate's naming rule is "N_name.png, in tab order" -- tab 8,
+    # after the three reference tabs (5-7); the pairs board moves to 9.
+    fig.savefig(PREVIEW / "8_where_nigeria_stands.png", dpi=170)
+    plt.close(fig)
+    print("  8_where_nigeria_stands.png")
+
+
 def visual_pairs_board() -> None:
-    """8. The pairs board on its default pair, the gate for colour and shape.
+    """9. The pairs board on its default pair, the gate for colour and shape.
 
     One green circle per state-round, the two poverty-group panes stacked the
     way the workbook stacks them ('Other 25' above 'Poorest 12' -- the group
@@ -688,11 +792,12 @@ def visual_pairs_board() -> None:
                  ha="left", x=0.04, y=0.985)
     fig.text(0.04, 0.955, "\n".join(textwrap.wrap(atlas_text.PAIRS_SUBTITLE, 112)),
              fontsize=8.6, color="#555555", va="top", ha="left", linespacing=1.35)
-    # Named 8_: the gate's naming rule is "N_name.png, in tab order", and the
-    # pairs board is tab 8 -- last, after the three reference tabs (5-7).
-    fig.savefig(PREVIEW / "8_how_measures_pair.png", dpi=170)
+    # Named 9_: the gate's naming rule is "N_name.png, in tab order", and the
+    # pairs board is tab 9 -- last, after the KPI board took tab 8 (2026-10-23,
+    # docs/SHEET_KPI.md); the three reference tabs are 5-7.
+    fig.savefig(PREVIEW / "9_how_measures_pair.png", dpi=170)
     plt.close(fig)
-    print("  8_how_measures_pair.png")
+    print("  9_how_measures_pair.png")
 
 
 def main() -> int:
@@ -706,11 +811,12 @@ def main() -> int:
     visual_spatial_clusters()
     visual_dimension_bars(rows)
     visual_state_over_time()
+    visual_kpi_board()
     visual_pairs_board()
     # The kept set is what this run wrote, not a second list that can drift from it.
     kept = {"1_where_poverty_sits.png", "2_where_poverty_clusters.png",
             "3_how_poverty_is_made_up.png", "4_state_over_time.png",
-            "8_how_measures_pair.png"}
+            "8_where_nigeria_stands.png", "9_how_measures_pair.png"}
     kept.update(visual_reference_table())
 
     # The directory holds this stage's output and nothing else, so a preview that a

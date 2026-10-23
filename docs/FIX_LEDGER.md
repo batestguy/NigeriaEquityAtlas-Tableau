@@ -756,3 +756,54 @@ builders `packet_builder.py` / `build_packetA3.py` / `build_packetA5.py` alongsi
   Open finding, not a defect: a fresh open sometimes carries non-default
   parameter-card selections and the payload follows the cards
   (docs/SHEET_PAIRS.md Built).
+
+## K. The KPI board's session - 2026-10-23
+
+### K1. Tableau's own autosave state poisoned whole mornings of loads
+**Severity DEFECT - status done (workaround documented)**
+Every force-kill of tabpub lands a `.twbr` autosave NEXT TO the source workbook
+(`tableau/~Nigeria-MPI-Equity-Atlas__<pid>.twbr`), indexed in
+`HKCU\Software\Tableau\Tableau Public 2026.2\Autosave File Map`, and every later
+open trips through File Recovery / Extract-Not-Found restore chains
+(`Data/Data/<extract>.hyper` double-path errors - the restore copy, not the
+file). Purge recipe, verified: kill tabpub, delete any `*.twbr` beside the
+.twbx, delete the `Autosave File Map` registry values, delete
+`%TEMP%\TableauTemp\`. After the purge, bare launch is clean and the twbx opens
+normally. UIA helpers live in `%TEMP%\opencode\` (`dump_uia.ps1`,
+`dismiss_chain.ps1`, `clear_recovery2.ps1`); `My Tableau Repository\Logs` is
+stale - read the dialogs, not the log.
+**Open the twbx via `Invoke-Item` (the double-click association route).** A
+direct `tabpublic.exe <path>` argument launch opens an empty `Book2` on this
+combo (twbx contents unaffected - association route loads them, same minute,
+same file). Commands that bypass the association must go through it.
+
+### K2. `default-format` on the <column> does not reach mark LABELS here
+**Severity DEFECT - status done (data-side lane shipped)**
+The ds-level `<column … default-format='0.0'>` was landed for `pos` in both
+copies (worksheet deps + datasource), the same lane the rank panel's
+`'"R"0'` lane documents. Labels still printed Tableau's General 4-decimal
+(0.3367) every time; the lane never worked for labels on these
+federated-extract sheets (the rank panel's bare-integer look needs no
+formatting - integers print bare under General too, so it never failed
+visibly). The shipped fix is data-side: stage 7 writes `pos_label`
+(`0.3`) and the sheet puts that string on the Label pill (`<text column=…>`,
+CH24 Shape/Legend byte-shape). The `default-format` stays for the axis.
+Number formats WOULD be needed for any aggregate on Label - avoid his lane.
+
+### K3. Colour-card tint eats a shape's RGB; contrast must ride alpha
+**Severity IMPROVEMENT turned DESIGN FACT - status done**
+With `series` on Colour + a ds-level palette, the Shape marks render as the
+SERIES colour keyed by the PNG's alpha - interior RGB detail (white
+coastlines/graticule on the purple disc) silently fuses into the disc
+(verified in-app: flat violet circle while the same PNG shows its lines in
+the QA gate). Anything a shape must show besides its silhouette therefore
+encodes as alpha: the world globe draws the disc at full alpha and the
+longitude lines + coastlines at reduced alpha (~55% / 75%), so the tint
+paints them lighter. Stage 7 `_draw_globe` carries the model and rationale."
+
+### K4. Session-restore hijacks the second launch
+**Severity IMPROVEMENT - status observed**
+Tab_Public sometimes splits off a second bare-shell process on `Invoke-Item`,
+whose own session-restore shows the Extract-Not-Found dialog for the atlas'
+extracts. Kill that shell (no workbook open, no autosave at risk), keep the
+window titled `… - Nigeria-MPI-Equity-Atlas`.

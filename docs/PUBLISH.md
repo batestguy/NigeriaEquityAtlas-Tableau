@@ -38,7 +38,8 @@ the declared columns before packaging.
 Stage 6 writes each extract itself with `tableauhyperapi` and validates the schema it
 wrote back against the declared columns before packaging.
 
-**The tabs, in tab order** (view 3 added 2026-10-22, view 8 joined 2026-10-21):
+**The tabs, in tab order** (view 3 added 2026-10-22, view 8 joined 2026-10-21,
+view 9, the KPI board, joined 2026-10-23):
 
 | Tab | Type (mark class) | What it carries |
 |---|---|---|
@@ -49,6 +50,7 @@ wrote back against the declared columns before packaging.
 | What the words mean | **text zones** (part 1 of 3) | the reference table, 24 rows: the word, its formula or weight, what it means, how it was made |
 | The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
 | How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
+| Where Nigeria stands | **silhouette board (*Shape*)**, one row per benchmarked KPI | the KPI board from `kpi_dots.hyper` (stage 7): 7 benchmarked national KPIs and their reference points = **20 map silhouettes — a green Nigeria map, a blue Africa map, a purple globe with white longitude lines (2026-10-23 user passes; the globe's tinted-down lines ride on alpha — see `docs/SHEET_KPI.md` built record and `FIX_LEDGER.md` K3)** — on a shared axis that is each row's own scale (`pos = value / the row's largest reference`; stage 7 normalises; each mark **prints its share at one decimal** beside it, a pre-formatted `pos_label` string on the Label pill at 7 pt with `mark-labels-cull` handling the near-coincident pair; the axis' own tick rule (`major-spacing='0.5'` → 0 / 0.5 / 1) is present but **screen-unverified** — delete `kpi_axis_ticks()` if inert at publish; hover carries the actual values at one decimal with the benchmark text and the source, pre-formatted). The images are **embedded in the workbook** inside `<external><shapes>` (`KPI_Geo/…`, mapped member-by-member by the ds-level `type='shape'` rule, `docs/SHEET_KPI.md`), so publishing needs no Shapes-repository copy; the optional authoring copy into `My Tableau Repository\Shapes\KPI_Geo` is written by stage 7 when the shell may write there and restores nothing if the workbook is re-fetched. Colour = `series` via a ds-level palette (`atlas_text.KPI_SERIES`), rows in the benchmarks table's order via a manual sort dictionary (headcount first; marks ordered so Nigeria draws last/on top). National figures only, no state panel; `docs/SHEET_KPI.md` carries the can/may-not list and the pending packet checks |
 | How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; circles filled **one green** (`#009E73`, `atlas_text.PAIRS_POINT_COLOUR`) via a pane-level `<format attr='mark-color'>`, no colour pill and therefore no colour legend; hover = **the state name only**; looking only — no computed claim, no fitted trend (`docs/SHEET_PAIRS.md`) |
 
 The three reference tabs are **one table paginated on its own groups**, not three
@@ -118,10 +120,15 @@ Public. See `docs/HANDOFF.md` §3b.
 1. Sign in to your Tableau Public account.
 2. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`. **It has been opened successfully on
    this machine** — it loads with no error dialog and renders (see `HANDOFF.md` §3).
-   Re-verified 2026-10-22 on the current build: title reads `Nigeria-MPI-Equity-Atlas`,
-   and the composition sheet's default view, bold-white segment labels and interactive
-   `state` checklist all draw (packets `render_dim6/7.png`, full-workbook
-   `render_full_dim.png`).
+   Re-verified 2026-10-23 on the current build: title reads `Nigeria-MPI-Equity-Atlas`
+   and the KPI board's 20 silhouette marks draw (in-app PrintWindow captures). Open
+   it the way the file association does — double-click, or `Invoke-Item` in
+   PowerShell: a direct `tabpublic.exe <path>` argument launch opens an empty
+   `Book2` on this machine even though the file is fine (`FIX_LEDGER.md` K1). If
+   loads start failing with recovery/extract dialogs, purge the autosave state
+   first (any `*.twbr` beside the .twbx, the
+   `HKCU\...\Tableau Public 2026.2\Autosave File Map` registry values,
+   `%TEMP%\TableauTemp\`), then relaunch.
 3. **File > Save to Tableau Public.**
 4. Wait for the upload and the render, then open the live URL and confirm all eight tabs
    are present and that `Where poverty sits` draws the filled choropleth, not a scatter
@@ -463,7 +470,9 @@ Once published, the viz can be checked from the command line with the `tableau`
 MCP server, which is read-only but sufficient for verification:
 
 - `get_workbook_details` — confirms the views and their types
-- `get_workbook_contents` — confirms all five views exist (two maps, three reference tabs)
+- `get_workbook_contents` — confirms all nine views exist (two maps, the
+  stacked composition bar, the time panel, three reference tabs, the KPI
+  board, the pairs board)
 - `get_workbook_image` — fetches a rendered PNG of a named view, proving it draws
 
 This is the step that catches a viz that uploaded but renders empty.

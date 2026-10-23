@@ -41,6 +41,7 @@ $Stages = @(
     '02_acquire_conflict',
     '03_acquire_climate',
     '04_merge',
+    '07_kpi_reference',
     '08_party_alignment',
     '09_spatial_diagnostics',
     '06_build_twb'
@@ -56,6 +57,7 @@ if (-not $SkipPreviews) {
         '02_acquire_conflict',
         '03_acquire_climate',
         '04_merge',
+        '07_kpi_reference',
         '08_party_alignment',
         '09_spatial_diagnostics',
         '05_preview',

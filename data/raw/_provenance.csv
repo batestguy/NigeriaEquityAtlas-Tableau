@@ -1,5 +1,13 @@
 file,url,sha256,bytes,fetched_utc,note
+EG.CFT.ACCS.ZS.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/EG.CFT.ACCS.ZS?format=json&date=2021&per_page=10,c3392d937a56ade9f4c3a98c4af33bc8878287f7977c3ef5de20d39cb42594ef,859,2026-10-23,cached
+EG.ELC.ACCS.ZS.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/EG.ELC.ACCS.ZS?format=json&date=2021&per_page=10,9e19cc70b87f2015e3785e55d2157ce1677849510c5ecfc3c5a59fe6bbfd6bb3,774,2026-10-23,cached
+SH.DYN.MORT.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/SH.DYN.MORT?format=json&date=2021&per_page=10,0e3f1410bcb10fa56bbf555fee9f0401e0a7aa8dc17dbb299cfd39569d9abefd,766,2026-10-23,cached
+SH.H2O.BASW.ZS.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/SH.H2O.BASW.ZS?format=json&date=2021&per_page=10,7a9bff203d003730825dcfa06743a9265a8f870e8c92799b1f99ba66c1268393,876,2026-10-23,cached
+SH.STA.ODFC.ZS.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/SH.STA.ODFC.ZS?format=json&date=2021&per_page=10,5036f7dbdc6e76f71f0d7ff05654ebe073e0c5ba9cd605487c6ad4839f64bcfd,822,2026-10-23,cached
+SH.STA.SMSS.ZS.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/SH.STA.SMSS.ZS?format=json&date=2021&per_page=10,63fcf563be5d9dcc20a67c41a0dcc0dad146b1f9e13e9d267c6f775634e57acf,863,2026-10-23,cached
+SI.POV.MPUN.json,https://api.worldbank.org/v2/country/NGA;SSF;WLD/indicator/SI.POV.MPUN?format=json&date=2021&per_page=10,23930dee69a86944afc21b407a7ddae93e57afb51f279f48fdcc78c8d5032bca,838,2026-10-23,cached
 geonames_cities5000.zip,https://download.geonames.org/export/dump/cities5000.zip,4e767cb4c93e61455154044113f172d9a620722e3e41e425f8d522ab3f27878a,5708626,2026-10-04,cached
+ne_110m_admin_0_countries.geojson,https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson,6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f,838726,2026-10-23,cached
 nga_adm1.geojson,https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1.geojson,64fa218ac3d453cc1e66412ff461c5dfa1a4a1ade0da93b239a9891b587d28f9,2289696,2026-10-04,cached
 ophi_nga_mpi.csv,https://data.humdata.org/dataset/042c1bf4-2942-475f-8cb2-1fb783f8da91/resource/601f51cd-c46a-4ab2-ba0f-8bef62329ddc/download/nga_mpi.csv,f97009b40f0ecde733f4e95931ce4bbb75db95563a4a9bde4d294e622a1dd710,4414,2026-10-04,cached
 ophi_nga_mpi_trends.csv,https://data.humdata.org/dataset/042c1bf4-2942-475f-8cb2-1fb783f8da91/resource/99381c98-d5de-49cf-81c1-5b54d2cddf2f/download/nga_mpi_trends.csv,b33fed58c46ebc08039ecaa6693e305e5d6778659135ff65ccb054ec347d242a,17131,2026-10-04,cached
