@@ -1014,7 +1014,7 @@
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>How measures pair</run><run fontsize='9'>  choose any two measures; points, not a test · panes cut on the 2021 poorest-12 split, so pane slopes are range-restricted · logged axes are log(1+rate) and keep zero-event states on the zero line</run>
+            <run bold='true' fontsize='13'>How measures pair</run><run fontsize='9'>  choose any two measures; points, not a test · each pane's quadratic line only describes its own marks -- no slope, no coefficient, no claim · panes cut on the 2021 poorest-12 split, so pane slopes are range-restricted · logged axes are log(1+rate) and keep zero-event states on the zero line</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -1140,6 +1140,7 @@
             <lod column='[federated.0mpipairs].[none:state:nk]' />
             <lod column='[federated.0mpipairs].[none:survey_year:ok]' />
           </encodings>
+          <trendline enabled='true' fit='polynomial' degree='2' exclude-intercept='false' enable-confidence-bands='true' exclude-color='false' enable-instant-analytics='false' enable-tooltips='true' />
           <customized-tooltip show-buttons='false'>
             <formatted-text>
               <run bold='true' fontsize='13'><![CDATA[<[federated.0mpipairs].[none:state:nk]>]]></run>
@@ -1149,6 +1150,10 @@
             <style-rule element='mark'>
               <format attr='mark-color' value='#009E73' />
               <format attr='mark-labels-show' value='false' />
+            </style-rule>
+            <style-rule element='trendline'>
+              <format attr='stroke-color' value='#4D4D4D' />
+              <format attr='stroke-size' value='2' />
             </style-rule>
           </style>
         </pane>

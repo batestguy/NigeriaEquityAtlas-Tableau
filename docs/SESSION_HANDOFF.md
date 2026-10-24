@@ -1,10 +1,57 @@
-# Handoff - sessions 2026-10-22 (composition sheet + white labels + default view), 2026-10-20 (explorer tools, next sheet frozen, then built), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
+# Handoff - sessions 2026-10-24 (pairs trend line + KPI direction key), 2026-10-22 (composition sheet + white labels + default view), 2026-10-20 (explorer tools, next sheet frozen, then built), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
 
 **Start here.** Pipeline is **9 stages**, all green (`.\scripts\run_all.ps1`, exit 0,
 ~160 s). The atlas is still **not published** — that remains the one manual
-step (your Tableau Public login). Not committed at handoff: **both** the
-pairs-board tab and everything the 2026-10-22 sections below describe sit as
-working-tree changes stacked on `2f1b7bb`.
+step (your Tableau Public login). The tree is clean up to `2431f5d` (the KPI-board
+follow-up passes); this session's trend-line work is its own commit on top.
+
+## 2026-10-24 (eighth session) - the pairs trend line, and the KPI direction key
+
+Two landed results, both render-verified, plus one method change.
+
+- **"How measures pair" now draws a quadratic trend line with 95% confidence
+  bands, one per pane** — the author's request, and an explicit override of that
+  sheet's frozen "no fit" guardlist. Full build record, grammar provenance and
+  the guardlist amendment: **`docs/SHEET_PAIRS.md`, "Trend line (2026-10-24)"**;
+  the session's dead ends and GUI findings: **`docs/FIX_LEDGER.md` §L**.
+  In one breath: `<trendline fit='polynomial' degree='2'
+  enable-confidence-bands='true' .../>` in the pairs `<pane>`, painted by a
+  pane-level `<style-rule element='trendline'>`; **asked for in white, shipped
+  in `#4D4D4D`** because white is invisible on the white pane (proven by
+  building both); instant analytics deliberately off so the hover cannot print
+  a model equation; stage 5 draws the same fit in the same colour, and stage 6
+  now asserts the element.
+- **Method change worth knowing: the trend line's XML is the first grammar in
+  this workbook sourced from a specification rather than a render packet.**
+  No public `.twb` serialises a trend line, and the Save-As packet route needs
+  two clicks into a Qt dialog that UIA cannot see. Tableau publishes its own
+  workbook schema (`tableau/tableau-document-schemas`); `twb_2026.2.0.xsd`
+  carries `PaneSpecification-Trendline-G` with the exact element, its required
+  attributes and its fixed position in `<pane>`. The whole workbook validates
+  against it with **zero** trendline errors. That is a second, independent way
+  to land XML here — use it when a packet cannot be obtained, but still
+  render-verify (schema-validity alone has let six defects through).
+- **The KPI board mixes metric directions, and that is deliberate.** The
+  question came up again, so it is written down here for good: of the seven
+  benchmarked rows on "Where Nigeria stands", the **first three are
+  lower-is-better** (poverty headcount, under-five mortality, open defecation)
+  and the **last four are higher-is-better** (safely managed sanitation, basic
+  drinking water, electricity, clean cooking fuel). The ground truth is the
+  `direction` column in `data/reference/kpi_benchmarks_2021.csv`, and the
+  reader-facing rule is the static italic run `atlas_text.KPI_TOOLTIP_NOTE`
+  ("for the first three rows lower is the good side, for the rest higher is").
+  So the board is **not** a "bigger bar = worse" chart, and no caption may
+  imply one: each row is a share of that row's own largest reference
+  (`docs/SHEET_KPI.md` §"the direction key"). Nothing needed changing — the
+  sheet already carries the key — this is the fact, in the file the next
+  session reads first.
+- **`scripts/atlas_text.py`** gained `PAIRS_TREND_COLOUR` (one hex; white is a
+  one-line change) and an amended `PAIRS_SUBTITLE` ("each pane's quadratic line
+  only describes its own marks -- no slope, no coefficient, no claim"). Sheet
+  and gate read the same constants, so they cannot drift.
+- **`requirements.txt`** mentions numpy now: the stage-5 gate does the
+  least-squares fit and the t-based band itself (`quadratic_fit_band()`).
+
 
 ## 2026-10-22 (seventh session) - the composition sheet, white numbers, and a default view
 

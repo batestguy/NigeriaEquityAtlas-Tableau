@@ -807,3 +807,101 @@ Tab_Public sometimes splits off a second bare-shell process on `Invoke-Item`,
 whose own session-restore shows the Extract-Not-Found dialog for the atlas'
 extracts. Kill that shell (no workbook open, no autosave at risk), keep the
 window titled `… - Nigeria-MPI-Equity-Atlas`.
+
+---
+
+## L. The trend-line session (2026-10-24)
+
+Everything here was paid for once so it is not paid for again. L1 is the one
+that changes how grammar is sourced; L2-L6 are why the GUI could not be driven.
+
+### L1. A trend line cannot be packet-sourced; Tableau publishes the schema
+**Severity IMPROVEMENT turned METHOD - status done**
+There is **no public `.twb` that serialises a `<trendline>`**. GitHub code
+search: `polyDegree extension:twb` -> 0 hits; the two `"trend-line"` `.twb`
+results only mention it in title text. `.twbr` autosaves written beside the
+workbook are plain workbook XML (`build 20262.26.0912.1023`) with **zero**
+`<trend` tags -- they are not a serialiser either.
+
+The grammar came instead from **Tableau's own published schema**:
+`github.com/tableau/tableau-document-schemas`, `schemas/2026_1/twb_2026.1.0.xsd`
+and `schemas/2026_2/twb_2026.2.0.xsd` (use 2026.2 -- it matches the installed
+Public build `20262.26.0528.2205`). Group `PaneSpecification-Trendline-G` gives
+the element and its required attributes; `TrendLineFitType-ST` gives the fit
+vocabulary (`linear | polynomial | log | exp | power`); `StyleElement-ST` /
+`StyleAttribute-ST` give `element='trendline'` with `stroke-color` /
+`stroke-size`. The group's **position in `PaneSpecification-G` is fixed**: after
+hidden-fields/drop-line, before `reference-line*` and `customized-tooltip`.
+
+To validate a workbook against it, the two `xs:import`s have to be stubbed
+locally (`http://www.tableausoftware.com/xml/user` -> `UserAttributes-AG` with
+`<xs:anyAttribute/>`, and `http://www.w3.org/XML/1998/namespace` -> the
+`base`/`lang`/`space`/`id` attribute declarations), otherwise libxml2 fails on
+the FIRST unresolved QName and never reaches the document. Recipe:
+`C:\Users\TOSHIBA\AppData\Local\Temp\opencode\twb_2026.2.0.local.xsd` +
+`user_stub.xsd` + `xml_stub.xsd`, then `lxml.etree.XMLSchema(...).validate(...)`.
+The atlas validates with **0 errors mentioning `trendline`**; the 30 others are
+the known tolerated deviations (`extract/@object-id` missing,
+`layout/@dim-percentage` + `@measure-percentage`, the `simple-id` elements this
+schema *requires* but Tableau's own loader rejects with `D2E8DA72`, and one
+`sort` ordering).
+
+### L2. The Trend Lines dialog is invisible to UIA
+**Severity IMPROVEMENT - status known**
+`Trend Lines Options` is a Qt window (`Qt6511QWindow`). `EnumWindows` sees it,
+UIA does not: the process' root children list only `TMainWindow`, so no
+checkbox can be ticked by name. It must be driven by pixels, which is fine
+until L4.
+
+### L3. `Show Trend Lines` is a TOGGLE, and `Edit` is disabled while it is off
+**Severity DEFECT in any automation - status known**
+Invoking `Analysis > Trend Lines > Show Trend Lines` when a line is already on
+turns it OFF, and `Edit All Trend Lines...` then reports `IsEnabled=False` and
+swallows the invoke silently (no error, no dialog). Deterministic order: read
+`Edit`'s enabled state FIRST; if enabled, invoke it; else invoke `Show`, wait,
+re-open the menu, then invoke `Edit`.
+
+### L4. A locked screen silently swallows every synthetic click
+**Severity DEFECT in any automation - status known**
+While the workstation is locked, `GetForegroundWindow` returns the lock screen,
+every `WindowFromPoint` returns `LockScreenBackstopFrame`, and `OpenInputDesktop`
+is `False`: clicks land nowhere and captured windows are stale. After unlock,
+coordinates map **1:1 (k ~= 0.985-1.0)**. An earlier session's "divide by 1.4764"
+DPI correction was **wrong** and made good clicks miss; do not reintroduce a
+constant scale factor -- measure it (UIA `BoundingRectangle.Width` /
+`GetWindowRect` width) or use k = 1.
+
+### L5. The harness console owns the foreground between shell calls
+**Severity IMPROVEMENT - status known**
+In this environment the console window (`VirtualConsoleClass`) takes the
+foreground back after each `shell` invocation. From a child process
+`SetForegroundWindow` + `AttachThreadInput` still returns `False`, so:
+**keyboard input (e.g. `Alt+A`) is eaten by the console**, while **UIA-driven
+mouse clicks on Tableau do work** (they only need the coordinates to be right).
+Two corollaries:
+
+- Drive menus by **UIA rect + mouse click** (`uia_click_path.ps1`), never by
+  mnemonics.
+- A **narrow window collapses Tableau's menu bar to `File | Help`**, which is
+  what a `MISS: Window menu` actually means -- resize/maximise first, then look
+  for the menu.
+
+### L6. A workbook opens on the sheet it last showed, not the first `<window>`
+**Severity IMPROVEMENT - status done**
+Reordering `<windows>` puts a sheet first in the file but not on screen:
+Tableau restored the last-viewed sheet for that path. To force a sheet for a
+render check, **prune the probe to that one worksheet and window**
+(`C:\Users\TOSHIBA\AppData\Local\Temp\opencode\probe_only.py`: lxml, remove
+every other `<worksheet>` and `<window>`, rezip as `probe.twbx`).
+`tableau/*.twb` is never touched by a probe.
+
+### L7. `element='trendline'` + `stroke-color` is live (the white test)
+**Severity IMPROVEMENT turned DESIGN FACT - status done**
+A pane-level `<style-rule element='trendline'>` with
+`<format attr='stroke-color' .../>` and `stroke-size` paints the fitted line and
+its band edges. Proven by contrast, not by eye: built white (`#FFFFFF`) the line
+and both band edges disappear while every mark and gridline stays; repainted
+`#4D4D4D` at the same geometry they return, thicker. So **white on this sheet's
+white pane is invisible** and the shipped colour is the dark ink
+(`atlas_text.PAIRS_TREND_COLOUR`). `docs/SHEET_PAIRS.md` "Trend line" is the
+build record.

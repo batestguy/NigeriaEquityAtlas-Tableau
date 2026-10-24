@@ -183,3 +183,135 @@ Recorded here rather than silently absorbed into the freeze bullets above.
   full workbook loads (`Tableau Public - Nigeria-MPI-Equity-Atlas`). The
   hover's on-screen content cannot be captured by PrintWindow; tooltip = one
   state-name run is XML-verified and goes to the publish-time manual checks.
+
+## Trend line (2026-10-24) — the freeze's "no fit" is amended
+
+The author's request: a **quadratic trend line with confidence bands, one per
+pane**, asked for in white. This is an explicit override of the freeze bullets
+"points only — no slope, no correlation, no fit" and "no colour encoding, no
+size, no fit, no reference lines"; the substance of the guardlist is preserved
+in the form the line takes (below), not silently dropped.
+
+**What shipped, in the pairs `<pane>`:**
+
+```xml
+<trendline enabled='true' fit='polynomial' degree='2' exclude-intercept='false'
+           enable-confidence-bands='true' exclude-color='false'
+           enable-instant-analytics='false' enable-tooltips='true' />
+```
+
+plus a pane style rule
+
+```xml
+<style-rule element='trendline'>
+  <format attr='stroke-color' value='#4D4D4D' />
+  <format attr='stroke-size' value='2' />
+</style-rule>
+```
+
+`exclude-color='false'` is the dialog's "allow a trend line per colour". There
+is no colour pill on this sheet, so the split that produces **one line per pane**
+is `poverty_group` on Rows: each pane is fitted on its own marks. `degree` only
+means anything for `fit='polynomial'`. The element sits **after `</encodings>`
+and before `<customized-tooltip>`** — that position is fixed by the schema's
+sequence, not a preference.
+
+### Where the grammar came from (no packet exists)
+
+This is the first thing in the workbook whose XML came from a **specification**
+rather than a render packet, and the reason is worth recording:
+
+- GitHub code search finds **no public `.twb` that serialises a trend line**
+  (`polyDegree extension:twb` → 0 hits; the two `"trend-line"` `.twb` hits only
+  mention it in a title string). A reference packet cannot be obtained this way.
+- The Save-As route (set the dialog state in-app, save, read the XML) was
+  attempted and is not available to automation on this machine: the Trend Lines
+  dialog is a Qt window **invisible to UIA** (root children show only
+  `TMainWindow`), and this session's console steals the foreground from the app
+  between shell invocations, so the two synthetic clicks it needs (tick "Show
+  confidence bands", OK) could not be landed reliably. The dialog's state was
+  confirmed visually first: Model Type **Polynomial, degree 2**, Factor
+  **`poverty_group`**, and **Show confidence bands the only unticked box**.
+- **Tableau publishes its own TWB schema**: `github.com/tableau/tableau-document-schemas`,
+  `schemas/2026_1/twb_2026.1.0.xsd` and `schemas/2026_2/twb_2026.2.0.xsd`
+  (the 2026.2 file is the one matching the installed Public build,
+  `20262.26.0528.2205`). Both carry the identical group
+  **`PaneSpecification-Trendline-G`**, whose content model is exactly the
+  element above: `id  enabled | fit | exclude-intercept |
+  enable-confidence-bands | exclude-color | enable-instant-analytics |
+  enable-tooltips | degree`, `fit` from `TrendLineFitType-ST`
+  (`linear | polynomial | log | exp | power`), and an optional
+  `excluded-factors` child. `StyleElement-ST` in the same file enumerates
+  `trendline` beside `mark` / `refline` / `gridline`, and `StyleAttribute-ST`
+  carries `stroke-color` / `stroke-size` — which is what the style rule above
+  uses.
+- **Verification used**: the built twb was validated against the 2026.2 schema
+  with lxml (the two `xs:import`s stubbed locally, `user` → `UserAttributes-AG`
+  and `xml:base`). Result: **0 errors mentioning `trendline`**. The 30 errors it
+  does report are the pre-existing, Tableau-tolerated deviations already in the
+  ledger (`extract/@object-id` missing, `layout/@dim-percentage` +
+  `@measure-percentage`, the `simple-id` elements this schema *requires* but
+  Tableau's own loader rejects — `D2E8DA72` — and one `sort` ordering), all
+  unchanged by this work. Schema-validity is still *not* sufficient on its own
+  (`AGENTS.md` has six defects that got past it), so the line was then
+  **render-verified**: both panes draw a degree-2 curve with a dotted band.
+
+### White does not work on this sheet — verified, not assumed
+
+The request was a **white** line. Built with `stroke-color='#FFFFFF'` the line
+and both band edges **vanish** into the white pane (every mark and gridline
+stayed; only the trend paint disappeared), and re-painting it `#4D4D4D` brought
+them straight back at the same geometry — so the rule is live and the colour is
+simply invisible. Shipped value: `#4D4D4D`, a neutral dark ink that reads as an
+overlay the marks sit on top of rather than as a second series, and that cannot
+be confused with the green fill. Going white is the one hex in
+`atlas_text.PAIRS_TREND_COLOUR`.
+
+### `enable-instant-analytics='false'` on purpose
+
+Instant analytics is what makes Tableau print the **fitted model's equation and
+p-value** in the hover. That is precisely what this sheet's guardlist forbids
+("no per-pane slope/correlation/r printed or implied"), so the switch is off;
+`enable-tooltips='true'` keeps the ordinary hover. The hover is still the state
+name only (2026-10-22 decision, unchanged).
+
+### What the line may and may not be read as
+
+`docs/CAUSAL_DECISION.md` governs. The line is a **description of each pane's
+own marks** — a degree-2 least-squares fit — not a result:
+
+- **no slope, no coefficient, no correlation, no p-value is printed anywhere**,
+  on the sheet or in the gate; the sheet prints no fit statistic at all;
+- the **panes are cut on the outcome** (the 2021 poorest-12 split), so the two
+  lines are **range-restricted and not comparable to each other** — the
+  subtitle says so, as it did before the line existed;
+- the bands are the **95% confidence band for the fitted mean** (Tableau's
+  default), not a prediction interval for a state, and they are wide because
+  each pane covers only part of the x range;
+- the **subtitle was amended** to carry the new sentence
+  `atlas_text.PAIRS_SUBTITLE`: "each pane's quadratic line only describes its
+  own marks -- no slope, no coefficient, no claim". Sheet and gate read the
+  same constant.
+
+### Gate changes (stage 5) and the build gate (stage 6)
+
+- `05_preview.py` now draws the **same fit** in the **same colour**:
+  `quadratic_fit_band()` (numpy `lstsq` + the t-based 95% band for the fitted
+  mean, `scipy.stats.t`), one per pane, under the marks. The gate's rule — the
+  PNG and the sheet must not be able to disagree — is what makes this a
+  requirement rather than a nicety; `docs/preview/9_how_measures_pair.png`
+  shows the banded fit.
+- `06_build_twb.py`'s `validate()` now **asserts** the trendline: exactly one
+  `<trendline>` in the workbook, carrying `enabled='true'`, `fit='polynomial'`,
+  `degree='2'`, `enable-confidence-bands='true'`. A dropped or down-graded
+  element would still load and still render — just without the line.
+
+### Publish-time checks this adds
+
+1. The hover must **not** print a model equation or p-value (instant analytics
+   off) — check by hovering a pane.
+2. Both panes show the line **and** its band, and switching the pair via either
+   dropdown re-fits both panes.
+3. The subtitle's three lines still fit the title block at the published window
+   size (it grew by one clause, 2026-10-24).
+

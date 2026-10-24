@@ -9,6 +9,7 @@
 # here if this ever has to run unattended.
 
 scipy>=1.11        # Spearman rho with p-values (poverty/conflict/climate correlation)
+numpy>=1.24        # stage 5: the pairs gate's quadratic fit + t-based 95% band
 matplotlib>=3.7    # stage 5 preview rendering
 openpyxl>=3.1      # reading the UNDP Global MPI subnational workbook
 shapely>=2.0       # point-in-polygon: event attribution, capital containment checks

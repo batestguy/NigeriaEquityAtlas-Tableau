@@ -67,6 +67,8 @@ import matplotlib.image as mtpl_image  # noqa: E402
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage  # noqa: E402
 from matplotlib.patches import Patch, Polygon as MplPolygon  # noqa: E402
 
+import numpy as np  # noqa: E402
+from scipy import stats  # noqa: E402
 import atlas_text  # noqa: E402
 from common import (  # noqa: E402
     DOCS,
@@ -747,14 +749,51 @@ def visual_kpi_board() -> None:
     print("  8_where_nigeria_stands.png")
 
 
+def quadratic_fit_band(
+    xs: list[float], ys: list[float],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Least-squares quadratic through a pane's marks, with its 95% band.
+
+    The same object the workbook's trend line draws (``fit='polynomial'``,
+    ``degree='2'``, confidence bands on): a degree-2 least-squares fit of y on
+    x over the pane's own marks, and the t-based confidence band for the fitted
+    MEAN at each x (Tableau's confidence bands are the same construction).
+
+    Descriptive only. Nothing returned here is reported: no slope is printed,
+    no coefficient, no correlation, no p-value -- the freeze's guardlist stands
+    (docs/SHEET_PAIRS.md). It exists so the gate draws the line the sheet draws.
+    """
+    x = np.asarray(xs, dtype=float)
+    y = np.asarray(ys, dtype=float)
+    design = np.column_stack([x ** 2, x, np.ones_like(x)])
+    coef, *_ = np.linalg.lstsq(design, y, rcond=None)
+    resid = y - design @ coef
+    dof = len(x) - design.shape[1]
+    assert dof > 0, f"a quadratic needs 4+ marks; this pane has {len(x)}"
+    sigma2 = float(resid @ resid) / dof
+    cov = sigma2 * np.linalg.inv(design.T @ design)
+    grid = np.linspace(float(x.min()), float(x.max()), 200)
+    gdesign = np.column_stack([grid ** 2, grid, np.ones_like(grid)])
+    se = np.sqrt(np.einsum("ij,jk,ik->i", gdesign, cov, gdesign))
+    crit = float(stats.t.ppf(0.975, dof))
+    fit = gdesign @ coef
+    return grid, fit, fit - crit * se, fit + crit * se
+
+
 def visual_pairs_board() -> None:
     """9. The pairs board on its default pair, the gate for colour and shape.
 
     One green circle per state-round, the two poverty-group panes stacked the
     way the workbook stacks them ('Other 25' above 'Poorest 12' -- the group
-    field's alphabetical order, P5), points only: no fit, no slope, no size
-    channel, the guardlist the freeze imposes. Colour binds to
-    atlas_text.PAIRS_POINT_COLOUR so the gate and the sheet cannot disagree.
+    field's alphabetical order, P5), one quadratic trend line per pane with its
+    95% confidence band, no size channel. A trend line was ADDED to the sheet on
+    2026-10-24 at the author's request, against the freeze's original "no fit"
+    guardlist; the guardlist's substance survives in the form the line takes --
+    the line is a description of each pane's own marks, and no slope, no
+    coefficient, no correlation and no claim is printed anywhere
+    (docs/SHEET_PAIRS.md, "Trend line"). Colour binds to
+    atlas_text.PAIRS_POINT_COLOUR and the line to PAIRS_TREND_COLOUR so the gate
+    and the sheet cannot disagree.
     """
     col = read(PAIRS)
     assert len(col) == 148, f"pairs gate has {len(col)} rows, expected 148"
@@ -777,6 +816,13 @@ def visual_pairs_board() -> None:
         pts = by_group[group]
         ax.scatter([p[0] for p in pts], [p[1] for p in pts], s=28,
                    color=atlas_text.PAIRS_POINT_COLOUR, edgecolors="none", zorder=3)
+        grid, fit, lo, hi = quadratic_fit_band(
+            [p[0] for p in pts], [p[1] for p in pts],
+        )
+        ax.fill_between(grid, lo, hi, color=atlas_text.PAIRS_TREND_COLOUR,
+                        alpha=0.10, linewidth=0, zorder=1)
+        ax.plot(grid, fit, color=atlas_text.PAIRS_TREND_COLOUR, linewidth=1.5,
+                solid_capstyle="round", zorder=4)
         ax.set_ylabel(group, fontsize=8)
         ax.grid(axis="both", color="#dddddd", linewidth=0.6, zorder=0)
         ax.spines[["top", "right"]].set_visible(False)

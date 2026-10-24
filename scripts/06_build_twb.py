@@ -1169,6 +1169,31 @@ def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
         # below, the exact shape FinanceDashboard serialises (52 hits:
         # <format attr='mark-color' value='#000000' /> on pane mark rules).
         f"          </encodings>\n"
+        # The quadratic trend line, 2026-10-24 (docs/SHEET_PAIRS.md, "Trend
+        # line"). Grammar is NOT guessable and is not from a saved packet --
+        # no public twb serialises one -- it is Tableau's own TWB schema,
+        # github.com/tableau/tableau-document-schemas,
+        # schemas/2026_1/twb_2026.1.0.xsd, group
+        # PaneSpecification-Trendline-G:
+        #   <trendline enabled fit exclude-intercept enable-confidence-bands
+        #              exclude-color [enable-instant-analytics]
+        #              [enable-tooltips] [degree]>
+        # fit is TrendLineFitType-ST: linear | polynomial | log | exp | power.
+        # `degree` is only meaningful for fit='polynomial'. The group's
+        # position in PaneSpecification-G's sequence is fixed: after
+        # hidden-fields/drop-line, BEFORE reference-line* and before
+        # customized-tooltip -- which is where this sits.
+        # exclude-color='false' is "allow a trend line per colour"; with no
+        # colour pill on this sheet the split that matters is the pane one
+        # (poverty_group is on Rows), so each pane gets its own line.
+        # enable-instant-analytics='false' on purpose: that switch is what
+        # prints the fitted model's equation and p-value in the hover, which is
+        # exactly what this sheet's guardlist forbids (no slope, no
+        # coefficient). enable-tooltips='true' keeps the ordinary hover.
+        f"          <trendline enabled='true' fit='polynomial' degree='2'"
+        f" exclude-intercept='false' enable-confidence-bands='true'"
+        f" exclude-color='false' enable-instant-analytics='false'"
+        f" enable-tooltips='true' />\n"
         f"          <customized-tooltip show-buttons='false'>\n"
         f"            <formatted-text>\n"
         f"{tooltip}"
@@ -1190,6 +1215,15 @@ def pairs_worksheet_xml(def_x: str, def_y: str) -> tuple[str, str]:
         # FinanceDashboard shape (52 hits, pane mark rules).
         f"              <format attr='mark-color' value='{atlas_text.PAIRS_POINT_COLOUR}' />\n"
         f"              <format attr='mark-labels-show' value='false' />\n"
+        f"            </style-rule>\n"
+        # The trend line's own paint, 2026-10-24. StyleElement-ST (same schema,
+        # same file) enumerates 'trendline' alongside mark/refline/gridline, so
+        # a rule with element='trendline' is schema-legal; stroke-color and
+        # stroke-size come from StyleAttribute-ST. Verified by render, not by
+        # schema alone (docs/SHEET_PAIRS.md).
+        f"            <style-rule element='trendline'>\n"
+        f"              <format attr='stroke-color' value='{atlas_text.PAIRS_TREND_COLOUR}' />\n"
+        f"              <format attr='stroke-size' value='2' />\n"
         f"            </style-rule>\n"
         f"          </style>\n"
         f"        </pane>\n"
@@ -2556,6 +2590,22 @@ def validate(xml: str, declared: set[str]) -> list[str]:
                "[federated.0kpiboard]", "[Parameters]"):
         if ds not in xml:
             problems.append(f"datasource reference {ds} never declared")
+
+    # The pairs board's trend line (2026-10-24). Its grammar is not guessable and
+    # is taken from Tableau's own TWB schema (PaneSpecification-Trendline-G), so a
+    # silently dropped or down-graded element would still load and still render
+    # -- just without the line. Gate the four things the sheet promises.
+    trends = re.findall(r"<trendline\b[^>]*>", xml)
+    if len(trends) != 1:
+        problems.append(
+            f"expected exactly one <trendline> (the pairs board's), found {len(trends)}"
+        )
+    else:
+        for attr, want in (("fit", "polynomial"), ("degree", "2"),
+                           ("enable-confidence-bands", "true"),
+                           ("enabled", "true")):
+            if f"{attr}='{want}'" not in trends[0]:
+                problems.append(f"pairs trendline lost {attr}='{want}': {trends[0]}")
     return problems
 
 

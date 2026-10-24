@@ -517,13 +517,22 @@ PANEL_DEFAULT_STATE = "Bauchi"
 # hover caveat both say it; the guardlist is in the freeze doc ("may not say").
 PAIRS_TITLE = "How measures pair"
 PAIRS_SUBTITLE = (
-    "choose any two measures; points, not a test \u00b7 panes cut on the 2021 "
-    "poorest-12 split, so pane slopes are range-restricted \u00b7 logged axes are "
-    "log(1+rate) and keep zero-event states on the zero line"
+    "choose any two measures; points, not a test \u00b7 each pane's quadratic line only "
+    "describes its own marks -- no slope, no coefficient, no claim \u00b7 panes cut on "
+    "the 2021 poorest-12 split, so pane slopes are range-restricted \u00b7 logged axes "
+    "are log(1+rate) and keep zero-event states on the zero line"
 )
 # The board's circle fill: the atlas's Okabe-Ito green (the same green the
 # living-standards share prints), single-sourced so the two sheets agree.
 PAIRS_POINT_COLOUR = "#009E73"
+# The trend line's paint (2026-10-24). Asked for as white; white on this sheet's
+# white pane is invisible -- verified by render, not assumed: built with
+# stroke-color='#FFFFFF', the line and both CI band edges vanished from the pane
+# while every mark and gridline stayed, and painting it '#4D4D4D' brought them
+# back (docs/SHEET_PAIRS.md "Trend line"). The shipped value is a neutral dark
+# ink: it reads as an overlay the marks sit on top of, not as a second series,
+# and it cannot be confused with the green fill. Going white is this one hex.
+PAIRS_TREND_COLOUR = "#4D4D4D"
 # The hover caveat was withdrawn with the hover simplification (2026-10-22):
 # the tooltip prints the state name alone, and the caveat sentences live where
 # a reader actually sees them -- in the subtitle. (Was: PAIRS_TOOLTIP_CAVEAT.)

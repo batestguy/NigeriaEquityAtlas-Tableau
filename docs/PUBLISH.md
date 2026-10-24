@@ -51,7 +51,7 @@ view 9, the KPI board, joined 2026-10-23):
 | The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
 | How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
 | Where Nigeria stands | **silhouette board (*Shape*)**, one row per benchmarked KPI | the KPI board from `kpi_dots.hyper` (stage 7): 7 benchmarked national KPIs and their reference points = **20 map silhouettes — a green Nigeria map, a blue Africa map, a purple globe with white longitude lines (2026-10-23 user passes; the globe's tinted-down lines ride on alpha — see `docs/SHEET_KPI.md` built record and `FIX_LEDGER.md` K3)** — on a shared axis that is each row's own scale (`pos = value / the row's largest reference`; stage 7 normalises; each mark **prints its share at one decimal** beside it, a pre-formatted `pos_label` string on the Label pill at 7 pt with `mark-labels-cull` handling the near-coincident pair; the axis' own tick rule (`major-spacing='0.5'` → 0 / 0.5 / 1) is present but **screen-unverified** — delete `kpi_axis_ticks()` if inert at publish; hover carries the actual values at one decimal with the benchmark text and the source, pre-formatted). The images are **embedded in the workbook** inside `<external><shapes>` (`KPI_Geo/…`, mapped member-by-member by the ds-level `type='shape'` rule, `docs/SHEET_KPI.md`), so publishing needs no Shapes-repository copy; the optional authoring copy into `My Tableau Repository\Shapes\KPI_Geo` is written by stage 7 when the shell may write there and restores nothing if the workbook is re-fetched. Colour = `series` via a ds-level palette (`atlas_text.KPI_SERIES`), rows in the benchmarks table's order via a manual sort dictionary (headcount first; marks ordered so Nigeria draws last/on top). National figures only, no state panel; `docs/SHEET_KPI.md` carries the can/may-not list and the pending packet checks |
-| How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; circles filled **one green** (`#009E73`, `atlas_text.PAIRS_POINT_COLOUR`) via a pane-level `<format attr='mark-color'>`, no colour pill and therefore no colour legend; hover = **the state name only**; looking only — no computed claim, no fitted trend (`docs/SHEET_PAIRS.md`) |
+| How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; circles filled **one green** (`#009E73`, `atlas_text.PAIRS_POINT_COLOUR`) via a pane-level `<format attr='mark-color'>`, no colour pill and therefore no colour legend; **one quadratic trend line per pane with its 95% confidence band** (`<trendline fit='polynomial' degree='2' enable-confidence-bands='true'>`, painted `#4D4D4D` by a pane-level `<style-rule element='trendline'>`; asked for in white, which is invisible on the white pane — `docs/SHEET_PAIRS.md` "Trend line", 2026-10-24), **instant analytics off so the hover cannot print the model equation**; hover = **the state name only**; looking only — the line describes each pane's own marks, so **no slope, coefficient, correlation or claim is printed** (`docs/SHEET_PAIRS.md`) |
 
 The three reference tabs are **one table paginated on its own groups**, not three
 documents. It was two prose dashboards (`What the words mean`, `How we did it`) until it
@@ -394,6 +394,15 @@ workbook.
   4. **Note the open-state finding** (`docs/SHEET_PAIRS.md` Built): a fresh
      open sometimes carries non-default card selections; check the shipped
      defaults (X = `H (% poor)`, Y = `Events log`) on the published viz.
+  5. **The trend line (2026-10-24).** Both panes must show a **quadratic curve
+     with its shaded 95% confidence band**, in dark ink. Hover a pane and
+     confirm **no model equation or p-value appears** (instant analytics is
+     off on purpose — that readout is exactly what the sheet's guardlist
+     forbids). Switch a dropdown and confirm **both** panes re-fit. If a line
+     is missing, the `<trendline>` element was lost between build and upload —
+     stage 6 now asserts it; if the line is there but **pale/invisible**, the
+     `stroke-color` format on `element='trendline'` was lost and the line fell
+     back to a light default.
 
 ## If something looks wrong
 

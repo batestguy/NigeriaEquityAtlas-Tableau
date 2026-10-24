@@ -10,4 +10,4 @@ National MPI value,,index (0-1),lower_is_better,,0.1748,,,,,,"OPHI/UNDP harmonis
 Average intensity among the poor (national),,% of weighted deprivations,lower_is_better,,52.90,,,,,,"OPHI national row; poor-weighted, so it is not a simple state mean.",2021,2026-10-04
 Severe poverty headcount,,% of population,lower_is_better,,18.10,,,,,,OPHI national row: deprived in 50% or more of weighted indicators.,2021,2026-10-04
 Vulnerable to poverty,,% of population,lower_is_better,,16.62,,,,,,OPHI national row: deprived in 20-33% of weighted indicators.,2021,2026-10-04
-People multidimensionally poor,,millions,lower_is_better,,75.3,,,,,,Sum of state mpi_poor_thousands in data/processed/mpi_atlas_2021.csv (UNDP sheet 5.3 populations).,2021,2026-10-22
+People multidimensionally poor,,millions,lower_is_better,,75.3,,,,,,Sum of state mpi_poor_thousands in data/processed/mpi_atlas_2021.csv (UNDP sheet 5.3 populations).,2021,2026-10-24
