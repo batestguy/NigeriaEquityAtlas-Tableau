@@ -958,3 +958,32 @@ so a line's "white" is really "less tint". Consequence for the 2026-10-24
 simplification: dropping the coastlines was free (they were alpha strokes too),
 and the amber globe renders its meridians as lighter amber, not white. That is
 correct and expected - see K3.
+
+---
+
+## N. The word budget (2026-10-24)
+
+**Severity IMPROVEMENT - status done**
+Every published page now opens with one sentence that says what the figure IS,
+then a terse tail of caveats. The rule that came out of the pass, for whoever
+edits copy next:
+
+1. **The first clause says what the figure means**, not how it is built
+   ("How poor each state is", "What each state's poverty is made of", "How
+   Nigeria compares with..."). A reader who reads only that clause still knows
+   what they are looking at.
+2. **A caveat that a claim depends on never leaves the sheet** — it moves to the
+   nearest surface the reader is already using (the hover, or the axis caption).
+   Each move is recorded in the sheet's own doc; none of them was deleted.
+3. **Never repeat a key on the toolbar.** "1 = highest" was printing in six row
+   headers; it is one subtitle line now. "(actual values on hover)" was printing
+   on an axis caption; the hover is discoverable.
+4. **Numbers on the marks are the exception, not the rule** - the same pass left
+   the KPI board's one-decimal labels and the composition sheet's segment values
+   in place, because those ARE what the reader came for.
+
+Before/after, in characters: composition 421 -> 143, KPI 346 -> 135, pairs
+291 -> 178, time panel 240 -> 130, reference-table intro 322 -> 132, and the map
+gained a constant that says the meaning where it used to say the survey
+(`MPI_MAP_SUBTITLE`, 74 chars, now shared by stage 6 and stage 5 so the sheet and
+its gate cannot print different sentences).

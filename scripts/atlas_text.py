@@ -56,8 +56,8 @@ class TableRow(TypedDict):
 
 WORDS_TITLE = "What the words mean"
 WORDS_INTRO = (
-    "This atlas measures poverty as missing basic needs in daily life, not as low "
-    "income. Here is what each word on the map means."
+    "Poverty here means missing basic needs, not low income. What each word on "
+    "the map means."
 )
 
 # Every entry carries four things, because the reference tab is one table and not two
@@ -261,8 +261,8 @@ TERMS: list[Term] = [
 
 INDICATORS_TITLE = "The list of basic needs"
 INDICATORS_INTRO = (
-    "Each item has a weight. A household's deprivation score "
-    "is the sum of the weights of the items it is missing."
+    "Each item has a weight; a household's score is the sum of the weights it "
+    "is missing."
 )
 
 INDICATORS: list[Indicator] = [
@@ -331,6 +331,17 @@ MPI_LEGEND_MEANING = (
     "the share of people who are poor multiplied by how deprived they are on "
     "average, as a percentage of the index"
 )
+# The poverty map's one-line statement of what the figure IS (2026-10-24 word
+# budget). Sourced once so the sheet and the stage-5 gate print the same words:
+# the gate used to carry its own longer sentence, which is exactly how a subtitle
+# drifts. Meaning first ("how poor each state is"), then the encoding, then the
+# one caveat the map cannot drop (bands, not ranks -- all 36 adjacent state
+# intervals overlap at 95%, docs/CLAIMS.md). Hover guidance moved to the legend
+# title, which already expands MPI, and to the tooltip itself.
+MPI_MAP_SUBTITLE = (
+    "How poor each state is, 2021 \u00b7 darker red = poorer "
+    "\u00b7 5 bands, not 37 ranks"
+)
 
 # The five MPI bands in the order they run, each with the colour it draws.
 # One list, three surfaces: stage 6 writes it into the workbook (a discrete field
@@ -375,8 +386,7 @@ MPI_BANDS: list[tuple[str, str]] = [
 # per-state ordering the atlas withdrew (docs/FIX_LEDGER.md A1).
 SPATIAL_MAP_TITLE = "Where poverty clusters"
 SPATIAL_MAP_SUBTITLE = (
-    "Each state coloured by its own poverty and its neighbours' \u2014 descriptive, "
-    "not a significance test"
+    "Poverty beside the neighbours' \u00b7 a grouping, not a significance test"
 )
 SPATIAL_MAP_READING = (
     "The colour says two things at once. Grey is the poor block: this state is poorer "
@@ -478,26 +488,25 @@ SPATIAL_DEEP_TYPES: list[str] = [
 # The colours are six unrelated hues -- different measures, not an ordered scale;
 # unlike MPI_BANDS the order of this list carries no meaning. The word "surveys"
 # in captions: the four rounds are DHS and MICS harmonised by OPHI (Data Table 6,
-# MN 63), so within-panel comparison holds. "1 = highest" sits in every header
-# because a bare "R6" means nothing without the direction; the subtitle carries
-# the worked examples of what "highest" is per measure.
+# MN 63), so within-panel comparison holds. 2026-10-24 word budget: the headers
+# read "<measure> . rank" and the direction key is stated ONCE in the subtitle
+# ("1 = highest"), because repeating "(1 = highest)" in six row headers was six
+# copies of the same three words on the row-header rail.
 PANEL_MEASURES: list[tuple[str, str, str]] = [
-    ("rank_mpi", "MPI \u00b7 rank (1 = highest)", "#d62728"),
-    ("rank_headcount", "H % poor \u00b7 rank (1 = highest)", "#1f77b4"),
-    ("rank_intensity", "Intensity A \u00b7 rank (1 = highest)", "#ff7f0e"),
-    ("rank_events", "Conflict events/100k \u00b7 rank (1 = highest)", "#2ca02c"),
-    ("rank_deaths", "Conflict deaths/100k \u00b7 rank (1 = highest)", "#9467bd"),
-    ("rank_temp", "Capital temp \u00b7 rank (1 = highest)", "#17becf"),
+    ("rank_mpi", "MPI \u00b7 rank", "#d62728"),
+    ("rank_headcount", "H % poor \u00b7 rank", "#1f77b4"),
+    ("rank_intensity", "Intensity A \u00b7 rank", "#ff7f0e"),
+    ("rank_events", "Conflict events/100k \u00b7 rank", "#2ca02c"),
+    ("rank_deaths", "Conflict deaths/100k \u00b7 rank", "#9467bd"),
+    ("rank_temp", "Capital temp \u00b7 rank", "#17becf"),
 ]
 # The key sentence on the sheet: ranks replaced the values on the marks, so the
 # direction has to be on the canvas. Wording stays inside docs/CLAIMS.md's rules:
 # it describes what the label IS (position on the published point estimate) and
 # what it is NOT (a separation claim between states).
 PANEL_SUBTITLE = (
-    "labels are the state's rank of 37 in that round: 1 = the measure's highest "
-    "value (poorest MPI, most conflict, hottest capital), higher = away from the "
-    "extreme \u00b7 stars flag OPHI-significant movement \u00b7 not a trend; ranks "
-    "don't separate at 95%"
+    "One state's rank of 37 on six measures, four rounds \u00b7 1 = highest "
+    "\u00b7 stars = significant change \u00b7 ranks overlap at 95%, so no trend"
 )
 # The state the sheet opens on: the hover example everywhere else in the atlas, so
 # the sheet never loads blank. Asserted to exist in the panel before the workbook
@@ -517,10 +526,9 @@ PANEL_DEFAULT_STATE = "Bauchi"
 # hover caveat both say it; the guardlist is in the freeze doc ("may not say").
 PAIRS_TITLE = "How measures pair"
 PAIRS_SUBTITLE = (
-    "choose any two measures; points, not a test \u00b7 each pane's quadratic line only "
-    "describes its own marks -- no slope, no coefficient, no claim \u00b7 panes cut on "
-    "the 2021 poorest-12 split, so pane slopes are range-restricted \u00b7 logged axes "
-    "are log(1+rate) and keep zero-event states on the zero line"
+    "Any two measures, one point per state-round \u00b7 panes split on the "
+    "poorest 12: compare within a pane \u00b7 the line describes its pane only "
+    "\u00b7 logged axes, 0 = none \u00b7 points, not a test"
 )
 # The board's circle fill: the atlas's Okabe-Ito green (the same green the
 # living-standards share prints), single-sourced so the two sheets agree.
@@ -574,13 +582,9 @@ PAIRS_TREND_COLOUR = "#4D4D4D"
 # which colour is which area.
 DIMENSIONS_TITLE = "How poverty is made up"
 DIMENSIONS_SUBTITLE = (
-    "each bar: one state's MPI split across OPHI's three areas \u00b7 the split "
-    "is exact, and the bar always totals 100% \u00b7 shown by default: the five "
-    "poorest states and the first twelve of the rest \u00b7 add any other state "
-    "from the state checklist card on the left rail \u00b7 bars listed in MPI "
-    "order, which is not a ranking \u00b7 health is child mortality only "
-    "(nutrition is excluded for every state), so it carries the full "
-    "one-third weight"
+    "What each state's poverty is made of \u00b7 shares of the MPI, adding to "
+    "100 \u00b7 MPI order, not a ranking \u00b7 17 of 37 bars: the left card "
+    "adds the rest"
 )
 DIMENSION_SHARES: list[tuple[str, str, str]] = [
     ("contrib_education_pct", "Education", "#0072B2"),
@@ -612,12 +616,9 @@ POVERTY_GROUP_REST = "Other 25"
 # across 109 developing countries, and every surface must carry that caveat.
 KPI_TITLE = "Where Nigeria stands"
 KPI_SUBTITLE = (
-    "Nigeria beside its 2021 reference points \u00b7 every row has its own "
-    "scale: a mark's number is its share of that row's largest reference "
-    "\u00b7 \u25bc lower is better, \u25b2 higher is better "
-    "\u00b7 the actual values, benchmark and source are on hover, at one "
-    "decimal \u00b7 the world line is developing countries (109 of them, "
-    "OPHI/UNDP), not every country \u00b7 point estimates"
+    "How Nigeria compares with Africa, the world and the SDG target, 2021 "
+    "\u00b7 each row is its own scale \u00b7 \u25bc lower is better, \u25b2 "
+    "higher is better"
 )
 # One shape mark per reference point, three members, the shapes ARE the
 # series identity (a map of Nigeria / Africa / the world -- KPI_SHAPE_FILES
@@ -714,19 +715,20 @@ KPI_SOURCE: dict[str, str] = {
 # the third 2026-10-23 pass ("reduce the amount of words") -- the causal
 # disclaimer stays, because docs/CAUSAL_DECISION.md forbids losing it.
 KPI_TOOLTIP_NOTE = (
-    "\u25bc lower is better \u00b7 \u25b2 higher is better "
-    "\u00b7 other countries' figures, for comparison only \u2014 no view of "
-    "what makes any row its size."
+    "\u25bc lower is better \u00b7 \u25b2 higher is better \u00b7 point "
+    "estimates \u00b7 other countries' figures, comparison only \u2014 no view "
+    "of what makes any row its size."
 )
 
 DIMENSIONS_CAVEAT = (
     "Read the split, not the bar order. The bars follow each state's MPI, but "
     "neighbouring states' MPI intervals overlap at 95%, so the order is the "
-    "point estimate's, not a finding."
+    "point estimate's, not a finding. Health = child deaths only here (no "
+    "nutrition, for any state), so it carries the full one-third."
 )
 METHOD_INTRO = (
-    "In plain terms: where the numbers come from, how they are put together, how sure "
-    "we can be, and what this atlas cannot tell you."
+    "Where the numbers come from, how they are combined, how sure we can be, and "
+    "what this atlas cannot say."
 )
 
 METHOD: list[Section] = [
@@ -843,11 +845,8 @@ METHOD: list[Section] = [
 # back into two pages.
 TABLE_TITLE = "Words, formulas and method"
 TABLE_INTRO = (
-    "The reference, in three parts: the words, the list of basic needs, and the "
-    "method. Every row carries the same three columns: the term with its formula or "
-    "weight, what it means in everyday language, and how it was made and where it "
-    "comes from. No figure here is new: each one is the same number the map and its "
-    "hover carry."
+    "The reference, in three parts. Every row: the term and its formula or "
+    "weight, what it means, how it was made. No figure here is new."
 )
 TABLE_HEADERS: list[str] = [
     "Word, and its formula or weight",

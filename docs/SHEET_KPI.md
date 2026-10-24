@@ -338,3 +338,31 @@ dodged value) and plots `pos`, so gate and sheet agree mark for mark.
    is now the third hue).
 5. At the published width the header column shows each label on one or two
    lines - if it wraps to three, the 230 px rule was lost.
+
+---
+
+## Amendment - 2026-10-24 (later pass): the subtitle, and where the world caveat went
+
+`KPI_SUBTITLE` was 346 characters; it is now 135:
+
+> How Nigeria compares with Africa, the world and the SDG target, 2021 ·
+> each row is its own scale · ▼ lower is better, ▲ higher is better
+
+- The sentences that went were the ones the sheet itself already answers:
+  *"a mark's number is its share of that row's largest reference"* is now the
+  Column axis' own caption (`Share of the row's largest reference`), and
+  *"the actual values, benchmark and source are on hover, at one decimal"* is
+  what a hover is for.
+- **The world caveat moved, it did not disappear.** "The world line is
+  developing countries (109 of them, OPHI/UNDP), not every country" is a
+  standing rule for this sheet ("May not say", above: both named in
+  hover/subtitle). It now rides the number it qualifies: the headcount row's
+  hover prints `World 22.0 (109 developing countries)` (stage 7 special-cases
+  the `SI.POV.MPUN` row), and the other rows' world figures are the World Bank
+  aggregate named by their own source string.
+- `"point estimates"` moved into `KPI_TOOLTIP_NOTE` (the hover's second line),
+  which also still carries the direction key and the no-causal-view sentence.
+- Toolbar words shortened with it: the Column axis caption is now
+  `Share of the row's largest reference` (was "…largest reference point"), the
+  Label pill's caption is `Share (one decimal)` (was "Value beside the map"),
+  and the tooltip's caption is `Values` (was "Values behind this mark").

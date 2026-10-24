@@ -123,3 +123,31 @@ in MPI position, eye-check thin-segment label collisions, and confirm the
 colour card draws — plus the atlas-wide items (sheet 1's legend click, alt
 text, axis headers off). This sheet needs no Fit click: the 17-bar default
 fits its window with Entire View already declared.
+
+---
+
+## Amendment - 2026-10-24: the subtitle's word budget
+
+The freeze's subtitle ran to 421 characters and five wrapped lines above a
+17-bar chart. It is now:
+
+> What each state's poverty is made of · shares of the MPI, adding to 100 ·
+> MPI order, not a ranking · 17 of 37 bars: the left card adds the rest
+
+What survived, and why each one had to: the meaning (what the bar IS), that the
+shares add to 100, the two clauses the freeze pins (`MPI order, not a ranking`
+and the default-plus-where-the-control-is sentence), and nothing else.
+
+What left the subtitle, and where it went:
+
+- *"health is child mortality only (nutrition is excluded for every state), so it
+  carries the full one-third weight"* -> into `atlas_text.DIMENSIONS_CAVEAT`,
+  the italic line of the sheet's hover, compressed to "Health = child deaths
+  only here (no nutrition, for any state), so it carries the full one-third."
+  The hover is where a reader is already reading the segments' numbers, so the
+  sentence now sits beside the thing it qualifies.
+- *"the split is exact"* -> dropped; the printed one-decimal segments and the
+  axis say it.
+- *"add any other state from the state checklist card on the left rail"* ->
+  compressed to "the left card adds the rest" (same instruction, ten words
+  fewer).

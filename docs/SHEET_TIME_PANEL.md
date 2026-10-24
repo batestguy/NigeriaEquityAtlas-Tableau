@@ -217,3 +217,30 @@ the user asked that every non-rank variable leave the sheet, and it left the
 - **Charts in the render test agreed with the gate**: same six measures, same
   captions, same colours, Bauchi default, Entire View. The publish-time checks
   above are unchanged.
+
+---
+
+## Amendment - 2026-10-24: one direction key, not seven
+
+Two changes, both word-count only:
+
+1. **The six row-header captions lose their suffix.** They read
+   `MPI · rank`, `H % poor · rank`, `Intensity A · rank`, `Conflict events/100k ·
+   rank`, `Conflict deaths/100k · rank`, `Capital temp · rank` — i.e. the
+   `(1 = highest)` parenthetical is gone from all six and now appears ONCE, in
+   the subtitle the freeze already requires it in ("1 = highest"). Six copies of
+   the same three words on the row-header rail bought nothing and cost width.
+2. **The subtitle is rewritten to say what the figure is** (240 -> 130 chars):
+
+   > One state's rank of 37 on six measures, four rounds · 1 = highest ·
+   > stars = significant change · ranks overlap at 95%, so no trend
+
+   Every frozen element survives: the direction key, the star meaning, and the
+   OPHI overlap caveat that forbids reading movement between states. What went
+   was the parenthetical examples of what "highest" means per measure (poorest
+   MPI, most conflict, hottest capital) — the captions name the measure, so the
+   examples were restating the row header.
+
+The stage-5 gate's own paragraph was cut from nine lines to three for the same
+reason; it is a QA artefact, not a published page, but it had become the longest
+block of prose in the repo's renders.

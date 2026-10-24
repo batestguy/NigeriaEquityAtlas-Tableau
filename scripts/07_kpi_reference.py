@@ -752,6 +752,15 @@ def build_dots() -> int:
             # Series names lose their " (2021)" tail here (the title says 2021)
             # and the unit stays out (the row header names it).
             short = series.split(" (")[0]
+            if (series == atlas_text.KPI_SERIES[2][0]
+                    and row["wdi_code"] == "SI.POV.MPUN"):
+                # "World" on the headcount row is UNDP/OPHI's total across 109
+                # developing countries, not every country on earth. That caveat
+                # used to sit in the sheet subtitle; the 2026-10-24 word budget
+                # moved it next to the number it qualifies, which is where a
+                # reader can act on it (docs/SHEET_KPI.md, "May not say").
+                parts.append(f"{short} {rounded} (109 developing countries)")
+                continue
             parts.append(f"{short} {rounded}")
         hover = (
             " \u00b7 ".join(parts)

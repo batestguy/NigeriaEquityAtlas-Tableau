@@ -1662,7 +1662,7 @@ def build_workbook(spatial_technical: str,
 
     sheet_map = worksheet_xml(
         "Where poverty sits",
-        subtitle="MICS 2021 · 5 bands, not 37 ranks · hover for MPI + 95% CI",
+        subtitle=atlas_text.MPI_MAP_SUBTITLE,
         rows=ref("lat", "avg", POLY_DS_NAME),
         cols=ref("lon", "avg", POLY_DS_NAME),
         mark="Polygon",
@@ -2135,9 +2135,14 @@ def build_workbook(spatial_technical: str,
     kpi_captions = {
         "kpi": "Indicator",
         "series": "Reference point (2021)",
-        "pos": "Share of this row's largest reference point",
-        "pos_label": "Value beside the map",
-        "hover": "Values behind this mark",
+        # 2026-10-24 word budget: these are the axis title, the Label pill's
+        # caption and the tooltip's caption, i.e. the words that print around the
+        # marks. "Share of this row's largest reference point" and "Value beside
+        # the map" said the same thing twice at length; the subtitle now carries
+        # the explanation, the axis just needs its name.
+        "pos": "Share of the row's largest reference",
+        "pos_label": "Share (one decimal)",
+        "hover": "Values",
     }
     # The field's own one-decimal number format (2026-10-23 user pass): the
     # printed labels and the axis ticks read 0.0-1.0, not 0.00-1.00. Same lane

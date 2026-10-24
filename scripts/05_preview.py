@@ -235,12 +235,12 @@ def visual_choropleth(rows: list[dict[str, str]]) -> None:
     titles(
         ax,
         f"Nigeria: {atlas_text.MPI_LEGEND_EXPANSION} (MPI) by state",
-        f"MICS 2021 \u00b7 36 states + FCT \u00b7 colour is the {atlas_text.MPI_LEGEND_TITLE.lower()} "
-        f"({atlas_text.MPI_LEGEND_EXPANSION}) \u2014 {atlas_text.MPI_LEGEND_MEANING}. The headcount "
-        "share H is a different number and is not this colour. OPHI's standard errors put "
-        "the median relative SE at 15%, and all 36 adjacent rank pairs overlap at 95%, so "
-        "five bands is the most the data supports; the exact value and its interval are in "
-        "the workbook's hover.",
+        f"{atlas_text.MPI_MAP_SUBTITLE} \u00b7 36 states + FCT \u00b7 colour is the "
+        f"{atlas_text.MPI_LEGEND_TITLE.lower()} ({atlas_text.MPI_LEGEND_EXPANSION}) "
+        f"\u2014 {atlas_text.MPI_LEGEND_MEANING}. The headcount share H is a different "
+        "number and is not this colour: OPHI's median relative SE is 15% and all 36 "
+        "adjacent rank pairs overlap at 95%, which is why the map bands rather than "
+        "ranking; the exact value and its interval are in the workbook's hover.",
         width=104,
     )
     ax.set_xlim(2.4, 15.0)
@@ -624,20 +624,11 @@ def visual_state_over_time() -> None:
     fig.text(
         0.065, 0.945,
         textwrap.fill(
-            "Line + markers, not a fitted trend: each point is the state's rank of "
-            "the 37 states in that round, printed R-style like the workbook's own "
-            "labels. Direction: R1 = the measure's highest value (poorest MPI, "
-            "most conflict, hottest capital), so a rising R means the state moves "
-            "away from the extreme; equal values share the better rank. The raw "
-            "values stay in mpi_trends_panel.csv -- they left the marks by design. "
-            "Over the harmonised OPHI rounds (DHS/MICS), so within-panel comparison "
-            "holds. The workbook opens on this state from the dropdown; every "
-            "measure can be ticked off separately there, and the hover carries the "
-            "annualised change since the previous round with the star flag OPHI's "
-            "change test gives it. Conflict figures are UCDP GED attributed to the "
-            "state; temperature is measured at the state capital. Movement between "
-            "states is not readable on this sheet: every adjacent rank pair "
-            "overlaps at 95%.",
+            "What it shows: this state's rank of 37 on each measure, round by "
+            "round (R1 = the measure's highest value). Read it as level, not "
+            "trend: adjacent rank pairs overlap at 95%. Stars on the hover flag "
+            "movement OPHI's change test supports. Conflict is UCDP GED, "
+            "temperature is the capital's.",
             118,
         ),
         fontsize=8.6, color="#555555", va="top", ha="left", linespacing=1.4,
@@ -741,8 +732,7 @@ def visual_kpi_board() -> None:
     # to 0 / 0.5 / 1 (a manual tick spacing of 0.5 on the sheet); the gate's
     # matplotlib default happened to match, so the ticks are stated explicitly.
     ax.set_xticks([0, 0.5, 1.0])
-    ax.set_xlabel("Share of this row's largest reference point (actual values on hover)",
-                  fontsize=8)
+    ax.set_xlabel("Share of the row's largest reference", fontsize=8)
     ax.grid(axis="x", color="#dddddd", linewidth=0.6, zorder=0)
     ax.spines[["top", "right"]].set_visible(False)
     fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False,

@@ -64,6 +64,17 @@ Two landed results, both render-verified, plus one method change.
   went **7 -> 6 pt**; and the QA gate's legend moved off the plot (it was
   covering a mark — a gate must never hide the thing it checks). Build record:
   `docs/SHEET_KPI.md`; findings: `FIX_LEDGER.md` §M.
+- **Then a word budget across every page.** One sentence per sheet now says what
+  the figure IS, with the caveats compressed into a short tail; nothing
+  claim-critical was deleted, it moved to the hover or the axis caption, and
+  every move is recorded in that sheet's doc. In characters: composition
+  421 -> 143, KPI 346 -> 135, pairs 291 -> 178, time panel 240 -> 130, the
+  reference-table intro 322 -> 132, and the six time-panel row headers lost a
+  six-times-repeated "(1 = highest)" now stated once in the subtitle. The
+  poverty map's subtitle became a shared constant (`MPI_MAP_SUBTITLE`) so the
+  sheet and its gate print the same sentence — they had drifted. The rule for
+  next time is `FIX_LEDGER.md` §N; the sheet-level notes are amendments at the
+  end of `SHEET_DIMENSIONS.md`, `SHEET_TIME_PANEL.md` and `SHEET_KPI.md`.
 
 
 ## 2026-10-22 (seventh session) - the composition sheet, white numbers, and a default view

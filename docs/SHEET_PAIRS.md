@@ -289,9 +289,10 @@ own marks** — a degree-2 least-squares fit — not a result:
   default), not a prediction interval for a state, and they are wide because
   each pane covers only part of the x range;
 - the **subtitle was amended** to carry the new sentence
-  `atlas_text.PAIRS_SUBTITLE`: "each pane's quadratic line only describes its
-  own marks -- no slope, no coefficient, no claim". Sheet and gate read the
-  same constant.
+  `atlas_text.PAIRS_SUBTITLE` — "the line describes its pane only" (the
+  2026-10-24 word budget shortened the whole subtitle; the sentence is the
+  survivor of "each pane's quadratic line only describes its own marks -- no
+  slope, no coefficient, no claim"). Sheet and gate read the same constant.
 
 ### Gate changes (stage 5) and the build gate (stage 6)
 
