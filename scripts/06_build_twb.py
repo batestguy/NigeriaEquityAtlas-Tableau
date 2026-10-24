@@ -708,6 +708,9 @@ PANEL_CONN = "hyper.0mpitrends"
 PANEL_HYPER = "mpi_trends_panel.hyper"
 # The tab name is also the sheet's title; the subtitle is a Worksheet argument.
 SHEET_TIME_TITLE = "A state over time"
+# The dashboard's sheet name. Its title and subtitle come from atlas_text (the
+# same two strings the stage-5 gate would print if it drew the board).
+SHEET_OVERVIEW = "Overview"
 PANEL_EXCLUDED = {
     "conflict_exposure_index", "temp_anomaly_c", "precip_anomaly_pct",
     "events", "fatalities", "fatalities_low", "fatalities_high",
@@ -1370,6 +1373,149 @@ def text_zone(zone_id: int, *, x: int, y: int, w: int, h: int,
     )
 
 
+def map_axis_hidden(ds: str) -> str:
+    """Hide a map sheet's lat/lon axes: they are place coordinates, not data.
+
+    Grammar: ``<style-rule element='axis'>`` with an ``attr='display'`` format
+    naming the field and its ``scope``. The composition sheet already ships this
+    shape to drop its generated "Multiple Values" axis
+    (``dim_table_style``), and the same attribute is what a real serialised
+    workbook writes for an axis the author switched off. A hand-drawn polygon map
+    has no business printing a 3..15 longitude ruler, and on the dashboard it did
+    (2026-10-24 render), which is what made the panels look like scatter plots.
+
+    ``class='0'`` is the axis level the composition sheet uses; both axes of a
+    sheet on Rows/Columns carry it.
+    """
+    return (
+        "          <style-rule element='axis'>\n"
+        f"            <format attr='display' class='0' field='[{ds}].[avg:lat:qk]'"
+        " scope='rows' value='false' />\n"
+        f"            <format attr='display' class='0' field='[{ds}].[avg:lon:qk]'"
+        " scope='cols' value='false' />\n"
+        "          </style-rule>\n"
+    )
+
+
+def overview_dashboard_xml() -> tuple[str, str]:
+    """The "Overview" dashboard: four of the shipped sheets on one fixed page.
+
+    Grammar, all from real files -- nothing here is guessed:
+
+    - the ``<dashboard>`` shell, a bare ``<style />`` and ``<size>``: our own three
+      reference dashboards (this file's output, which loads and renders). The
+      visible page title is a TEXT ZONE, not ``<layout-options><title>``: the
+      layout-options block is what a Tableau-authored file carries, but it did not
+      render on this dashboard (2026-10-24 render), while a text zone is the object
+      our reference dashboards already prove;
+    - an EMBEDDED WORKSHEET zone: ``<zone h w x y name='<sheet>'>`` with no
+      ``type-v2``, a ``<layout-cache type-h='cell' type-w='cell' />`` child and a
+      ``<zone-style>``: from
+      ``SoftwareRetailAnalytics.twbx`` (the dashboard the author pointed at,
+      unpacked 2026-10-24), zone id 128;
+    - ``<viewpoint name='<sheet>'><zoom type='entire-view' /></viewpoint>`` in the
+      dashboard's window: same file, its ``d1. Performance Overview`` window;
+    - zone coordinates are 1/100000 of the canvas on each axis, so x/w are
+      fractions of the width and y/h of the height -- which is why the helpers
+      below convert per axis.
+
+    Three panels, not nine: the two maps answer "where" at the same grain, and the
+    composition answers "made of what" for the same 37 states. The KPI board is
+    deliberately NOT here -- it is national while these three are state-level, and
+    ``docs/SHEET_KPI.md`` forbids reading a state figure against a country
+    average, which adjacency alone would invite. The time panel and the pairs
+    board stay tabs: one is a full page of six small multiples, the other is the
+    interactive coda.
+    """
+    size = (1600, 1000)
+    gap = 8
+    header_h = 64
+
+    def ux(px: float) -> int:
+        return round(px / size[0] * 100_000)
+
+    def uy(px: float) -> int:
+        return round(px / size[1] * 100_000)
+
+    body = size[1] - header_h
+    # The maps are indifferent to height; the composition bar is not. 400 px of
+    # map and 536 px of bars is the split that keeps 17 stacked bars readable at
+    # 9 pt (a 200/700 split was tried first and the rows collided).
+    map_h = 400
+    panels = [
+        # (sheet name, x, y, w, h) in canvas pixels.
+        # Three panels, not four: at this canvas the composition bar and the time
+        # panel each need a half-page of their own, and putting both in the bottom
+        # row squeezed them into unreadable states (2026-10-24 render of the 2x2:
+        # 17 bars in ~300 px, small-multiple row labels truncated to "Conflic..").
+        # The maps survive any size, so they take the top row; the composition
+        # takes the full width below it, where 17 stacked bars finally breathe.
+        # The time panel stays a tab -- it is a page, not a card.
+        ("Where poverty sits", 0, header_h, 790, map_h),
+        (atlas_text.SPATIAL_MAP_TITLE, 790 + gap, header_h,
+         1600 - 790 - gap, map_h),
+        (atlas_text.DIMENSIONS_TITLE, 0, header_h + map_h + gap, 1600,
+         body - map_h - gap),
+    ]
+
+    zones = (
+        # The page's own title band. A text zone rather than the dashboard's
+        # <layout-options><title>: that block is what a Tableau-authored file
+        # carries, but it did not render here (2026-10-24 render), while a text
+        # zone is the object our three reference dashboards already prove.
+        f"          <zone forceUpdate='true' h='{uy(header_h)}' id='9'"
+        f" type-v2='text' w='100000' x='0' y='0'>\n"
+        f"            <formatted-text>\n"
+        f"              <run bold='true' fontsize='16'>{escape(atlas_text.OVERVIEW_TITLE)}</run>"
+        f"<run fontsize='10'>  {escape(atlas_text.OVERVIEW_SUBTITLE)}</run>\n"
+        f"            </formatted-text>\n"
+        f"            <zone-style>\n"
+        f"              <format attr='margin' value='8' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+    ) + "".join(
+        f"          <zone h='{uy(h)}' id='{10 + i}' name='{escape(name)}'"
+        f" w='{ux(w)}' x='{ux(x)}' y='{uy(y)}'>\n"
+        f"            <layout-cache type-h='cell' type-w='cell' />\n"
+        f"            <zone-style>\n"
+        f"              <format attr='border-color' value='#d9d9d9' />\n"
+        f"              <format attr='border-style' value='solid' />\n"
+        f"              <format attr='border-width' value='1' />\n"
+        f"              <format attr='margin' value='2' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+        for i, (name, x, y, w, h) in enumerate(panels)
+    )
+    dashboard = (
+        f"    <dashboard name='{escape(SHEET_OVERVIEW)}'>\n"
+        f"      <style />\n"
+        f"      <size maxheight='{size[1]}' maxwidth='{size[0]}'"
+        f" minheight='{size[1]}' minwidth='{size[0]}' />\n"
+        f"      <zones>\n"
+        f"        <zone h='100000' id='1' type-v2='layout-basic' w='100000'"
+        f" x='0' y='0'>\n"
+        f"{zones}"
+        f"        </zone>\n"
+        f"      </zones>\n"
+        f"    </dashboard>\n"
+    )
+    viewpoints = "".join(
+        f"        <viewpoint name='{escape(name)}'>\n"
+        f"          <zoom type='entire-view' />\n"
+        f"        </viewpoint>\n"
+        for name, _x, _y, _w, _h in panels
+    )
+    window = (
+        f"    <window class='dashboard' name='{escape(SHEET_OVERVIEW)}'>\n"
+        f"      <viewpoints>\n"
+        f"{viewpoints}"
+        f"      </viewpoints>\n"
+        f"      <active id='-1' />\n"
+        f"    </window>\n"
+    )
+    return dashboard, window
+
+
 def table_dashboards() -> list[tuple[str, str]]:
     """The reference table, in three parts: one dashboard per content group.
 
@@ -1699,6 +1845,7 @@ def build_workbook(spatial_technical: str,
         # schema's StyleAttribute vocabulary, so the XML validates either way --
         # only rendering tells them apart.
         mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
+        table_style=map_axis_hidden(POLY_DS_NAME),
     )
 
     # ---- sheet 1b: the cluster map, immediately after the poverty map -------
@@ -1739,6 +1886,7 @@ def build_workbook(spatial_technical: str,
         # The same white strokes sheet 1 carries, so the country reads as the same
         # country drawn twice rather than as two different maps of two different places.
         mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
+        table_style=map_axis_hidden(SPATIAL_POLY_DS_NAME),
     )
 
     # ---- sheet 2b: the time panel, "A state over time" ----------------------
@@ -2310,10 +2458,12 @@ def build_workbook(spatial_technical: str,
     # every sentence a reader needs from those five sheets is now a row of this
     # table, which is why withdrawing them cost the atlas no claim.
     reference_tabs = table_dashboards()
+    overview_dash, overview_window = overview_dashboard_xml()
 
-    dashboards = "  <dashboards>\n" + "".join(
-        xml for _name, xml in reference_tabs
-    ) + "  </dashboards>\n"
+    dashboards = ("  <dashboards>\n"
+                  + overview_dash
+                  + "".join(xml for _name, xml in reference_tabs)
+                  + "  </dashboards>\n")
     # One window per part, in the same order, so the tab bar reads words -> needs ->
     # method. Each needs its own <window>: a dashboard with no window is not shown at
     # all, and a dashboard whose window is missing loads as a blank tab.
@@ -2328,9 +2478,11 @@ def build_workbook(spatial_technical: str,
 
     # Window order is tab order when the workbook opens, and it is the order the
     # three surfaces are meant to be read in: where poverty sits, where it clusters,
-    # then the words that explain both.
+    # then the words that explain both. 2026-10-24: the Overview dashboard goes
+    # FIRST, because a workbook opens on its first window and a reader should land
+    # on the page that shows four sheets at once rather than on one of them.
     windows = f"""  <windows source-height='1500'>
-    <window class='worksheet' name='Where poverty sits'>
+{overview_window}    <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
           <strip size='160'>

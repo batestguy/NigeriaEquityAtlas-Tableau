@@ -37,6 +37,8 @@
       <column caption='mpi_ci_hi_pct' datatype='real' name='[mpi_ci_hi_pct]' role='measure' type='quantitative' />
       <column caption='gov_party' datatype='string' name='[gov_party]' role='dimension' type='nominal' />
       <column caption='dim_hover' datatype='string' name='[dim_hover]' role='dimension' type='nominal' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
@@ -51,8 +53,6 @@
       <column-instance column='[mpi_ci_hi_pct]' derivation='Sum' name='[sum:mpi_ci_hi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[gov_party]' derivation='None' name='[none:gov_party:nk]' pivot='key' type='nominal' />
       <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
-      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <extract count='-1' enabled='true' units='records'>
         <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/mpi_polygons.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
           <relation name='Extract' table='[Extract].[Extract]' type='table' />
@@ -119,6 +119,8 @@
       <column caption='Neighbourhood type (this state&apos;s poverty, beside the states it borders&apos;)' datatype='string' name='[spatial_group]' role='dimension' type='nominal' />
       <column caption='Average poverty score of the states it borders (MPI, % of index)' datatype='real' name='[spatial_lag_mpi_pct]' role='measure' type='quantitative' />
       <column caption='Number of states it borders' datatype='integer' name='[neighbours]' role='measure' type='quantitative' />
+      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[pcode]' derivation='None' name='[none:pcode:nk]' pivot='key' type='nominal' />
       <column-instance column='[ring]' derivation='None' name='[none:ring:ok]' pivot='key' type='ordinal' />
@@ -128,8 +130,6 @@
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
       <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
-      <column-instance column='[lat]' derivation='Avg' name='[avg:lat:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[lon]' derivation='Avg' name='[avg:lon:qk]' pivot='key' type='quantitative' />
       <extract count='-1' enabled='true' units='records'>
         <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_polygons.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
           <relation name='Extract' table='[Extract].[Extract]' type='table' />
@@ -519,7 +519,11 @@
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
-        <style>
+        <style>          <style-rule element='axis'>
+            <format attr='display' class='0' field='[federated.0mpipolygons].[avg:lat:qk]' scope='rows' value='false' />
+            <format attr='display' class='0' field='[federated.0mpipolygons].[avg:lon:qk]' scope='cols' value='false' />
+          </style-rule>
+
           <style-rule element='mark'><format attr='has-stroke' value='true' /><format attr='stroke-color' value='#FFFFFF' /><format attr='stroke-size' value='3' /></style-rule>
         </style>
       <panes>
@@ -637,7 +641,11 @@
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
-        <style>
+        <style>          <style-rule element='axis'>
+            <format attr='display' class='0' field='[federated.0mpispatialpoly].[avg:lat:qk]' scope='rows' value='false' />
+            <format attr='display' class='0' field='[federated.0mpispatialpoly].[avg:lon:qk]' scope='cols' value='false' />
+          </style-rule>
+
           <style-rule element='mark'><format attr='has-stroke' value='true' /><format attr='stroke-color' value='#FFFFFF' /><format attr='stroke-size' value='3' /></style-rule>
         </style>
       <panes>
@@ -1167,6 +1175,49 @@
     </worksheet>
   </worksheets>
   <dashboards>
+    <dashboard name='Overview'>
+      <style />
+      <size maxheight='1000' maxwidth='1600' minheight='1000' minwidth='1600' />
+      <zones>
+        <zone h='100000' id='1' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone forceUpdate='true' h='6400' id='9' type-v2='text' w='100000' x='0' y='0'>
+            <formatted-text>
+              <run bold='true' fontsize='16'>Nigeria MPI Equity Atlas</run><run fontsize='10'>  one country, two realities · 2021</run>
+            </formatted-text>
+            <zone-style>
+              <format attr='margin' value='8' />
+            </zone-style>
+          </zone>
+          <zone h='40000' id='10' name='Where poverty sits' w='49375' x='0' y='6400'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+          <zone h='40000' id='11' name='Where poverty clusters' w='50125' x='49875' y='6400'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+          <zone h='52800' id='12' name='How poverty is made up' w='100000' x='0' y='47200'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+        </zone>
+      </zones>
+    </dashboard>
     <dashboard name='What the words mean'>
       <layout-options>
         <title>
@@ -2093,6 +2144,20 @@
     </dashboard>
   </dashboards>
   <windows source-height='1500'>
+    <window class='dashboard' name='Overview'>
+      <viewpoints>
+        <viewpoint name='Where poverty sits'>
+          <zoom type='entire-view' />
+        </viewpoint>
+        <viewpoint name='Where poverty clusters'>
+          <zoom type='entire-view' />
+        </viewpoint>
+        <viewpoint name='How poverty is made up'>
+          <zoom type='entire-view' />
+        </viewpoint>
+      </viewpoints>
+      <active id='-1' />
+    </window>
     <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>

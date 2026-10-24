@@ -987,3 +987,68 @@ Before/after, in characters: composition 421 -> 143, KPI 346 -> 135, pairs
 gained a constant that says the meaning where it used to say the survey
 (`MPI_MAP_SUBTITLE`, 74 chars, now shared by stage 6 and stage 5 so the sheet and
 its gate cannot print different sentences).
+
+---
+
+## O. The dashboard session (2026-10-24, later)
+
+The author asked for "a dashboard from the sheets we have", pointing at a
+Tableau Public page. This section is what building one cost to learn.
+
+### O1. The reference workbook is the packet -- download, unpack, copy
+**Severity METHOD - status done**
+`tableau` MCP `download_workbook_twbx` + `unpack_twbx` fetch any public .twbx and
+its files; the XML is then readable like any packet in this repo. Anatomy of
+`SoftwareRetailAnalytics` (the page the author pointed at, 30k views): 56
+worksheets, **5 dashboards**, 510 zones, 81 `<button>` navigation objects, one
+hyper extract, 15 packaged images. Zone types in use: `layout-flow` (216),
+`empty` (93), `text` (78), `dashboard-object` (37, the nav buttons),
+`bitmap` (18), `layout-basic` (5), `color` (3), `paramctrl` (2), `size` (2).
+Useful as the source for **any** dashboard object we have not proven yet.
+
+### O2. An embedded worksheet zone has no `type-v2`
+**Severity IMPROVEMENT - status done**
+A float in a real dashboard that shows a sheet is
+`<zone fixed-size=… h=… id=… name='<sheet name>' show-title='false' w=… x=… y=…>`
+-- **no `type-v2` at all**, a `<layout-cache type-h='cell' type-w='cell' />`
+child and a `<zone-style>`. The dashboard's `<window>` then needs
+`<viewpoint name='<sheet>'><zoom type='entire-view' /></viewpoint>` for it.
+Coordinates are **1/100000 of the canvas per axis** (x/w fractions of width,
+y/h of height), not one shared scale. Verified in our workbook 2026-10-24.
+
+### O3. `<layout-options><title>` did not render on our dashboard
+**Severity DEFECT avoided - status known**
+Our three reference dashboards declare a dashboard title in
+`<layout-options><title>`, and so does the new overview. On the overview it did
+**not** draw (the page opened with no title band). A `type-v2='text'` zone at the
+top does draw, and that is what ships. Do not spend a session on the
+layout-options lane again; if a dashboard needs a title, make it a text zone.
+
+### O4. Axis `display` also hides a map's rulers
+**Severity IMPROVEMENT - status done**
+`<style-rule element='axis'><format attr='display' class='0'
+field='[ds].[avg:lat:qk]' scope='rows' value='false' /></style-rule>` is the
+serialisation of "axis off", and it removes the tick numbers **and** the axis
+caption on a Polygon map (verified 2026-10-24 on both maps, on the tab and in the
+dashboard). `docs/PUBLISH.md` had carried "axis headers off" as a GUI click since
+2026-10-17; it was never a GUI-only thing. `map_axis_hidden()` in stage 6 does it
+for both maps.
+
+### O5. A dashboard is not a contact sheet
+**Severity DESIGN FACT - status done**
+The first overview was a 2x2 (map, clusters, composition, time panel). Rendered,
+the bottom row was unusable: the composition compressed to ~15 px per row with
+colliding labels, and the small-multiple labels truncated to "Conflic..". Tableau
+shrinks a sheet's pane but **not its fonts**, so a text-dense sheet has a floor.
+The shipping layout is 1 map + 1 map + the composition at full width, with the
+time panel left as a tab. Rule of thumb learned here: on a fixed canvas, a sheet
+needs roughly its tab size divided by two to stay legible; below that it is
+decoration.
+
+### O6. Cards do not travel with a sheet into a dashboard
+**Severity IMPROVEMENT - status known**
+Filter cards, parameter cards and colour legends are **window** objects; an
+embedded worksheet zone is just the sheet. So a dashboard built from sheets that
+depend on their cards loses the interactivity silently. Adding it back means
+`filter` / `paramctrl` / `color` zones -- three types we have not proven, all
+present in the reference file (O1) when the time comes.

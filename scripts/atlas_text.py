@@ -54,6 +54,13 @@ class TableRow(TypedDict):
     method: str
 
 
+# The overview dashboard (stage 6): the one page that shows four sheets at once.
+# Title and subtitle live here for the same reason every other page's do -- so a
+# single constant drives both the workbook and anything that prints the page
+# (the dashboard title run, and docs). The framing is the project's own (D6,
+# docs/SESSION_HANDOFF.md): "one country, two realities", never "two zones".
+OVERVIEW_TITLE = "Nigeria MPI Equity Atlas"
+OVERVIEW_SUBTITLE = "one country, two realities \u00b7 2021"
 WORDS_TITLE = "What the words mean"
 WORDS_INTRO = (
     "Poverty here means missing basic needs, not low income. What each word on "

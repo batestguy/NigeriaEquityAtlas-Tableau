@@ -27,7 +27,15 @@ extracts were packaged until 2026-10-18, when the sheets that drew them were wit
 stale copies of them from an earlier build may still be sitting in `tableau/` — they are
 gitignored artefacts, so delete them if the folder still lists them. The trends-panel
 extract came back on 2026-10-20 as `mpi_trends_panel.hyper` feeding the new sixth view
-(`docs/SHEET_TIME_PANEL.md`).
+(`docs/SHEET_TIME_PANEL.md`), and `kpi_dots.hyper` arrived with the KPI board on
+2026-10-23 (`docs/SHEET_KPI.md`).
+
+**Tab 1 is the `Overview` dashboard** (2026-10-24, `docs/DASHBOARD.md`): a fixed
+1600x1000 page carrying `Where poverty sits`, `Where poverty clusters` and
+`How poverty is made up`, with a title-band text zone. It is the page the workbook
+opens on, so a viewer meets the country before the tab bar. Its three panels are
+the card-independent sheets only — filter/parameter/legend cards are window objects
+and do not travel into a dashboard.
 
 The data ships as **Hyper extracts**, not CSV. Tableau Public refuses any workbook whose
 datasource is not an extract (*"Workbooks saved to Tableau Public must use extracts"*,
@@ -130,10 +138,10 @@ Public. See `docs/HANDOFF.md` §3b.
    `HKCU\...\Tableau Public 2026.2\Autosave File Map` registry values,
    `%TEMP%\TableauTemp\`), then relaunch.
 3. **File > Save to Tableau Public.**
-4. Wait for the upload and the render, then open the live URL and confirm all eight tabs
-   are present and that `Where poverty sits` draws the filled choropleth, not a scatter
-   of points. Fetch it with the `tableau` MCP `get_workbook_image` rather than trusting
-   the upload dialog.
+4. Wait for the upload and the render, then open the live URL and confirm all **ten tabs**
+   (the `Overview` dashboard first, then the nine views) and that `Where poverty sits`
+   draws the filled choropleth, not a scatter of points. Fetch it with the `tableau` MCP
+   `get_workbook_image` rather than trusting the upload dialog.
 
 ## The map, and why it is drawn from shipped geometry
 

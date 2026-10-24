@@ -51,6 +51,20 @@ Two landed results, both render-verified, plus one method change.
   and gate read the same constants, so they cannot drift.
 - **`requirements.txt`** mentions numpy now: the stage-5 gate does the
   least-squares fit and the t-based band itself (`quadratic_fit_band()`).
+- **The workbook now opens on a dashboard.** Tab 1 is `Overview` (2026-10-24,
+  `docs/DASHBOARD.md`): a fixed 1600x1000 page with the two maps on top and the
+  composition full-width below. Built by downloading and unpacking the Tableau
+  Public workbook the author pointed at (`download_workbook_twbx` +
+  `unpack_twbx` via the MCP server) and copying its zone grammar byte-precise —
+  an embedded sheet is `<zone … name='<sheet>'>` with **no `type-v2`** plus a
+  `<viewpoint>` in the dashboard window. Two findings worth keeping: a
+  dashboard's `<layout-options><title>` did **not** render (the page title is a
+  text zone now), and the "axis headers off = GUI click" item was never a GUI
+  thing — `<style-rule element='axis'>` with `attr='display'` hides both maps'
+  lat/lon rulers in XML. Also learned the hard way: a dashboard is not a contact
+  sheet — the 2x2 version squeezed the composition into colliding labels and the
+  small-multiple panel into "Conflic..", so the shipping layout is three panels.
+  `FIX_LEDGER.md` §O carries all of it.
 - **The KPI board got the same kind of pass, later the same day** (asked as a
   follow-up: "longitude lines only", "what colour for the world", "dodge",
   "smaller labels", "a per-row arrow"). Five changes, all render-verified:
