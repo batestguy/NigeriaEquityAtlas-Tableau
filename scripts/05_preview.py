@@ -668,7 +668,7 @@ def visual_kpi_board() -> None:
     col = read(KPI_DOTS)
     assert len(col) == 20, f"KPI dots gate has {len(col)} rows, expected 20"
     colours = dict(atlas_text.KPI_SERIES)
-    rows: list[tuple[str, list[tuple[str, float]]]] = []
+    rows: list[tuple[str, list[tuple[str, float, str]]]] = []
     for row in col:
         pos = float(row["pos"])
         assert 0 < pos <= 1.0, f"{row['kpi']} / {row['series']}: pos {pos:.3f} out of (0, 1]"
@@ -676,13 +676,25 @@ def visual_kpi_board() -> None:
             f"series {row['series']!r} has no colour in atlas_text.KPI_SERIES"
         )
         assert row["hover"].strip(), f"{row['kpi']}: empty hover"
+        # The printed number is the mark's TRUE share of the row's largest
+        # reference; `pos` may be dodged left to clear a neighbour, so the gate
+        # must print pos_label the way the sheet does, not f"{pos:.1f}".
+        label = row["pos_label"].strip()
+        assert label, f"{row['kpi']} / {row['series']}: empty pos_label"
+        assert len(label.split(".")[-1]) == 1, (
+            f"{row['kpi']} / {row['series']}: pos_label {label!r} is not one decimal"
+        )
         if not rows or rows[-1][0] != row["kpi"]:
             rows.append((row["kpi"], []))
-        rows[-1][1].append((row["series"], pos))
+        rows[-1][1].append((row["series"], pos, label))
     assert len(rows) == 7, f"KPI dots gate has {len(rows)} rows of marks, expected 7"
 
     fig, ax = plt.subplots(figsize=(9.6, 6.0))
-    fig.subplots_adjust(left=0.295, right=0.985, top=0.74, bottom=0.11)
+    # Bottom reserved for a horizontal legend OUTSIDE the plot: the older
+    # lower-right legend sat on top of the electricity row's world mark, which
+    # is the one thing a QA gate must never do (2026-10-24 user pass: "labels
+    # ... not overlapping").
+    fig.subplots_adjust(left=0.295, right=0.985, top=0.74, bottom=0.17)
     names = [r[0] for r in rows]
     shapes_dir = Path(__file__).resolve().parent.parent / "data" / "reference" / "kpi_shapes"
     assert atlas_text.KPI_SHAPE_FILES and set(atlas_text.KPI_SHAPE_FILES) == set(colours), (
@@ -703,22 +715,17 @@ def visual_kpi_board() -> None:
     zoom = 0.115
     for i, (_name, marks) in enumerate(rows):
         y = len(rows) - 1 - i  # first row of the CSV on top, like the sheet
-        prev_pos: float | None = None
-        for series, pos in marks:
-            # A tied position would print the two labels on top of each
-            # other; step the later one aside the way the sheet's marks
-            # stack in draw order anyway.
-            dx = 14 if prev_pos is not None and abs(pos - prev_pos) < 0.03 else 0
-            prev_pos = pos
+        for series, pos, value_label in marks:
             ab = AnnotationBbox(
                 OffsetImage(images[series], zoom=zoom),
                 (pos, y), frameon=False, zorder=3,
             )
             ax.add_artist(ab)
-            # The sheet prints each mark's share at one decimal beside it
-            # (the 2026-10-23 label pass); the gate prints the same numbers
-            # from the same column, small, so the two cannot drift apart.
-            ax.annotate(f"{pos:.1f}", (pos, y), xytext=(dx, 15),
+            # The sheet prints each mark's TRUE share at one decimal beside it
+            # (the 2026-10-23 label pass); the gate prints the same string from
+            # the same column -- pos_label, never the dodged `pos` -- so a
+            # dodged mark still prints its own value and the two cannot drift.
+            ax.annotate(value_label, (pos, y), xytext=(0, 15),
                         textcoords="offset points", ha="center",
                         fontsize=6.0, color="#555555", zorder=4)
             if series not in handle_seen:
@@ -738,8 +745,9 @@ def visual_kpi_board() -> None:
                   fontsize=8)
     ax.grid(axis="x", color="#dddddd", linewidth=0.6, zorder=0)
     ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(handles=handles, loc="lower right", fontsize=8, frameon=True,
-              title="Reference point (2021)", title_fontsize=8)
+    fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False,
+               fontsize=8, title="Reference point (2021)", title_fontsize=8,
+               bbox_to_anchor=(0.64, 0.005))
 
     titles(ax, atlas_text.KPI_TITLE, atlas_text.KPI_SUBTITLE, width=84)
     # Named 8_: the gate's naming rule is "N_name.png, in tab order" -- tab 8,

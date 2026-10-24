@@ -26,10 +26,13 @@ its reference points", not "Nigeria graded":
 - **sub-Saharan Africa (2021)** — Tableau categorical blue `#4E79A7`, Africa
   from Natural Earth 110m (public domain, fetched once, SHA256 in the
   provenance ledger).
-- **World (2021)** — Tableau categorical orange `#F28E2B` as a solid globe
-  (continents as negative space). For every row this is *developed-
-  and-developing-mixed* WDI aggregates; for the poverty headcount it is
-  UNDP/OPHI's count across the 109 developing regions' countries, and every
+- **World (2021)** — **amber `#E69F00` as a globe of vertical meridians only**
+  (2026-10-24; supersedes both the earlier orange cut-out and the purple
+  coastline globe). Okabe-Ito amber because the board's other two hues are
+  already spent on a green landmass (one country) and a blue one (one
+  continent) — see "the world's colour" below. For every row this is
+  *developed-and-developing-mixed* WDI aggregates; for the poverty headcount it
+  is UNDP/OPHI's count across the 109 developing regions' countries, and every
   surface says so.
 
 The shapes identify the series by geometry — colour is the secondary key (the
@@ -93,13 +96,16 @@ row reads:
 hover rounds what the reader acts on; the drawn `pos` keeps full precision.)
 
 A second, static italic run carries the direction key
-(`atlas_text.KPI_TOOLTIP_NOTE`): for the first three rows lower is the good
-side, for the rest higher is; the world figures are other countries'
-statistics, for comparison only; **no view of what makes any row the size it
-is** — the sheet carries no causal sentence. There is deliberately **no
-per-mark good/bad badge**: the status colour of a row is not derivable
-("not on track" needs a trajectory, and this atlas carries none for these
-indicators), so the direction key is the reader's rule, not a flag.
+(`atlas_text.KPI_TOOLTIP_NOTE`): `▼ lower is better · ▲ higher is better`, the
+world figures are other countries' statistics, for comparison only; **no view of
+what makes any row the size it is** — the sheet carries no causal sentence. Since
+2026-10-24 the same two glyphs also print **once per row, in the row header**
+(`Poverty headcount (% of people) ▼`, `Clean cooking fuel (% of people) ▲`), so
+the reader does not have to map "first three rows" onto the board by counting.
+There is still deliberately **no per-mark good/bad badge**: a row's direction is
+not a value's status ("not on track" needs a trajectory, and this atlas carries
+none for these indicators), so the arrow says which end of that row is the good
+end, never that a particular mark is good or bad.
 
 ## May not say (same discipline as SHEET_PAIRS's guardlist)
 
@@ -227,3 +233,108 @@ Five same-day user passes changed the board after the freeze. What now ships:
   hover tooltip prints the one-decimal values line plus the direction key.
   Still pending publish-time checks: hover on a cull-hidden mark, the
   checklist of colour-card hues, the axis tick row.
+
+---
+
+## Built record - 2026-10-24 pass (arrows, dodge, amber globe, quarter-length labels)
+
+The pass answered five things at once. Everything below was verified twice: in
+the stage-5 gate PNG and in the running app, by loading a probe of the built
+package pruned to this one sheet (`probe_only.py`, because Tableau re-opens a
+workbook on the sheet it last showed, never on the first `<window>` -
+`FIX_LEDGER` L6).
+
+### 1. The world's globe is meridians only
+
+`_draw_globe` no longer strokes Natural Earth's coastlines. At mark scale (a
+~40 px shape) the 110m coastline is sub-pixel noise that fought the graticule,
+and the ask was longitude lines only. What is left is the disc plus **seven
+orthographic meridians** (0, +/-30, +/-60, +/-80 degrees): on a sphere seen
+face-on a meridian projects to a vertical ellipse of semi-width
+`R*sin(delta)`, so the set bows and the disc reads as a globe instead of a
+striped coin. Because the mark is now pure geometry, `_draw_globe` takes no
+coordinates at all - the disc fills the icon canvas and `_finish_icon` trims it -
+and the Douglas-Peucker helper that only the coastline layer used is gone.
+
+### 2. The world's colour: amber `#E69F00`, and why that hex
+
+`atlas_text.KPI_SERIES` world member is now **amber**, not the purple. The
+board already spends a **green** landmass (one country) and a **blue** one (one
+continent), so the third mark cannot be green or blue; amber is the hue that
+stays clear of both for a colour-blind reader too (it is Okabe-Ito's partner to
+`#009E73`, which the Nigeria mark already uses), it exists in the project's
+palette vocabulary already (the composition sheet's Education share), and on a
+disc with meridians it reads as sand/land under a graticule - "the planet" -
+rather than as a fourth brand colour. Purple is a one-hex revert if the amber
+reads wrong. Note that the colour is *not* carrying any judgement: the arrows
+(below) carry direction, the hue carries identity.
+
+### 3. Per-row direction arrows, in the row header
+
+`KPI_ROW_LABELS` now ends each row label with `▼` (lower is better) or `▲`
+(higher is better), and `atlas_text.KPI_DIRECTION_ARROW` maps the two glyphs to
+the benchmarks CSV's `direction` values. Stage 7 **asserts** each label's glyph
+against the CSV, so a re-sourced or re-ordered row cannot leave an arrow
+pointing the wrong way. The glyph rides the dimension member text - a data
+value - so the manual sort dictionary still matches and **no new column,
+encoding or mark** was needed; the alternative (a second axis or a badge on the
+marks) would have put a status on a data point, which the guardlist forbids.
+The subtitle and the hover key now read `▼ lower is better · ▲ higher is
+better` (previously "first three rows ... the rest ...", which forced the reader
+to count rows on a board that has arrows now).
+
+Four labels were **shortened** in the same pass, because the arrow lengthened
+them and the header column is 230 px: "Child deaths under 5
+(per 1,000 births)" -> "Under-5 deaths per 1,000 births", "At least basic
+drinking water (% of people)" -> "Basic drinking water (% of people)", "Access
+to electricity (% of people)" -> "Electricity access (% of people)", "Safely
+managed sanitation (% of people)" -> "Safely managed sanitation (%)". Same
+units, fewer words; the hover and the reference table still carry the full
+names.
+
+### 4. Dodge: overlapping silhouettes are spread, without lying about the value
+
+Tableau cannot offset marks inside a discrete row, so the dodge is done in the
+data (`_dodge`, stage 7) and `pos` - already documented as **layout, not data**
+- carries it. Rules, in order:
+
+- the mark at the row's largest reference stays exactly at 1.0, so the right
+  edge keeps meaning what the axis caption says;
+- any mark within `KPI_DODGE_MIN_GAP` (0.07 of the axis, roughly one icon) of
+  the one above it slides **left** just far enough to clear, floored at 0.02;
+- the printed number is the mark's **true share** (`pos_label`), never the
+  dodged position, and the hover still prints the raw values.
+
+On 2021's numbers two rows dodge: open defecation (SSA 0.9465 -> 0.93 against
+Nigeria 1.0) and clean cooking fuel (SSA 0.2831 -> 0.2339 against Nigeria
+0.3039). Every other row is untouched. The stage-5 gate reads `pos_label` for
+the number (it used to recompute `f"{pos:.1f}"`, which would have printed the
+dodged value) and plots `pos`, so gate and sheet agree mark for mark.
+
+### 5. Smaller value labels, and a legend that stops covering a mark
+
+- The pane datalabel rule's `font-size` goes 7 -> **6**; `mark-labels-cull`
+  stays on as the backstop.
+- The gate's legend moved from inside the plot (lower right, where it sat **on
+  top of the electricity row's world mark**) to a horizontal strip **below the
+  axis**, which is the one overlap a QA gate must never ship.
+- The row header column is pinned to **230 px** with the field-scoped width rule
+  the composition sheet already ships and the one sourced from
+  ClinicPerformanceDashboard/FinanceDashboard
+  (`<style-rule element='header'><format attr='width' field=... />`), so the
+  longer labels print on one or two lines instead of three.
+
+### Publish-time checks this adds
+
+1. Both glyphs render **in the row headers**, `▼` on the first three rows and
+   `▲` on the last four (a missing glyph means the member strings were
+   rewritten somewhere between the extract and the sheet).
+2. The world marks are **amber with visible vertical meridians**; if the disc is
+   flat or striped-but-wrong, the shape file did not rebind (the `type='shape'`
+   rule) rather than the colour being wrong.
+3. **No two silhouettes touch** on any row, and no printed number sits on
+   another one.
+4. The colour card still draws (it is the sheet's one right-edge card, and it
+   is now the third hue).
+5. At the published width the header column shows each label on one or two
+   lines - if it wraps to three, the 230 px rule was lost.

@@ -51,6 +51,19 @@ Two landed results, both render-verified, plus one method change.
   and gate read the same constants, so they cannot drift.
 - **`requirements.txt`** mentions numpy now: the stage-5 gate does the
   least-squares fit and the t-based band itself (`quadratic_fit_band()`).
+- **The KPI board got the same kind of pass, later the same day** (asked as a
+  follow-up: "longitude lines only", "what colour for the world", "dodge",
+  "smaller labels", "a per-row arrow"). Five changes, all render-verified:
+  the world mark is now **amber `#E69F00` with vertical orthographic meridians
+  only** (coastlines gone — they were sub-pixel noise at mark scale, and the
+  hue had to clear the green country and the blue continent); marks that would
+  collide are **dodged left in the data** (Tableau cannot offset a mark inside a
+  discrete row; the row maximum stays at 1.0 and the printed number is always
+  the true share); each **row header now ends in `▼`/`▲`** (asserted against the
+  benchmarks CSV's `direction` column, so the arrows cannot rot); value labels
+  went **7 -> 6 pt**; and the QA gate's legend moved off the plot (it was
+  covering a mark — a gate must never hide the thing it checks). Build record:
+  `docs/SHEET_KPI.md`; findings: `FIX_LEDGER.md` §M.
 
 
 ## 2026-10-22 (seventh session) - the composition sheet, white numbers, and a default view

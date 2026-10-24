@@ -2171,23 +2171,37 @@ def build_workbook(spatial_technical: str,
             "          </sort>\n"
         )
 
-    def kpi_axis_ticks() -> str:
-        """The position axis' major ticks at 0 / 0.5 / 1 (2026-10-23 user pass).
+    def kpi_table_style() -> str:
+        """The KPI board's workbook-level style rules: axis ticks + header width.
 
-        Grammar from a real Tableau-authored workbook (hr_rwfd.twb), whose axis
-        style-rule carries an `<encoding attr='space' … major-origin='0'
+        Ticks: grammar from a real Tableau-authored workbook (hr_rwfd.twb), whose
+        axis style-rule carries an `<encoding attr='space' … major-origin='0'
         major-spacing='800' … type='space' />` beside its tick-color formats --
         the serialisation of the axis' manual tick spacing, in data units. For
         a 0-1 share axis the spacing 0.5 should land ticks at 0, 0.5 and 1.
         This grammar was never exercised in this repo: if the workbook fails to
         load or the ticks render unchecked, delete this rule and let Tableau
         pick its default ticks (the fallback documented in SHEET_KPI.md).
+
+        Header width: the row labels carry the direction arrow and are long, so
+        the header column needs room or every row prints on three lines
+        (2026-10-24 render). The field-scoped width rule is the shape the
+        composition sheet already ships and the one recorded there from
+        ClinicPerformanceDashboard/FinanceDashboard
+        (`<style-rule element='header'><format attr='width' field=… />`), so it
+        is packet-sourced rather than guessed. 230 px fits the longest label
+        ("Basic drinking water (% of people)") on one line at the sheet's header
+        font; narrower windows still wrap, which is what Entire View does.
         """
         return (
             "          <style-rule element='axis'>\n"
             f"            <encoding attr='space' class='0' field='{ref('pos', 'avg', KP_DS_NAME)}' "
             "field-type='quantitative' major-origin='0' major-spacing='0.5' "
             "scope='cols' type='space' />\n"
+            "          </style-rule>\n"
+            "          <style-rule element='header'>\n"
+            f"            <format attr='width' field='[{KP_DS_NAME}].[none:kpi:nk]' "
+            "value='230' />\n"
             "          </style-rule>\n"
         )
 
@@ -2226,13 +2240,13 @@ def build_workbook(spatial_technical: str,
         ),
         pane_mark_formats=(("size", KP_SHAPE_SIZE),
                            ("mark-labels-cull", "true")),
-        pane_datalabel_attrs=(("color-mode", "auto"), ("font-size", "7")),
+        pane_datalabel_attrs=(("color-mode", "auto"), ("font-size", "6")),
         ds_name=KP_DS_NAME,
         ds_caption=KP_DS_CAPTION,
         deps=kpi_deps,
         filters=kpi_filters(kpi_order),
         tooltip=kpi_tooltip_runs(),
-        table_style=kpi_axis_ticks(),
+        table_style=kpi_table_style(),
     )
     kpi_window = (
         "    <!-- The KPI board: left rail (the proven stack) plus the right-edge\n"

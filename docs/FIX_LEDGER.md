@@ -905,3 +905,56 @@ and both band edges disappear while every mark and gridline stays; repainted
 white pane is invisible** and the shipped colour is the dark ink
 (`atlas_text.PAIRS_TREND_COLOUR`). `docs/SHEET_PAIRS.md` "Trend line" is the
 build record.
+
+---
+
+## M. The KPI-board pass (2026-10-24)
+
+### M1. Tableau cannot dodge marks inside a discrete row
+**Severity IMPROVEMENT turned METHOD - status done**
+The board puts `kpi` on Rows and `pos` on Columns, so every mark in a row shares
+one y. Two reference points whose shares are within about one icon width
+therefore draw on top of each other, and there is no sheet-level setting to
+separate them: a dodge needs the y encoding to move, and moving it means giving
+up the discrete row header. The fix is data-side, in stage 7's `_dodge`: the row
+maximum stays at 1.0 (the axis caption keeps being true), and any mark within
+`KPI_DODGE_MIN_GAP` slides left just enough to clear. `pos` was already
+documented as LAYOUT, not data, which is what makes this legitimate; the printed
+number is still the true share from `pos_label`.
+
+**Corollary that bit once:** the stage-5 gate printed `f"{pos:.1f}"`, so a dodged
+mark would have printed the dodged number while the sheet printed the true one.
+The gate now reads `pos_label` and asserts it is one decimal.
+
+### M2. Row-header text is the cheapest place to put a per-row glyph
+**Severity IMPROVEMENT - status done**
+The direction arrows (▼ lower is better, ▲ higher is better) ride the dimension
+member strings. That keeps the manual sort dictionary (which matches on those
+strings) working, needs no column, encoding or mark, and survives publish. A
+per-mark badge stays forbidden by the sheet's guardlist. Stage 7 asserts each
+label's glyph against the benchmarks CSV's `direction` column, so the arrows
+cannot drift from the data.
+
+### M3. Header width is a field-scoped style rule - and it is in pixels
+**Severity IMPROVEMENT - status done**
+`<style-rule element='header'><format attr='width' field='[ds].[none:field:nk]'
+value='230' />` widens a row-header column; the composition sheet already ships
+the shape (value 92 for its nested group header) and it is the
+ClinicPerformanceDashboard / FinanceDashboard grammar. 230 px is what the longest
+KPI label needs; below that Tableau wraps to two or three lines and the board
+loses vertical room (observed 2026-10-24: three-line headers at ~150 px).
+
+### M4. A QA gate's legend must not sit on a mark
+**Severity DEFECT in the gate - status done**
+`8_where_nigeria_stands.png` carried its legend at lower right, **on top of the
+electricity row's world mark** - the gate was hiding the thing it exists to
+check. It is now a horizontal strip below the axis.
+
+### M5. Shape marks are tinted by ALPHA, so detail must be drawn in alpha
+**Severity IMPROVEMENT turned DESIGN FACT - status done (extends K3)**
+The world globe keeps its meridians by drawing them at reduced alpha (~45% drop)
+into the same RGBA PNG: the colour card paints Shape marks by the PNG's alpha,
+so a line's "white" is really "less tint". Consequence for the 2026-10-24
+simplification: dropping the coastlines was free (they were alpha strokes too),
+and the amber globe renders its meridians as lighter amber, not white. That is
+correct and expected - see K3.

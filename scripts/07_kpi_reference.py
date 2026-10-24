@@ -46,6 +46,7 @@ import base64
 import csv
 import io
 import json
+import math
 import shutil
 import sys
 import urllib.request
@@ -457,113 +458,56 @@ def _fill_rgba(fill: str) -> tuple[int, int, int, int]:
             int(hexcode[4:6], 16), 255)
 
 
-def _rdp(points: list[tuple[float, float]], eps: float) -> list[tuple[float, float]]:
-    """Douglas-Peucker simplification of a polyline to epsilon pixels."""
-    if len(points) < 3:
-        return points
-    (x1, y1), (x2, y2) = points[0], points[-1]
-    dx, dy = x2 - x1, y2 - y1
-    denom = (dx * dx + dy * dy) ** 0.5 or 1.0
-    best_i, best_d = 0, eps
-    for i in range(1, len(points) - 1):
-        px, py = points[i]
-        d = abs(dy * (px - x1) - dx * (py - y1)) / denom
-        if d > best_d:
-            best_i, best_d = i, d
-    if best_i == 0:
-        return [points[0], points[-1]]
-    left = _rdp(points[:best_i + 1], eps)
-    right = _rdp(points[best_i:], eps)
-    return left[:-1] + right
+def _draw_globe(fill: str) -> bytes:
+    """The world mark: a solid disc with VERTICAL MERIDIANS only.
 
+    History, because this mark has been redrawn three times: the 2026-10-23
+    passes rejected a flat strip, then a map clipped into a circle, then
+    continents cut out of the disc, and landed on "disc + white coastlines +
+    a lat/long grid". The 2026-10-24 pass is the last word so far and removes
+    the coastlines: at mark scale (a ~40 px shape) the 110m coastline is
+    sub-pixel noise that fights the meridians, and the user asked for longitude
+    lines only. What is left is the disc plus five meridian chords -- the
+    minimum that still reads as a globe rather than a coloured dot, and the
+    only detail that survives being scaled down.
 
-def _draw_globe(rings: list[list[tuple[float, float]]], fill: str,
-                cx: float, cy: float, radius: float) -> bytes:
-    """The world mark: a solid GLOBE with white coastlines and lat/long grid.
-
-    The 2026-10-23 user pass rejected the earlier worlds (a flat strip, a map
-    clipped into a circle, then continents cut out of the disc) and pinned the
-    final design: the disc carries the series purple and the white detail makes
-    it read as a globe -- every Natural Earth admin-0 coastline stroked in
-    white, plus a white meridian/parallel graticule. Drawn with PIL at 4x
-    supersample so the strokes stay smooth after the downscale to the shared
-    canvas; the disc carries the tint's alpha, graticule and coastlines carry
-    a lighter alpha so the tint paints them lighter than the disc.
+    Drawn with PIL at 4x supersample, then downscaled on the shared canvas.
+    Contrast rides ALPHA, not RGB: Tableau's colour card tints the PNG, so the
+    lines drop their alpha (~45% of the disc) and the tint paints them lighter
+    -- see the long note in build_shape_images and FIX_LEDGER K3.
     """
     from PIL import Image, ImageDraw
 
     ss = 4
     side = ICON_CANVAS * ss
-    span = 2 * radius
 
-    def to_px(x: float, y: float) -> tuple[float, float]:
-        return (
-            (x - (cx - radius)) / span * side,
-            side - (y - (cy - radius)) / span * side,  # PIL grows downward
-        )
-
-    # The colour card TINTS the shapes: with `series` on Colour, Tableau keys
-    # the mark colour to the PNG's alpha (the 2026-10-23 in-app evidence: the
-    # violet members africa/nigeria match their series hue, and a white-line
-    # world.png fuses into a solid violet disc). Contrast therefore has to ride
-    # ALPHA, not RGB: the disc stays full alpha; the graticule and coastlines
-    # drop their alpha so the tint paints them LIGHTER than the disc -- the
-    # closest a Shape+Colour mark can get to "purple globe, white lines".
-    out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(out)
-    draw.ellipse([0, 0, side - 1, side - 1], fill=_fill_rgba(fill))
-
-    # Longitude lines only (meridians every 60 degrees), the 2026-10-23
-    # user pass narrowing "lines around the world" to the meridian rings --
-    # drawn as straight chords since the equirect frame maps linearly onto
-    # the disc. Heavy by design at mark scale.
-    grid_w = max(2, round(side * 0.05))
-    coast_w = max(2, round(side * 0.018))
+    # Longitude lines only (the 2026-10-24 pass: no parallels, no coastlines).
+    # Drawn as ORTHOGRAPHIC MERIDIANS rather than straight stripes: on a sphere
+    # seen face-on, a meridian at delta-longitude projects to a vertical ellipse
+    # of semi-width R*sin(delta), so the set of them bows and the disc reads as
+    # a globe instead of a striped coin. 0 degrees is the straight central
+    # meridian, then +/-30, +/-60 and +/-80 degrees for the near-limb pair.
+    grid_w = max(2, round(side * 0.035))
     lines_mask = Image.new("L", (side, side), 0)
     ldraw = ImageDraw.Draw(lines_mask)
-    for k in (1, 2, 3, 4, 5):
-        x = cx - radius + span * k / 6.0
-        ldraw.line([to_px(x, cy - radius), to_px(x, cy + radius)],
-                   fill=255, width=grid_w)
-
-    # Coastlines on the same alpha model: landmass rings stroked, not filled,
-    # and only into the lines mask (never the RGB canvas -- the tint owns the
-    # colour channel). Rings smaller than ~0.2% of the disc are dropped
-    # (lakes, archipelago specks), and surviving rings are decimated with
-    # Douglas-Peucker so dense 110m coastline wiggles cannot pile stroke onto
-    # stroke; the coast alpha leans mid-way between disc and grid.
-    disc_area = 3.14159 * radius * radius
-    eps_px = side * 0.006
-    for ring in rings:
-        if len(ring) < 3:
-            continue
-        area2 = 0.0
-        for (x1, y1), (x2, y2) in zip(ring, ring[1:]):
-            area2 += x1 * y2 - x2 * y1
-        if abs(area2 / 2.0) < 0.002 * disc_area:
-            continue
-        pts = [to_px(x, y) for x, y in ring]
-        # GeoJSON rings close exactly (last == first); RDP needs an open
-        # line or the identical endpoints collapse the ring to a chord.
-        curve = pts[:-1] if pts[-1] == pts[0] else pts
-        ldraw.line([*_rdp(curve, eps_px), curve[0]], fill=255, width=coast_w,
-                   joint="curve")
+    mid = side / 2.0
+    for deg in (0.0, 30.0, -30.0, 60.0, -60.0, 80.0, -80.0):
+        w = (side / 2.0) * abs(math.sin(math.radians(deg)))
+        if w < 1.0:
+            ldraw.line([(mid, 0.0), (mid, side)], fill=255, width=grid_w)
+        else:
+            ldraw.ellipse([mid - w, 0.0, mid + w, side], outline=255,
+                          width=grid_w)
 
     # Alpha compose: start from the disc, carve the tinted-down intensity for
-    # every line pixel -- longitude lines ~55% of the disc's tint, coasts
-    # ~75%. Clip to the sphere (rings can overhang the antimeridian edge of
-    # the bbox).
+    # every line pixel (~45% drop).
     disc = Image.new("L", (side, side), 0)
     ddraw = ImageDraw.Draw(disc)
     ddraw.ellipse([0, 0, side - 1, side - 1], fill=255)
     import numpy as np
     disc_a = np.asarray(disc, dtype=np.float32)
     lines_a = np.asarray(lines_mask, dtype=np.float32) / 255.0
-    # per-pixel alpha: disc * (1 - lines * drop), grid dropping ~45%, coasts
-    # drawn into the same mask keep their share -- depth differentiates by how
-    # they stack, and a line's final alpha is the deepest stroke there.
-    base = disc_a * (1.0 - lines_a * 0.45)
-    alpha = base.astype(np.uint8)
+    alpha = (disc_a * (1.0 - lines_a * 0.45)).astype(np.uint8)
     arr = np.zeros((side, side, 4), dtype=np.uint8)
     arr[..., 0:3] = _fill_rgba(fill)[0:3]
     arr[..., 3] = alpha
@@ -647,21 +591,11 @@ def build_shape_images() -> None:
         SHAPES_SRC / atlas_text.KPI_SHAPE_FILES["sub-Saharan Africa (2021)"],
         fills["sub-Saharan Africa (2021)"],
     )
-    world_rings: list[list[tuple[float, float]]] = []
-    for f in features:
-        world_rings.extend(_ring_paths(f["geometry"]))
-    # The globe's disc: centred on the map's bounding box, spanning its larger
-    # side, so the landmasses sit centred with the rim just outside.
-    wxs = [x for ring in world_rings for x, _ in ring]
-    wys = [y for ring in world_rings for _, y in ring]
+    # The globe is a disc on the shared canvas, so it needs no geometry: the
+    # landmass no longer draws on it (2026-10-24 keeps the meridians only), and
+    # _finish_icon trims and rescales whatever ink it gets.
     _finish_icon(
-        _draw_globe(
-            world_rings,
-            fills["World (2021)"],
-            (min(wxs) + max(wxs)) / 2,
-            (min(wys) + max(wys)) / 2,
-            max(max(wxs) - min(wxs), max(wys) - min(wys)) / 2 * 1.04,
-        ),
+        _draw_globe(fills["World (2021)"]),
         SHAPES_SRC / atlas_text.KPI_SHAPE_FILES["World (2021)"],
         fills["World (2021)"],
     )
@@ -695,6 +629,48 @@ def build_shape_images() -> None:
 
 
 # --- Wave 2: the sheet's own extract ------------------------------------------
+# A mark's icon is ~0.05-0.07 of a 0-1 axis wide on the shipped sheet, so two
+# shares closer together than this overlap: the reader cannot tell there are
+# two marks, and their printed labels collide as well.
+KPI_DODGE_MIN_GAP = 0.07
+# Never push a dodged mark off the axis or onto the frame.
+KPI_DODGE_FLOOR = 0.02
+
+
+def _dodge(shares: dict[str, float]) -> dict[str, float]:
+    """Spread a row's near-coincident marks apart, without moving the top one.
+
+    Returns the position each mark is DRAWN at. A mark at the row's largest
+    reference stays exactly where it belongs (1.0 -- by construction the row's
+    scale is that value), and any mark whose share falls within
+    KPI_DODGE_MIN_GAP of the one above it is slid LEFT just far enough to clear
+    it. Sliding down/left rather than centre-then-spread is deliberate: the
+    right-hand edge of every row keeps meaning "the largest reference", so the
+    axis caption stays true.
+
+    This is the one place on this sheet where a drawn position is not exactly
+    the value, so it is bounded and it is visible: the slide is at most
+    KPI_DODGE_MIN_GAP, the mark still prints its TRUE share (pos_label, not the
+    dodged pos), and a row with no collision is untouched. Two rows dodge on
+    2021's numbers (clean cooking fuel's SSA/Nigeria pair, and open defecation's
+    SSA/Nigeria pair); the rest are already clear.
+
+    `pos` is documented layout, not data (this sheet's own docstring: one axis
+    because the row units differ), which is why the fix lives here rather than
+    in the workbook -- Tableau cannot offset marks inside a discrete row.
+    """
+    out: dict[str, float] = {}
+    ceiling: float | None = None
+    for series, share in sorted(shares.items(), key=lambda kv: kv[1], reverse=True):
+        pos = share
+        if ceiling is not None and pos > ceiling:
+            pos = ceiling
+        out[series] = max(pos, KPI_DODGE_FLOOR)
+        ceiling = out[series] - KPI_DODGE_MIN_GAP
+    assert set(out) == set(shares), "dodge lost a mark"
+    return out
+
+
 def build_dots() -> int:
     """data/processed/kpi_dots.csv -- the marks the 'Where Nigeria stands' sheet draws.
 
@@ -706,12 +682,14 @@ def build_dots() -> int:
     whole grammar is value-beside-reference.
 
     `pos` is the row-normalised position: value / the largest of that row's
-    references (Nigeria, SSA, world, SDG benchmark). The sheet needs one axis
-    because the row units differ (per-1,000 rates against percents); pos is
-    therefore a LAYOUT aid. The 2026-10-23 user passes ended with the share
-    PRINTING on the sheet (marks' labels + the returned axis, one decimal,
+    references (Nigeria, SSA, world, SDG benchmark), then dodged (`_dodge`) so
+    two near-coincident marks do not draw on top of each other. The sheet needs
+    one axis because the row units differ (per-1,000 rates against percents);
+    pos is therefore a LAYOUT aid. The 2026-10-23 user passes ended with the
+    share PRINTING on the sheet (marks' labels + the returned axis, one decimal,
     user's explicit "keep the scale-share number") while the raw values stay
-    one hover away.
+    one hover away -- and since 2026-10-24 the label prints the TRUE share even
+    when the mark itself is dodged left to clear its neighbour.
     """
     path = REFERENCE / "kpi_benchmarks_2021.csv"
     if not path.exists():
@@ -732,6 +710,15 @@ def build_dots() -> int:
     for row in benchmark_rows:
         label = atlas_text.KPI_ROW_LABELS[row["kpi"]]
         assert label.strip(), f"no row label for benchmark kpi {row['kpi']!r}"
+        # The row header's direction arrow is a design constant (atlas_text) and
+        # the benchmarks CSV's `direction` column is the ground truth; assert
+        # them against each other so a re-ordered or re-sourced row cannot leave
+        # an arrow pointing the wrong way.
+        arrow = atlas_text.KPI_DIRECTION_ARROW[row["direction"]]
+        assert label.endswith(" " + arrow), (
+            f"{row['kpi']}: row label {label!r} does not end with {arrow!r}, "
+            f"but the benchmarks CSV says direction={row['direction']!r}"
+        )
         raw = {
             atlas_text.KPI_SERIES[0][0]: row["nigeria_wdi"] or row["nigeria_dataset"],
             atlas_text.KPI_SERIES[1][0]: row["sub_saharan_africa"],
@@ -742,6 +729,10 @@ def build_dots() -> int:
             f"{row['kpi']}: no Nigeria value to draw"
         )
         scale = max(values.values())
+        # Placement, before draw order: the true share of the row's largest
+        # reference, then a dodge for marks that would collide (see _dodge).
+        shares = {series: value / scale for series, value in values.items()}
+        placed = _dodge(shares)
         # The hovering word budget is one line (2026-10-23 user pass, third):
         # values at one decimal, then the benchmark and the source, nothing
         # else the sheet already shows. The row header carries the unit and
@@ -778,19 +769,21 @@ def build_dots() -> int:
         for series, value in reversed(list(raw.items())):
             if not value:
                 continue
-            pos = float(value) / scale
+            pos = placed[series]
             assert 0 < pos <= 1.0, f"{row['kpi']} / {series}: pos {pos:.3f} out of (0, 1]"
             # The mark's LABEL is a pre-formatted string (2026-10-23 user pass:
-            # the value beside the maps prints at one decimal, small font).
-            # The number-format lanes in the twb were tried and the label kept
-            # Tableau's General 4-decimal print, so the sheet labels the same
-            # way the hover does: with data-side text, never with formatting.
+            # the value beside the maps prints at one decimal, small font) and
+            # it prints the TRUE share, never the dodged position -- the dodge
+            # moves the picture, not the number. The number-format lanes in the
+            # twb were tried and the label kept Tableau's General 4-decimal
+            # print, so the sheet labels the same way the hover does: with
+            # data-side text, never with formatting.
             marks.append(
                 {
                     "kpi": label,
                     "series": series,
                     "pos": f"{pos:.4f}",
-                    "pos_label": f"{pos:.1f}",
+                    "pos_label": f"{shares[series]:.1f}",
                     "hover": hover,
                 }
             )

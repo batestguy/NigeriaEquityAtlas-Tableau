@@ -50,7 +50,7 @@ view 9, the KPI board, joined 2026-10-23):
 | What the words mean | **text zones** (part 1 of 3) | the reference table, 24 rows: the word, its formula or weight, what it means, how it was made |
 | The list of basic needs | **text zones** (part 2 of 3) | the same three columns, 11 rows: the nine needs in three areas, each with its weight and what counts as missing |
 | How we did it | **text zones** (part 3 of 3) | the same three columns, 9 rows: a worked step per section, from the survey to the party question |
-| Where Nigeria stands | **silhouette board (*Shape*)**, one row per benchmarked KPI | the KPI board from `kpi_dots.hyper` (stage 7): 7 benchmarked national KPIs and their reference points = **20 map silhouettes — a green Nigeria map, a blue Africa map, a purple globe with white longitude lines (2026-10-23 user passes; the globe's tinted-down lines ride on alpha — see `docs/SHEET_KPI.md` built record and `FIX_LEDGER.md` K3)** — on a shared axis that is each row's own scale (`pos = value / the row's largest reference`; stage 7 normalises; each mark **prints its share at one decimal** beside it, a pre-formatted `pos_label` string on the Label pill at 7 pt with `mark-labels-cull` handling the near-coincident pair; the axis' own tick rule (`major-spacing='0.5'` → 0 / 0.5 / 1) is present but **screen-unverified** — delete `kpi_axis_ticks()` if inert at publish; hover carries the actual values at one decimal with the benchmark text and the source, pre-formatted). The images are **embedded in the workbook** inside `<external><shapes>` (`KPI_Geo/…`, mapped member-by-member by the ds-level `type='shape'` rule, `docs/SHEET_KPI.md`), so publishing needs no Shapes-repository copy; the optional authoring copy into `My Tableau Repository\Shapes\KPI_Geo` is written by stage 7 when the shell may write there and restores nothing if the workbook is re-fetched. Colour = `series` via a ds-level palette (`atlas_text.KPI_SERIES`), rows in the benchmarks table's order via a manual sort dictionary (headcount first; marks ordered so Nigeria draws last/on top). National figures only, no state panel; `docs/SHEET_KPI.md` carries the can/may-not list and the pending packet checks |
+| Where Nigeria stands | **silhouette board (*Shape*)**, one row per benchmarked KPI | the KPI board from `kpi_dots.hyper` (stage 7): 7 benchmarked national KPIs and their reference points = **20 map silhouettes — a green Nigeria map, a blue Africa map, and an amber globe carrying vertical meridians only (2026-10-24 pass: Okabe-Ito `#E69F00`, orthographic meridians instead of coastlines; the lines ride on alpha, so the colour card paints them lighter — see `docs/SHEET_KPI.md` built record, `FIX_LEDGER.md` K3/M5)** — on a shared axis that is each row's own scale (`pos = value / the row's largest reference`; stage 7 normalises and **dodges** marks that would collide, keeping the row maximum at 1.0 — the printed number is the TRUE share, a pre-formatted `pos_label` string on the Label pill at **6 pt** with `mark-labels-cull` as the backstop; each row header ends in a **direction arrow**, `▼` lower is better / `▲` higher is better, asserted against the benchmarks CSV's `direction`; the header column is pinned to 230 px by the composition sheet's field-scoped width rule; the axis' own tick rule (`major-spacing='0.5'` → 0 / 0.5 / 1) is still **screen-unverified** — delete `kpi_table_style()`'s axis rule if inert at publish; hover carries the actual values at one decimal with the benchmark text and the source, pre-formatted). The images are **embedded in the workbook** inside `<external><shapes>` (`KPI_Geo/…`, mapped member-by-member by the ds-level `type='shape'` rule, `docs/SHEET_KPI.md`), so publishing needs no Shapes-repository copy; the optional authoring copy into `My Tableau Repository\Shapes\KPI_Geo` is written by stage 7 when the shell may write there and restores nothing if the workbook is re-fetched. Colour = `series` via a ds-level palette (`atlas_text.KPI_SERIES`), rows in the benchmarks table's order via a manual sort dictionary (headcount first; marks ordered so Nigeria draws last/on top). National figures only, no state panel; `docs/SHEET_KPI.md` carries the can/may-not list and the pending packet checks |
 | How measures pair | **point cloud (*Circle*)**, one pane per state-round pair | the pairs board from `pairs_board.hyper`: both axes driven by the inline Parameters dropdowns; circles filled **one green** (`#009E73`, `atlas_text.PAIRS_POINT_COLOUR`) via a pane-level `<format attr='mark-color'>`, no colour pill and therefore no colour legend; **one quadratic trend line per pane with its 95% confidence band** (`<trendline fit='polynomial' degree='2' enable-confidence-bands='true'>`, painted `#4D4D4D` by a pane-level `<style-rule element='trendline'>`; asked for in white, which is invisible on the white pane — `docs/SHEET_PAIRS.md` "Trend line", 2026-10-24), **instant analytics off so the hover cannot print the model equation**; hover = **the state name only**; looking only — the line describes each pane's own marks, so **no slope, coefficient, correlation or claim is printed** (`docs/SHEET_PAIRS.md`) |
 
 The three reference tabs are **one table paginated on its own groups**, not three
@@ -403,6 +403,24 @@ workbook.
      stage 6 now asserts it; if the line is there but **pale/invisible**, the
      `stroke-color` format on `element='trendline'` was lost and the line fell
      back to a light default.
+
+- **The KPI board's 2026-10-24 pass is only gate-and-probe verified**, so it
+  wants five eyes on the published viz (`docs/SHEET_KPI.md`, built record):
+  1. **Both arrows print in the row headers** — `▼` on the first three rows,
+     `▲` on the last four. A missing glyph means the member strings were
+     rewritten somewhere between the extract and the sheet.
+  2. **The world marks are amber with visible vertical meridians** (not a flat
+     disc, not a purple one). A flat disc means the `type='shape'` rule stopped
+     binding; purple means the palette member went back to the old hex.
+  3. **No two silhouettes touch** on any row, and no printed number sits on
+     another. The dodge is data-side (`FIX_LEDGER.md` M1), so a collision means
+     the extract was rebuilt without it.
+  4. **The colour card draws** and shows three members (the sheet's one
+     right-edge card, now on its third hue).
+  5. **Labels are still legible at the published size** at `font-size='6'`; if
+     they are too small, the pane datalabel font-size is one number in stage 6.
+  6. At the published width each row label takes one or two lines; three lines
+     means the 230 px header rule (`kpi_table_style`) was lost.
 
 ## If something looks wrong
 

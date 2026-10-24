@@ -614,6 +614,7 @@ KPI_TITLE = "Where Nigeria stands"
 KPI_SUBTITLE = (
     "Nigeria beside its 2021 reference points \u00b7 every row has its own "
     "scale: a mark's number is its share of that row's largest reference "
+    "\u00b7 \u25bc lower is better, \u25b2 higher is better "
     "\u00b7 the actual values, benchmark and source are on hover, at one "
     "decimal \u00b7 the world line is developing countries (109 of them, "
     "OPHI/UNDP), not every country \u00b7 point estimates"
@@ -627,12 +628,23 @@ KPI_SUBTITLE = (
 # The next pass on the same day went further: the world's globe draws in
 # purple with white coastlines and a lat/long grid, so it reads as a globe
 # rather than a flat map cut into a disc.
+# 2026-10-24 pass: the world went from that purple to OKABE-ITO AMBER
+# (#E69F00) and the globe lost its coastlines, keeping its vertical meridians
+# only. The reasoning, because this is a colour question the user asked
+# outright: the two hues the board already spends are a GREEN landmass (one
+# country) and a BLUE one (one continent), so the third mark cannot be blue or
+# green without colliding with them; amber is the one hue that stays clear of
+# both for a colour-blind reader as well (Okabe-Ito pairs it with #009E73), and
+# it is the project's existing Okabe-Ito family (the composition sheet's
+# Education share is the same hex). On a disc with vertical meridians it reads
+# as sand/land under a graticule -- "the planet" -- rather than as a fourth
+# brand colour. Purple is the one-hex revert if the amber reads wrong.
 # Colours are single-sourced so the workbook's palette block and the stage-5
 # QA gate cannot drift apart, like MPI_BANDS and SPATIAL_QUADRANTS before it.
 KPI_SERIES: list[tuple[str, str]] = [
     ("Nigeria (2021)", "#009E73"),
     ("sub-Saharan Africa (2021)", "#4E79A7"),
-    ("World (2021)", "#9467BD"),
+    ("World (2021)", "#E69F00"),
 ]
 # The marks are map silhouettes (2026-10-23): each member draws as its own
 # shape -- a map of Nigeria, a map of Africa, a map of the world -- so the
@@ -651,14 +663,38 @@ KPI_SHAPE_FILES: dict[str, str] = {
 # Row labels: what the sheet's row header prints. Keyed to the kpi names the
 # benchmarks CSV carries (stage 7), with the unit written out, because a bare
 # "117.6" means nothing without it and the axis numbers are abstract shares.
+#
+# The trailing glyph is the per-row direction arrow (2026-10-24 user pass: "an
+# arrow indicating if high values are good or bad, per row"). It rides the ROW
+# HEADER TEXT -- a data value, so the manual sort dictionary still matches and
+# no new encoding, column or mark is needed. Nothing per MARK is flagged: the
+# guardlist (docs/SHEET_KPI.md) forbids a good/bad badge on a data point, and
+# the arrow describes the row's reading, not the value's quality. The glyph is
+# derived from KPI_DIRECTION_ARROW below, and stage 7 ASSERTS it against the
+# benchmarks CSV's `direction` column, so the arrows cannot drift from the data.
+#
+# Length matters: the header column is 230 px (stage 6 sets it) and a longer
+# label wraps to a second and third line, which eats the board's vertical room.
+# 2026-10-24 shortened four labels for exactly that reason ("Child deaths under
+# 5 (per 1,000 births)" -> "Under-5 deaths per 1,000 births", "At least basic
+# drinking water (% of people)" -> "Basic drinking water (% of people)",
+# "Access to electricity" -> "Electricity access", "Safely managed sanitation
+# (% of people)" -> "... (%)"), the same units, fewer words.
 KPI_ROW_LABELS: dict[str, str] = {
-    "Multidimensional poverty headcount (national)": "Poverty headcount (% of people)",
-    "Under-five mortality rate": "Child deaths under 5 (per 1,000 births)",
-    "Open defecation": "Open defecation (% of people)",
-    "Safely managed sanitation": "Safely managed sanitation (% of people)",
-    "At least basic drinking water": "At least basic drinking water (% of people)",
-    "Access to electricity": "Access to electricity (% of people)",
-    "Access to clean cooking fuels and technologies": "Clean cooking fuel (% of people)",
+    "Multidimensional poverty headcount (national)":
+        "Poverty headcount (% of people) \u25bc",
+    "Under-five mortality rate": "Under-5 deaths per 1,000 births \u25bc",
+    "Open defecation": "Open defecation (% of people) \u25bc",
+    "Safely managed sanitation": "Safely managed sanitation (%) \u25b2",
+    "At least basic drinking water": "Basic drinking water (% of people) \u25b2",
+    "Access to electricity": "Electricity access (% of people) \u25b2",
+    "Access to clean cooking fuels and technologies":
+        "Clean cooking fuel (% of people) \u25b2",
+}
+# The two glyphs, keyed to the benchmarks CSV's `direction` values.
+KPI_DIRECTION_ARROW: dict[str, str] = {
+    "lower_is_better": "\u25bc",
+    "higher_is_better": "\u25b2",
 }
 # Short source names for the hover line, keyed to the WDI code. The full
 # provenance (fetch date, licence, exact series) stays in the benchmarks CSV
@@ -678,7 +714,7 @@ KPI_SOURCE: dict[str, str] = {
 # the third 2026-10-23 pass ("reduce the amount of words") -- the causal
 # disclaimer stays, because docs/CAUSAL_DECISION.md forbids losing it.
 KPI_TOOLTIP_NOTE = (
-    "First three rows: lower is better \u00b7 the rest: higher is better "
+    "\u25bc lower is better \u00b7 \u25b2 higher is better "
     "\u00b7 other countries' figures, for comparison only \u2014 no view of "
     "what makes any row its size."
 )
