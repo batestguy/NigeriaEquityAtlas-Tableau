@@ -1520,21 +1520,26 @@
               <format attr='margin' value='0' />
             </zone-style>
           </zone>
-          <zone h='100000' id='9' type-v2='text' w='43750' x='0' y='0'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'> </run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'> </run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
+          <zone h='100000' id='8' type-v2='text' w='43750' x='0' y='0'>
+            <formatted-text><run fontcolor='#22252a' fontsize='9'> </run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
               <format attr='background-color' value='#F4F1EA' />
             </zone-style>
           </zone>
-          <zone h='13208' id='10' type-v2='text' w='43750' x='0' y='86792'>
-            <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated (Google Gemini).</run></formatted-text>
+          <zone h='55346' id='9' type-v2='text' w='43750' x='0' y='0'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
-              <format attr='background-color' value='#F4F1EA' />
             </zone-style>
           </zone>
-          <zone h='5660' id='21' type-v2='dashboard-object' w='14773' x='568' y='62736'>
+          <zone h='4403' id='20' type-v2='text' w='42330' x='710' y='55346'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='4' />
+            </zone-style>
+          </zone>
+          <zone h='5346' id='21' type-v2='dashboard-object' w='14773' x='142' y='59748'>
             <button action='tabdoc:goto-sheet window-id=&quot;{CEC0A58D-EB2D-59E4-8DC0-4BE1534A5C9D}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1   Overview  →</caption>
@@ -1543,7 +1548,13 @@
               </button-visual-state>
             </button>
           </zone>
-          <zone h='5660' id='22' type-v2='dashboard-object' w='22230' x='568' y='76101'>
+          <zone h='10063' id='22' type-v2='text' w='42330' x='710' y='64780'>
+            <formatted-text><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='4' />
+            </zone-style>
+          </zone>
+          <zone h='5346' id='23' type-v2='dashboard-object' w='22230' x='142' y='74843'>
             <button action='tabdoc:goto-sheet window-id=&quot;{D490EF37-C020-550A-8C6C-CC5ABC436D16}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2   A state, in context  →</caption>
@@ -1551,6 +1562,18 @@
                 <button-caption-font-style fontcolor='#008751' fontname='Tableau Semibold' fontsize='13' underline='true' />
               </button-visual-state>
             </button>
+          </zone>
+          <zone h='10063' id='24' type-v2='text' w='42330' x='710' y='79874'>
+            <formatted-text><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='4' />
+            </zone-style>
+          </zone>
+          <zone h='10063' id='10' type-v2='text' w='42330' x='710' y='89937'>
+            <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated (Google Gemini).</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='4' />
+            </zone-style>
           </zone>
         </zone>
       </zones>

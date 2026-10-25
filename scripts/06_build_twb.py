@@ -1569,7 +1569,8 @@ def _estimate_height(paragraphs: list[list[Run]], width_px: int) -> int:
 
 
 def text_zone(zone_id: int, *, x: int, y: int, w: int, h: int,
-              paragraphs: list[list[Run]], background: str = "") -> str:
+              paragraphs: list[list[Run]], background: str = "",
+              margin: int = CELL_MARGIN) -> str:
     """One text zone. Geometry is in 1/100000ths of the dashboard, Tableau's unit."""
     body = f"<run fontsize='{BODY_SIZE}'>{PARA_BREAK}</run>".join(
         "".join(_run_xml(*r) for r in runs) for runs in paragraphs
@@ -1580,7 +1581,7 @@ def text_zone(zone_id: int, *, x: int, y: int, w: int, h: int,
         f"          <zone h='{h}' id='{zone_id}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
         f"            <formatted-text>{body}</formatted-text>\n"
         "            <zone-style>\n"
-        f"              <format attr='margin' value='{CELL_MARGIN}' />\n"
+        f"              <format attr='margin' value='{margin}' />\n"
         f"{fill}"
         "            </zone-style>\n"
         "          </zone>\n"
@@ -1833,30 +1834,42 @@ def cover_dashboard_xml() -> tuple[str, str]:
         [(atlas_text.COVER_TITLE, True, 26, False)],
         [(atlas_text.COVER_SUBTITLE, False, 12, False)],
         [(atlas_text.COVER_INTRO, False, 9, False)],
-        [("CONTENTS", True, 10, False)],
     ]
-    # Each contents heading is a navigation button laid over a blank line of the
-    # heading's own size, so the text zone keeps the layout it was measured at.
-    # The y centres are measured from the 2026-10-25 render at 1:1 (the canvas
-    # is the image's size), not derived; re-measure if the text above changes.
-    heading_y_px = [417, 502]
-    assert len(heading_y_px) == len(atlas_text.COVER_TOC)
+    # The contents list is a column of FIXED slots below the header, never
+    # positions inside the header's text flow: Tableau Public lays text out
+    # differently from the desktop app (the title fits one line on the web, two
+    # on the desktop), so buttons pinned to measured lines drifted off them on
+    # the 2026-10-25 publish. Here a reflow can only move text within its own
+    # zone. A text zone centres its text vertically, so the header zone ends
+    # where the contents begin (it needs ~335 px on the desktop, its taller
+    # case) and the opaque panel behind everything is a zone of its own. A zone
+    # too short for its wrapped lines elides them to one ("povert.."), hence
+    # 64 px for two 9 pt lines.
     # a contents name that is not a dashboard would build a button to nowhere
     assert {n for n, _ in atlas_text.COVER_TOC} <= {SHEET_OVERVIEW, SHEET_CONTEXT}
-    buttons = ""
+    slot_top, button_h, desc_h, credit_h = 352, 34, 64, 64
+    contents = text_zone(
+        20, x=ux(10), y=uy(slot_top), w=ux(panel_w - 20), h=uy(28),
+        paragraphs=[[("CONTENTS", True, 10, False)]], margin=4,
+    )
+    y = slot_top + 28
     for i, (name, desc) in enumerate(atlas_text.COVER_TOC, 1):
-        paragraphs.append([(" ", True, 13, False)])
-        paragraphs.append([(desc, False, 9, False)])
         # A text button centres its caption, so the zone is sized to the caption
         # to sit flush with the text: 9.5 px a character + 42 px, fitted to the two
         # rendered captions (185 px for 15 characters, 290 px for 26), plus 24 px
         # of button padding. Narrower than that and Tableau elides the caption.
         caption = f"{i}   {name}  →"
-        buttons += nav_button_zone(
-            20 + i, target=name, caption=caption, tooltip=f"Open {name}",
-            x=ux(8), y=uy(heading_y_px[i - 1] - 18),
-            w=ux(round(len(caption) * 9.5) + 42 + 24), h=uy(36),
+        contents += nav_button_zone(
+            20 + 2 * i - 1, target=name, caption=caption, tooltip=f"Open {name}",
+            x=ux(2), y=uy(y), w=ux(round(len(caption) * 9.5) + 42 + 24),
+            h=uy(button_h),
         )
+        contents += text_zone(
+            20 + 2 * i, x=ux(10), y=uy(y + button_h - 2), w=ux(panel_w - 20),
+            h=uy(desc_h), paragraphs=[[(desc, False, 9, False)]], margin=4,
+        )
+        y += button_h + desc_h - 2
+    assert y <= size[1] - credit_h, f"contents run into the credit line ({y} px)"
 
     zones = (
         f"          <zone h='100000' id='2' param='Image/{COVER_IMAGE_NAME}'"
@@ -1866,15 +1879,16 @@ def cover_dashboard_xml() -> tuple[str, str]:
         f"            </zone-style>\n"
         f"          </zone>\n"
         + text_zone(
-            9, x=0, y=0, w=ux(panel_w), h=100000, paragraphs=paragraphs,
+            8, x=0, y=0, w=ux(panel_w), h=100000, paragraphs=[[(" ", False, 9, False)]],
             background="#F4F1EA",
         )
+        + text_zone(9, x=0, y=0, w=ux(panel_w), h=uy(slot_top), paragraphs=paragraphs)
+        + contents
         + text_zone(
-            10, x=0, y=uy(size[1] - 84), w=ux(panel_w), h=uy(84),
-            paragraphs=[[(atlas_text.COVER_CREDIT, False, 7, False)]],
-            background="#F4F1EA",
+            10, x=ux(10), y=uy(size[1] - credit_h), w=ux(panel_w - 20),
+            h=uy(credit_h),
+            paragraphs=[[(atlas_text.COVER_CREDIT, False, 7, False)]], margin=4,
         )
-        + buttons
     )
     dashboard = (
         f"    <dashboard name='{escape(SHEET_COVER)}'>\n"

@@ -1320,16 +1320,21 @@ anyway by `hide_worksheet_tabs()`. This may reopen the sheet-1 legend
 question in `PUBLISH.md` (the `simple-id` suspect was ruled out on the wrong
 evidence), but nothing here tested that.
 
-### U2. A text button centres its caption -- size the zone to the words
-**Severity IMPROVEMENT - status done, render-verified**
-`button-type='text'` centres the caption in the zone, and a zone that is too
-narrow elides it ("1 Overview ..."). The headings in the cover's text zone
-became blank lines of the same size (a 13 pt bold NBSP), so the layout is
-unchanged, and each button sits over its blank line at a measured y centre (417
-and 502 px on the 1408x636 canvas) with a width of
-`9.5 px x characters + 42 + 24` (fitted to the two rendered captions). If the
-text above the contents changes, re-measure `heading_y_px` in
-`cover_dashboard_xml()`.
+### U2. Buttons pinned over flowing text drift on the web -- use fixed slots
+**Severity DEFECT - status done, desktop render-verified, web pending republish**
+The first version laid each button over a blank line inside the cover's one
+big text zone, at y positions measured in the desktop app. Published, the web
+lays the same text out differently (the title fits one line, not two), so
+the links sat over the descriptions. Both links still navigated correctly on
+the live viz (2026-10-25). The fix is to make no position depend on text flow.
+The header (title, subtitle, intro) is its own zone ending at 352 px. The
+opaque panel is a separate full-height zone. CONTENTS, each button, each
+description and the credit are fixed slots below it, so a reflow only moves
+text inside its own zone. Two rules found on the way: a text zone **centres
+its text vertically** (a full-height header pushed the title into the list),
+and a zone too short for its wrapped lines **elides to one line** ("povert..");
+two 9 pt lines need 64 px. A text button centres its caption, so each button
+is sized to its words (`9.5 px x characters + 42 + 24`).
 
 ### U3. Still to check after publishing
 A button fires on a plain click on Tableau Public but needs Alt+click (or
