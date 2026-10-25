@@ -123,10 +123,16 @@ composited into a claim. On/around the cover:
 
 - **Deadline:** none given at interview. UNKNOWN — waves proceed in order;
   if a live date appears, re-order waves 2-6 against it.
-- **Illustration source/licence:** UNKNOWN. The asset ships under the user's
-  name on Tableau Public; wave 1 cannot pass until provenance is recorded in
-  this file (creator, licence, where obtained). A placeholder is
-  acceptable during builds; the *published* cover is not.
+- **Illustration source/licence: RESOLVED 2026-10-25.** AI-generated with
+  **Google Gemini** by the author, from the file
+  `Gemini_Generated_Image_kk046wkk046wkk04.jpg` (1408x768, now cropped to
+  1408x636 and stored as `tableau/assets/cover.jpg`). No third-party
+  photograph, person or artwork is reproduced in it, so no portrait consent
+  and no third-party licence attaches. Copyright in AI-generated output is
+  jurisdiction-dependent and the tool's own terms govern use; the author
+  asserts no rights over it beyond the atlas, and the cover credits it as
+  "AI-generated (Google Gemini)". Recorded here because the plan requires
+  provenance before the cover ships.
 - **The illustration's look** beyond its content (attire detail, composition,
   style) is the user's call at asset time — the plan only fixes its content
   requirements (two women, north + south attire, embrace, flag-tone palette).

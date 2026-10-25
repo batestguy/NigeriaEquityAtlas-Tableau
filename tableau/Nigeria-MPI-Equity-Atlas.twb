@@ -1523,7 +1523,7 @@
             </zone-style>
           </zone>
           <zone h='13208' id='10' type-v2='text' w='43750' x='0' y='86792'>
-            <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated.</run></formatted-text>
+            <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated (Google Gemini).</run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
               <format attr='background-color' value='#F4F1EA' />

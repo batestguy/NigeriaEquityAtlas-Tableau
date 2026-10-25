@@ -1068,5 +1068,5 @@ COVER_TOC: list[tuple[str, str]] = [
 ]
 COVER_CREDIT = (
     "Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) \u00b7 "
-    "UCDP GED \u00b7 Open-Meteo. Illustration: AI-generated."
+    "UCDP GED \u00b7 Open-Meteo. Illustration: AI-generated (Google Gemini)."
 )
