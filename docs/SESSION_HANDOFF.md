@@ -1,5 +1,39 @@
 # Handoff - sessions 2026-10-24 (pairs trend line + KPI direction key), 2026-10-22 (composition sheet + white labels + default view), 2026-10-20 (explorer tools, next sheet frozen, then built), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
 
+## 2026-10-25 (tenth session) - published, navigable, documented: project closed
+
+**State at close: done.** The atlas is live at
+https://public.tableau.com/app/profile/jerry.bannister/viz/Nigeria-MPI-Equity-Atlas
+and the repo (`master`, pushed) matches what is published.
+
+- **The cover's contents are links.** `1 Overview` and `2 A state, in context` are
+  `goto-sheet` buttons. They need a `<simple-id>` on each dashboard window, which an
+  earlier session wrongly ruled out (FIX_LEDGER U1). The first layout pinned the
+  buttons over flowing text and drifted on the web; the cover is now fixed slots
+  (U2). Both links were clicked on the live viz and land on the right dashboard.
+- **The live viz has no tab bar** (published without "Show sheets as tabs"), so the
+  cover links are the reader's navigation. It opens on `Start here`. The three
+  reference tabs are reachable by direct URL (listed in the README).
+- **Republishing:** rebuild, open the twbx, select `Start here`, File -> Save to
+  Tableau Public under the same name. The desktop app opens on whatever window it
+  last showed, not the first, so check the tab before saving.
+- **Demo:** `docs/demo/atlas_demo.mp4` (2:41, every control on the live viz, music:
+  *Motherland* by Sound Sultan, committed at the author's decision) and five stills.
+  The recorder was a throwaway Playwright script, not kept in the repo.
+- **README** rewritten against the code: the live link, a guide to every control,
+  the real 10-stage order, R for stage 09, the nine previews, and the CLAIMS.md
+  wording (the forbidden "negative result" framing is gone).
+
+**If anyone picks this up again**, the open items are small and none blocks anything:
+1. `run_all.ps1` hard-codes the interpreter path (README says to edit `$Python`).
+2. The README's licence column is unchecked against the sources.
+3. Optional "back to contents" buttons on the two dashboards (cover links are the
+   only in-viz navigation).
+4. The sheet-1 legend question may deserve a re-test now that `<simple-id>` is
+   known to load (FIX_LEDGER U1); the legend zones on the Overview already draw.
+5. No ruff config in the repo; the 10 lint findings in `06_build_twb.py` predate
+   this work.
+
 ## 2026-10-25 (ninth session) - the Overview's state selector and its two legends
 
 Three user instructions, all landed and render-verified: a state selector that moves
