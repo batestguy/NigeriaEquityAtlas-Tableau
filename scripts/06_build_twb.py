@@ -96,11 +96,12 @@ import csv
 import os
 import re
 import sys
+import uuid
 import os
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape, unescape
 
 import atlas_text
 from common import PROCESSED, REFERENCE, REPO_ROOT, spatial_context_line
@@ -1777,6 +1778,31 @@ def overview_dashboard_xml() -> tuple[str, str]:
     return dashboard, window
 
 
+def nav_button_zone(zone_id: int, *, target: str, caption: str, tooltip: str,
+                    x: int, y: int, w: int, h: int) -> str:
+    """A text button that jumps to another dashboard (Tableau's Navigation object).
+
+    Grammar byte-copied from ``SoftwareRetailAnalytics.twbx`` (FIX_LEDGER §O1):
+    a ``dashboard-object`` zone holding ``<button action='tabdoc:goto-sheet
+    window-id=...' button-type='text'>``. The window id is the target's
+    ``<simple-id>``, which ``add_window_ids`` writes from the same name.
+    """
+    return (
+        f"          <zone h='{h}' id='{zone_id}' type-v2='dashboard-object'"
+        f" w='{w}' x='{x}' y='{y}'>\n"
+        f"            <button action='tabdoc:goto-sheet window-id=&quot;"
+        f"{window_uuid(target)}&quot;' button-type='text'>\n"
+        f"              <button-visual-state>\n"
+        f"                <caption>{escape(caption)}</caption>\n"
+        f"                <tooltip-text>{escape(tooltip)}</tooltip-text>\n"
+        f"                <button-caption-font-style fontcolor='#008751'"
+        f" fontname='Tableau Semibold' fontsize='13' underline='true' />\n"
+        f"              </button-visual-state>\n"
+        f"            </button>\n"
+        f"          </zone>\n"
+    )
+
+
 def cover_dashboard_xml() -> tuple[str, str]:
     """The cover tab: the illustration, with the title and a contents list on it.
 
@@ -1809,9 +1835,28 @@ def cover_dashboard_xml() -> tuple[str, str]:
         [(atlas_text.COVER_INTRO, False, 9, False)],
         [("CONTENTS", True, 10, False)],
     ]
+    # Each contents heading is a navigation button laid over a blank line of the
+    # heading's own size, so the text zone keeps the layout it was measured at.
+    # The y centres are measured from the 2026-10-25 render at 1:1 (the canvas
+    # is the image's size), not derived; re-measure if the text above changes.
+    heading_y_px = [417, 502]
+    assert len(heading_y_px) == len(atlas_text.COVER_TOC)
+    # a contents name that is not a dashboard would build a button to nowhere
+    assert {n for n, _ in atlas_text.COVER_TOC} <= {SHEET_OVERVIEW, SHEET_CONTEXT}
+    buttons = ""
     for i, (name, desc) in enumerate(atlas_text.COVER_TOC, 1):
-        paragraphs.append([(f"{i}   {name}", True, 13, False)])
+        paragraphs.append([(" ", True, 13, False)])
         paragraphs.append([(desc, False, 9, False)])
+        # A text button centres its caption, so the zone is sized to the caption
+        # to sit flush with the text: 9.5 px a character + 42 px, fitted to the two
+        # rendered captions (185 px for 15 characters, 290 px for 26), plus 24 px
+        # of button padding. Narrower than that and Tableau elides the caption.
+        caption = f"{i}   {name}  →"
+        buttons += nav_button_zone(
+            20 + i, target=name, caption=caption, tooltip=f"Open {name}",
+            x=ux(8), y=uy(heading_y_px[i - 1] - 18),
+            w=ux(round(len(caption) * 9.5) + 42 + 24), h=uy(36),
+        )
 
     zones = (
         f"          <zone h='100000' id='2' param='Image/{COVER_IMAGE_NAME}'"
@@ -1829,6 +1874,7 @@ def cover_dashboard_xml() -> tuple[str, str]:
             paragraphs=[[(atlas_text.COVER_CREDIT, False, 7, False)]],
             background="#F4F1EA",
         )
+        + buttons
     )
     dashboard = (
         f"    <dashboard name='{escape(SHEET_COVER)}'>\n"
@@ -3196,7 +3242,7 @@ def build_workbook(spatial_technical: str,
 
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='{VERSION}' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='{VERSION}' xmlns:user='http://www.tableausoftware.com/xml/user'>
-  <preferences>
+{FORMAT_MANIFEST}  <preferences>
     <preference name='ui.encoding.shelf.height' value='24' />
     <preference name='ui.shelf.height' value='26' />
   </preferences>
@@ -3206,6 +3252,39 @@ def build_workbook(spatial_technical: str,
 {sheet_map}{sheet_cluster}{sheet_dim}{sheet_time}{sheet_kpi}{sheet_pairs}  </worksheets>
 {dashboards}{windows}{shape_pack}</workbook>
 """
+
+
+# The cover's contents buttons (2026-10-25) need two pieces of newer grammar:
+# the button object itself, and a persistent id on the window it jumps to.
+# <simple-id> failed the load on 2026-10-18 because it was placed FIRST in the
+# window and the manifest lacked WindowsPersistSimpleIdentifiers; as the LAST
+# child of the window with this manifest it loads, and Tableau's Edit Button
+# dialog resolves the target by name (FIX_LEDGER §U).
+FORMAT_MANIFEST = (
+    "  <document-format-change-manifest>\n"
+    "    <BasicButtonObject />\n"
+    "    <BasicButtonObjectTextSupport />\n"
+    "    <WindowsPersistSimpleIdentifiers />\n"
+    "  </document-format-change-manifest>\n"
+)
+
+
+def window_uuid(name: str) -> str:
+    """A dashboard window's id, derived from its name so every build agrees."""
+    return "{" + str(uuid.uuid5(uuid.NAMESPACE_URL, f"atlas-window:{name}")).upper() + "}"
+
+
+def add_window_ids(xml: str) -> str:
+    """Give every dashboard window a ``<simple-id>`` as its last child."""
+    def one(mo: re.Match) -> str:
+        name = mo.group(1)
+        return (f"{mo.group(0)[:-len('</window>')]}"
+                f"  <simple-id uuid='{window_uuid(unescape(name))}' />\n    </window>")
+    out, n = re.subn(
+        r"<window class='dashboard' name='([^']*)'>.*?\n    </window>", one, xml, flags=re.DOTALL
+    )
+    assert n >= 6, f"expected the dashboard windows, tagged {n}"
+    return out
 
 
 def hide_worksheet_tabs(xml: str) -> str:
@@ -3682,6 +3761,7 @@ def main() -> int:
         len(spatial_poly_reader), len(panel_reader), len(pairs_reader),
         dim_bar_order, dim_rows, len(kpi_reader), kpi_order,
     )
+    xml = add_window_ids(xml)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     poly_hyper = OUT_DIR / POLY_HYPER

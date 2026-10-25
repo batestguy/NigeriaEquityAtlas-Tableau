@@ -1293,3 +1293,47 @@ seven in all, and draws them from the same PNGs the workbook embeds.
 `05_preview.py` asserted 20 marks; the extract is 27 now. That assert is the
 reason the gate is worth its cost -- it caught the change before the render did,
 and the gate now draws the arrows at the same positions with the same images.
+
+## U. Clickable contents on the cover (2026-10-25)
+
+The ask: "make my contents page clickable, linking the other dashboards".
+
+### U1. `<simple-id>` loads after all -- it was placed wrong on 2026-10-18
+**Severity IMPROVEMENT - status done, render-verified**
+A navigation button targets a window by its `<simple-id>` uuid
+(`tabdoc:goto-sheet window-id="{...}"`), and the 2026-10-18 attempt had
+concluded this schema rejects `simple-id` (`D2E8DA72`). It does not. Two things
+were wrong with that attempt (and the later `try_ids.py` probe): the element
+was the window's FIRST child, and the manifest lacked
+`<WindowsPersistSimpleIdentifiers />`. With the element as the window's **last**
+child (after `<active>`, where `SoftwareRetailAnalytics.twbx` puts it) and a
+manifest of `BasicButtonObject`, `BasicButtonObjectTextSupport`,
+`WindowsPersistSimpleIdentifiers`, the workbook loads under the right title.
+Proof that the link resolves without clicking: Tableau's Edit Button dialog
+reads **Navigate to: Overview** on a scratch packet. Proof by clicking: in
+presentation mode, both cover buttons land on their dashboards.
+
+The ids are `uuid5` of the dashboard name (`window_uuid()`), so every build
+writes the same ones and a button can be built before its target's window.
+`add_window_ids()` tags only dashboard windows; worksheet windows are dropped
+anyway by `hide_worksheet_tabs()`. This may reopen the sheet-1 legend
+question in `PUBLISH.md` (the `simple-id` suspect was ruled out on the wrong
+evidence), but nothing here tested that.
+
+### U2. A text button centres its caption -- size the zone to the words
+**Severity IMPROVEMENT - status done, render-verified**
+`button-type='text'` centres the caption in the zone, and a zone that is too
+narrow elides it ("1 Overview ..."). The headings in the cover's text zone
+became blank lines of the same size (a 13 pt bold NBSP), so the layout is
+unchanged, and each button sits over its blank line at a measured y centre (417
+and 502 px on the 1408x636 canvas) with a width of
+`9.5 px x characters + 42 + 24` (fitted to the two rendered captions). If the
+text above the contents changes, re-measure `heading_y_px` in
+`cover_dashboard_xml()`.
+
+### U3. Still to check after publishing
+A button fires on a plain click on Tableau Public but needs Alt+click (or
+presentation mode, F7) in the desktop authoring view -- that is not a defect.
+Check on the live URL that both links work, and that the viz opens on
+`Start here`: one desktop open landed on `A state, in context` while the XML
+lists the cover first.

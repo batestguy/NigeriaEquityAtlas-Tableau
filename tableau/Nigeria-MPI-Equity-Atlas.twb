@@ -1,5 +1,10 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <workbook original-version='18.1' source-build='2024.1.0 (20241.24.0212.1000)' source-platform='win' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest>
+    <BasicButtonObject />
+    <BasicButtonObjectTextSupport />
+    <WindowsPersistSimpleIdentifiers />
+  </document-format-change-manifest>
   <preferences>
     <preference name='ui.encoding.shelf.height' value='24' />
     <preference name='ui.shelf.height' value='26' />
@@ -1516,7 +1521,7 @@
             </zone-style>
           </zone>
           <zone h='100000' id='9' type-v2='text' w='43750' x='0' y='0'>
-            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>1   Overview</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>2   A state, in context</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'> </run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'> </run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
               <format attr='background-color' value='#F4F1EA' />
@@ -1528,6 +1533,24 @@
               <format attr='margin' value='14' />
               <format attr='background-color' value='#F4F1EA' />
             </zone-style>
+          </zone>
+          <zone h='5660' id='21' type-v2='dashboard-object' w='14773' x='568' y='62736'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{CEC0A58D-EB2D-59E4-8DC0-4BE1534A5C9D}&quot;' button-type='text'>
+              <button-visual-state>
+                <caption>1   Overview  →</caption>
+                <tooltip-text>Open Overview</tooltip-text>
+                <button-caption-font-style fontcolor='#008751' fontname='Tableau Semibold' fontsize='13' underline='true' />
+              </button-visual-state>
+            </button>
+          </zone>
+          <zone h='5660' id='22' type-v2='dashboard-object' w='22230' x='568' y='76101'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{D490EF37-C020-550A-8C6C-CC5ABC436D16}&quot;' button-type='text'>
+              <button-visual-state>
+                <caption>2   A state, in context  →</caption>
+                <tooltip-text>Open A state, in context</tooltip-text>
+                <button-caption-font-style fontcolor='#008751' fontname='Tableau Semibold' fontsize='13' underline='true' />
+              </button-visual-state>
+            </button>
           </zone>
         </zone>
       </zones>
@@ -2573,6 +2596,7 @@
     <window class='dashboard' name='Start here'>
       <viewpoints />
       <active id='-1' />
+      <simple-id uuid='{70F5F4BC-F652-5DAD-8298-1C62BD490006}' />
     </window>
     <window class='dashboard' name='Overview'>
       <viewpoints>
@@ -2587,6 +2611,7 @@
         </viewpoint>
       </viewpoints>
       <active id='-1' />
+      <simple-id uuid='{CEC0A58D-EB2D-59E4-8DC0-4BE1534A5C9D}' />
     </window>
     <window class='dashboard' name='A state, in context'>
       <viewpoints>
@@ -2601,6 +2626,7 @@
         </viewpoint>
       </viewpoints>
       <active id='-1' />
+      <simple-id uuid='{D490EF37-C020-550A-8C6C-CC5ABC436D16}' />
     </window>
 <!-- The composition sheet: its colour card carries the three
          dimension colours; the grammar is the cluster map's, which is
@@ -2626,14 +2652,17 @@
 <window class='dashboard' name='What the words mean'>
       <viewpoints />
       <active id='-1' />
+      <simple-id uuid='{F1CB87B7-9F70-5CAF-B958-8A4109146DD1}' />
     </window>
     <window class='dashboard' name='The list of basic needs'>
       <viewpoints />
       <active id='-1' />
+      <simple-id uuid='{3A274712-8E17-5CD1-BEB8-3FBF20F29310}' />
     </window>
     <window class='dashboard' name='How we did it'>
       <viewpoints />
       <active id='-1' />
+      <simple-id uuid='{3F16FECB-8EB8-5D4C-A4EA-6AA7BFA1CB02}' />
     </window>
     <!-- The KPI board: left rail (the proven stack) plus the right-edge
          colour card, the composition sheet's shape, which is the one

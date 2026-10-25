@@ -574,3 +574,13 @@ the silhouettes (`docs/SHEET_KPI.md` amendment 2). On the published viz:
 3. **No arrow prints a number**, and no arrow shows a hover.
 4. If the arrows are missing entirely, the embedded shapes were lost in the
    re-save; the row headers' ▼/▲ glyphs still carry the direction.
+
+## 2026-10-25 — the cover's clickable contents (new checks)
+
+The two contents headings on `Start here` are navigation buttons (`FIX_LEDGER` §U).
+
+1. On the live viz, click **1 Overview →** and **2 A state, in context →**: each
+   should open its dashboard. (In the desktop app they fire only on Alt+click or
+   in presentation mode, F7.)
+2. The viz should open on `Start here`. If it opens elsewhere, select the cover
+   tab before publishing — the tab showing at publish time is the one readers land on.
