@@ -1,5 +1,44 @@
 # Handoff - sessions 2026-10-24 (pairs trend line + KPI direction key), 2026-10-22 (composition sheet + white labels + default view), 2026-10-20 (explorer tools, next sheet frozen, then built), 2026-10-18 (reference table), 2026-10-09/10 (party test, map fit)
 
+## 2026-10-25 (ninth session) - the Overview's state selector and its two legends
+
+Three user instructions, all landed and render-verified: a state selector that moves
+every pane, a colour legend per map, and a much shorter cluster-map hover.
+
+- **The selector is a workbook parameter, not a filter card, and it had to be.** The
+  three Overview panes read three different extracts; a filter card applies only to
+  sheets on its own datasource, so "one control, all panes" is not expressible with
+  a card. `State select` (caption `State`, 38 list members) plus one calculated
+  boolean `state_match` per extract plus a `paramctrl` zone does it. Proved without
+  clicking: built once with the default set to `Kano`; both maps drew Kano alone,
+  the composition drew Kano's single bar, and both legends collapsed to one member
+  each. Grammar and the dead ends: `FIX_LEDGER` **§Q**.
+- **The legends are `type-v2='color'` zones.** A zone's aspect ratio decides its
+  orientation, and that cost two render cycles: a 76 px strip under the maps drew
+  one horizontal row of five swatches with every label clipped ("1. under .."), and
+  a 250 px column still clipped the cluster map's sentence-length members. They now
+  share one 624 px right-hand column, both read in full, and the maps keep 480 px
+  each. This also **narrows the old colour-legend defect to the tab**: a legend
+  zone draws even though sheet 1's window card does not.
+- **The composition's 17-member filter had to go.** Two ANDed filters cannot be
+  overridden, so a pick outside the 17 (Kano) would have drawn a silently empty
+  pane. The row set is now the parameter, whose "(All states)" arm carries the same
+  17 names: default unchanged (status bar still reads "17 rows by 1 column"), any
+  pick overrides it. The 17-of-37 checklist card is retired in favour of the same
+  control the dashboard uses. `docs/SHEET_DIMENSIONS.md`, amendment 2 -- including
+  what was lost (multi-select).
+- **The cluster map's hover went from eleven lines to five**: state and type, the
+  score, the split, the neighbours' average, and the no-spillover caveat. The four
+  frozen reader lines were not deleted (the pre-registration requires them in the
+  workbook) -- they became a 45th reference-table row on "How we did it"
+  (`docs/spatial_preregistration.md`, amendment 3). Stage 5's row assertion caught
+  the count change, as designed.
+- **One trap worth keeping:** a double hyphen inside an XML comment fails the build
+  with "invalid token" and names only a line and column (§Q5).
+- **Pipeline: all 10 stages green (165 s), exit 0.** Workbook still unpublished;
+  `docs/PUBLISH.md` gained four publish-time checks for the new controls.
+
+
 **Start here.** Pipeline is **9 stages**, all green (`.\scripts\run_all.ps1`, exit 0,
 ~160 s). The atlas is still **not published** â€” that remains the one manual
 step (your Tableau Public login). The tree is clean up to `2431f5d` (the KPI-board

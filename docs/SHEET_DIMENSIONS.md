@@ -151,3 +151,39 @@ What left the subtitle, and where it went:
 - *"add any other state from the state checklist card on the left rail"* ->
   compressed to "the left card adds the rest" (same instruction, ten words
   fewer).
+
+---
+
+## Amendment 2 (2026-10-25) — the row set is parameter-driven; the checklist is retired
+
+**Why.** The Overview dashboard gained a state selector that must move all three
+panes at once (`docs/DASHBOARD.md`, 2026-10-25). The three panes read three
+extracts, so the selector is a workbook parameter plus one calculated filter per
+extract — not a filter card (`docs/FIX_LEDGER.md` §Q3).
+
+**What changed on this sheet.**
+
+- The `state` filter is now a **categorical filter on the calculated boolean**
+  `state_match` instead of a manual union of 17 members. The calculation's
+  `(All states)` arm carries the same 17 names
+  (`dim_bar_order[:5] + dim_bar_order[12:24]`), so **the shipped default is
+  unchanged**: 17 bars, same states, same MPI order (verified: the status bar
+  reads "17 rows by 1 column"). A single pick from the selector overrides the 17.
+- The **left-rail `state` checklist card is retired**, replaced by the same
+  parameter card the dashboard's `paramctrl` zone drives. Two controls over one
+  row set could not be reconciled: two ANDed filters mean a pick outside the 17
+  would have drawn a silently empty pane.
+
+**What was lost, stated plainly.** The checklist allowed ticking *several* states
+at once, including states outside the default 17. That is gone: the selector is
+one state or all-states. Any future multi-select needs a second parameter and a
+different calculation, not a re-instated filter.
+
+**What did not change.** The 17-bar default, the bar order, the two group blocks
+`Poorest 12` / `Other 25` with the pane divider, the white segment numbers, the
+hover, and the caveat line. Stage 5's gate still draws 17 bars from the same
+constants.
+
+**Wording.** `atlas_text.DIMENSIONS_SUBTITLE` no longer says "the left card adds
+the rest" — it now reads "17 of 37 bars by default: the left control picks a
+state".

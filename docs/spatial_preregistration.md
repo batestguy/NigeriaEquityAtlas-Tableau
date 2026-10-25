@@ -220,3 +220,36 @@ exist:
 
 The withdrawal does not touch the decision rule above, and it was not used to justify
 any change to the statistics.
+
+---
+
+## Amendment 3 (2026-10-25) — the four frozen reader lines moved off the hover
+
+**What changed.** The cluster map's customized tooltip no longer prints
+`SPATIAL_READER_LINES`, its heading, the "how to read this surface" paragraph or
+the technical footer. It now prints five lines:
+
+```
+Kano · Poorer than average, neighbours poorer too
+Poverty score: 21.73%
+Made up of: Education 42.32 · Health 24.49 · Living standards 33.20
+Average of the 8 states it borders: 30.11%
+Nothing here shows that one state's poverty affects its neighbour's — neighbours
+resembling each other is a fact about the map.
+```
+
+**Why.** The author's instruction: "the text from tool bar is too much, reduce it
+so its precise and concise". What shipped was eleven lines of prose behind a 40 px
+hover box.
+
+**What the change does not touch.** The test, the decision rule, the result, the
+four type labels, the legend caption and the frozen wording itself are unchanged.
+**The four lines are still in the workbook**, moved to a method row on the
+*"How we did it"* reference tab ("Do poor states sit next to poor states?"), which
+is where the reference material already lives; the reference table is 45 rows for
+that reason. `SPATIAL_NO_CAUSE` — the caveat that forbids a spillover reading —
+stays on the map itself, because a neighbourhood type is vocabulary that invites
+one.
+
+Recorded here rather than silently absorbed, per the file's own rule that
+amendments are appended.

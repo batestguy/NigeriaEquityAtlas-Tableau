@@ -1,15 +1,15 @@
 key,kind,short,statistic,value,p,nsim,n,note,run_date
-h1_global_i,H1,Moran's I of the poverty score (queen contiguity),morans_I,0.7976812,0.0001,9999,37,,2026-10-24
-h2_resid_i,H2,Moran's I after accounting for how far north a state is,morans_I,0.2435384,0.0095,9999,37,,2026-10-24
-h3_survivors_n,H3,states whose own neighbourhood stands out after correcting for 37 tests,n_states,1,,,37,Yobe,2026-10-24
-ctx_lat_i,context,Moran's I of how far north a state is,morans_I,0.8597403,0.0001,9999,37,,2026-10-24
-ctx_lat_r2,context,share of the pattern explained by how far north a state is,r_squared,0.77473,,,37,,2026-10-24
-ctx_full_i,context,Moran's I after accounting for latitude plus conflict and climate,morans_I,0.1077417,0.107,9999,37,,2026-10-24
-ctx_raw_n,context,states that look local before correcting for 37 tests,n_states,16,,,37,Abia; Anambra; Bauchi; Delta; Gombe; Jigawa; Kaduna; Kebbi; Kano; Kogi; Katsina; Ondo; Rivers; Sokoto; Yobe; Zamfara,2026-10-24
-ctx_var,context,variance of Moran's I under the null,variance,0.01150777,,,37,,2026-10-24
-ctx_delta_aic,context,spatial-error model AIC minus ordinary-least-squares AIC,delta_aic,-2.964655,,,37,,2026-10-24
-sen_rook_i,sensitivity,queen weights replaced by rook weights,morans_I,0.7976812,0.0001,9999,37,,2026-10-24
-sen_knn_i,sensitivity,queen weights replaced by the 4 nearest neighbours,morans_I,0.8007394,0.0001,9999,37,,2026-10-24
-sen_no_fct_i,sensitivity,the 36 states with FCT excluded,morans_I,0.8151064,0.0001,9999,36,,2026-10-24
-sen_knn_survivors_n,sensitivity,states surviving correction with the 4 nearest neighbours,n_states,1,,,37,,2026-10-24
-sen_by_survivors_n,sensitivity,states surviving Benjamini-Yekutieli instead of Bonferroni,n_states,0,,,37,,2026-10-24
+h1_global_i,H1,Moran's I of the poverty score (queen contiguity),morans_I,0.7976812,0.0001,9999,37,,2026-10-25
+h2_resid_i,H2,Moran's I after accounting for how far north a state is,morans_I,0.2435384,0.0095,9999,37,,2026-10-25
+h3_survivors_n,H3,states whose own neighbourhood stands out after correcting for 37 tests,n_states,1,,,37,Yobe,2026-10-25
+ctx_lat_i,context,Moran's I of how far north a state is,morans_I,0.8597403,0.0001,9999,37,,2026-10-25
+ctx_lat_r2,context,share of the pattern explained by how far north a state is,r_squared,0.77473,,,37,,2026-10-25
+ctx_full_i,context,Moran's I after accounting for latitude plus conflict and climate,morans_I,0.1077417,0.107,9999,37,,2026-10-25
+ctx_raw_n,context,states that look local before correcting for 37 tests,n_states,16,,,37,Abia; Anambra; Bauchi; Delta; Gombe; Jigawa; Kaduna; Kebbi; Kano; Kogi; Katsina; Ondo; Rivers; Sokoto; Yobe; Zamfara,2026-10-25
+ctx_var,context,variance of Moran's I under the null,variance,0.01150777,,,37,,2026-10-25
+ctx_delta_aic,context,spatial-error model AIC minus ordinary-least-squares AIC,delta_aic,-2.964655,,,37,,2026-10-25
+sen_rook_i,sensitivity,queen weights replaced by rook weights,morans_I,0.7976812,0.0001,9999,37,,2026-10-25
+sen_knn_i,sensitivity,queen weights replaced by the 4 nearest neighbours,morans_I,0.8007394,0.0001,9999,37,,2026-10-25
+sen_no_fct_i,sensitivity,the 36 states with FCT excluded,morans_I,0.8151064,0.0001,9999,36,,2026-10-25
+sen_knn_survivors_n,sensitivity,states surviving correction with the 4 nearest neighbours,n_states,1,,,37,,2026-10-25
+sen_by_survivors_n,sensitivity,states surviving Benjamini-Yekutieli instead of Bonferroni,n_states,0,,,37,,2026-10-25

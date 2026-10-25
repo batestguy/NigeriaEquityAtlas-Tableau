@@ -525,7 +525,11 @@ def visual_reference_table() -> list[str]:
         print(f"  {name}")
         written.append(name)
 
-    assert seen == 44, f"the reference tabs carry {seen} rows, expected 44"
+    # 44 until 2026-10-25, when the cluster map's four frozen reader lines moved
+    # off its hover and into a method row (docs/spatial_preregistration.md,
+    # amendment 3) -- the pre-registration requires the frozen wording to stay in
+    # the workbook, so the row count rose rather than the text being dropped.
+    assert seen == 45, f"the reference tabs carry {seen} rows, expected 45"
     return written
 
 

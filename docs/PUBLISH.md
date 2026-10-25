@@ -341,7 +341,7 @@ workbook.
   legend is broken — the earlier conclusion may have been drawn from a capture that
   clipped the right edge. Not resolved here; both sheets ship the same declaration.
 
-- **Alt text is not set on any of the eight tabs.** Tableau auto-generates a description;
+- **Alt text is not set on any tab** (ten tabs as of 2026-10-25). Tableau auto-generates a description;
   edit it per view, then Save. Keep it descriptive and objective, not interpretive: for
   `Where poverty sits` that means naming the measure, the five bands and the period, not
   asserting which state is worst — no single state holds the highest score defensibly
@@ -511,3 +511,29 @@ MCP server, which is read-only but sufficient for verification:
 - `get_workbook_image` — fetches a rendered PNG of a named view, proving it draws
 
 This is the step that catches a viz that uploaded but renders empty.
+## 2026-10-25 — the Overview's selector and legends (new checks)
+
+The Overview page now carries a `paramctrl` state selector and two `type-v2='color'`
+legend zones (`docs/DASHBOARD.md`, `docs/FIX_LEDGER.md` §Q). All three were
+render-verified locally; these are the extra things to confirm on the **published**
+viz, because a publish re-saves the workbook and interaction cannot be captured
+from a packet:
+
+1. **The selector** in the title band reads `State` and lists `(All states)` plus
+   the 37 states. Pick a state and confirm **all three panes move together** — both
+   maps collapse to that polygon, the composition shows that one bar. Then set it
+   back to `(All states)` and confirm the composition returns to **17 bars**.
+2. **Both legends** print their full titles and every member label:
+   `MPI band (Multidimensional Poverty Index)` with five bands, and
+   `Neighbourhood type (this state's poverty, beside the states it borders')` with
+   three types (the fourth has no state in 2021). If a label truncates, the legend
+   zone lost width during the re-save.
+3. **The composition tab** still opens on 17 bars with the `State` control on its
+   left rail and **no** state checklist (retired, `docs/SHEET_DIMENSIONS.md`
+   amendment 2).
+4. **The cluster map's hover** is five short lines ending in the no-spillover
+   caveat. If the four-paragraph essay reappears, the short tooltip was lost.
+
+Note on the old colour-legend item above: the legend **zone** on the dashboard
+draws, which is new evidence that only the sheet-1 **window card** is broken. The
+`Analysis -> Legends -> Colour Legend` click is now needed for the *tab* only.

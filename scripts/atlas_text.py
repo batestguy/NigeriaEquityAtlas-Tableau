@@ -590,8 +590,8 @@ PAIRS_TREND_COLOUR = "#4D4D4D"
 DIMENSIONS_TITLE = "How poverty is made up"
 DIMENSIONS_SUBTITLE = (
     "What each state's poverty is made of \u00b7 shares of the MPI, adding to "
-    "100 \u00b7 MPI order, not a ranking \u00b7 17 of 37 bars: the left card "
-    "adds the rest"
+    "100 \u00b7 MPI order, not a ranking \u00b7 17 of 37 bars by default: the "
+    "left control picks a state"
 )
 DIMENSION_SHARES: list[tuple[str, str, str]] = [
     ("contrib_education_pct", "Education", "#0072B2"),
@@ -956,6 +956,21 @@ def table_rows() -> list[tuple[str, str, list[TableRow]]]:
         }
         for s in METHOD
     ]
+    # The cluster map's four frozen reader lines live HERE as of 2026-10-25
+    # (docs/spatial_preregistration.md, amendment 3). They used to be the body of
+    # that map's hover, which made the tooltip eleven lines of prose behind a
+    # 40 px box; the pre-registration requires the frozen wording to stay in the
+    # workbook, so it became a method row rather than being deleted. The caveat
+    # that forbids a spillover reading stays on the map's own hover
+    # (SPATIAL_NO_CAUSE) and is repeated here.
+    steps.append(
+        {
+            "word": "Do poor states sit next to poor states?",
+            "formula": "Moran's I on state MPI, queen contiguity",
+            "meaning": SPATIAL_READER_LINES[0],
+            "method": " ".join(SPATIAL_READER_LINES[1:]) + " " + SPATIAL_NO_CAUSE,
+        }
+    )
 
     groups = [
         (WORDS_TITLE, WORDS_INTRO, words),

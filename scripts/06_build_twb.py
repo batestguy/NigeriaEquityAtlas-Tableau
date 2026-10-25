@@ -345,7 +345,8 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
                    palette: tuple[str, list[tuple[str, str]]] | None = None,
                    shape_palette: list[tuple[str, str]] | None = None,
                    captions: dict[str, str] | None = None,
-                   default_formats: dict[str, str] | None = None) -> str:
+                   default_formats: dict[str, str] | None = None,
+                   calcs: str = "") -> str:
     """One datasource over a packaged Hyper extract, with every column declared.
 
     Tableau Public refuses any workbook whose datasource is not an extract
@@ -390,7 +391,7 @@ def datasource_xml(columns: list[tuple[str, str, str]], hyper_filename: str, row
         <relation connection='{conn_name}' name='Extract' table='[Extract].[Extract]' type='table' />
       </connection>
       <aliases enabled='yes' />
-{col_blocks}{instances}      <extract count='-1' enabled='true' units='records'>
+{col_blocks}{calcs}{instances}      <extract count='-1' enabled='true' units='records'>
         <connection access_mode='readonly' author-locale='en' class='hyper' dbname='{dbname}' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
           <relation name='Extract' table='[Extract].[Extract]' type='table' />
         </connection>
@@ -443,7 +444,8 @@ def column_instances(*texts: str) -> str:
 
 def deps_xml(columns: list[tuple[str, str, str]],
              captions: dict[str, str] | None = None,
-             default_formats: dict[str, str] | None = None) -> str:
+             default_formats: dict[str, str] | None = None,
+             calcs: str = "") -> str:
     """The per-worksheet column block real Tableau writes.
 
     Tableau repeats the datasource's columns inside every worksheet that uses it
@@ -457,6 +459,12 @@ def deps_xml(columns: list[tuple[str, str, str]],
     are made to agree rather than argued about. ``default_formats`` follows the
     same rule for the field number formats (a V4 packet matched Tableau's own
     serialization, which repeats default-format in the worksheet copy too).
+
+    ``calcs`` are calculated-field columns (plus their <column-instance>) that the
+    worksheet needs and the extract cannot hold, because they read a parameter.
+    They sit INSIDE <datasource-dependencies>, which is where Tableau puts both a
+    calculation and its instance -- the boolean-filter calc in
+    SoftwareRetailAnalytics.twb is the reference shape (2026-10-25).
     """
     captions = captions or {}
     formats = default_formats or {}
@@ -467,7 +475,7 @@ def deps_xml(columns: list[tuple[str, str, str]],
         for name, datatype, role in columns
     )
     return f"""          <datasource-dependencies>
-{body}          </datasource-dependencies>
+{body}{calcs}          </datasource-dependencies>
 """
 
 
@@ -983,7 +991,7 @@ def parameter_column_xml(caption: str, pname: str, menu: list[str], default: str
     )
 
 
-def parameters_ds_xml(def_x: str, def_y: str) -> str:
+def parameters_ds_xml(def_x: str, def_y: str, states: list[str]) -> str:
     """The Parameters pseudo-datasource the workbook-level <datasources> carries.
 
     Grammar from packet A1/A2 (loads, cards render off it). It is appended
@@ -991,6 +999,11 @@ def parameters_ds_xml(def_x: str, def_y: str) -> str:
     not confuse the two extract-backed reads; inspection of the shipped
     serialized KPI workbook shows parameters first, but the packet had them
     last and loaded, so either position binds.
+
+    Three parameters since 2026-10-25: the pairs board's two dropdowns and the
+    Overview's state selector. Parameters are workbook-global, which is the
+    whole reason the selector is a parameter and not a filter card -- see the
+    STATE_PARAM block.
     """
     labels = [label for label, _field in PAIRS_MENU]
     return (
@@ -999,6 +1012,7 @@ def parameters_ds_xml(def_x: str, def_y: str) -> str:
         "      <aliases enabled='yes' />\n"
         + parameter_column_xml(PAIRS_PARAM_X, PAIRS_PARAM_X, labels, def_x)
         + parameter_column_xml(PAIRS_PARAM_Y, PAIRS_PARAM_Y, labels, def_y)
+        + state_parameter_column_xml(states)
         + "    </datasource>\n"
     )
 
@@ -1024,6 +1038,131 @@ def parameters_deps_xml(def_x: str, def_y: str) -> str:
         "          <datasource-dependencies datasource='Parameters'>\n"
         + render(PAIRS_PARAM_X, def_x)
         + render(PAIRS_PARAM_Y, def_y)
+        + "          </datasource-dependencies>\n"
+    )
+
+
+# --- the Overview's state selector (2026-10-25) ------------------------------
+# The ask: "selection of states button and a filter so that when a state is
+# selected it shows values on all panes in dashboard".
+#
+# A dashboard filter CARD cannot do that here. The three panes read three
+# different extracts (`Nigeria MPI polygons`, `Spatial polygons`, `Poverty
+# composition`), and a filter card only ever applies to worksheets on its own
+# datasource. A workbook PARAMETER can, because parameters are global: one
+# parameter, one calculated boolean per extract, one `paramctrl` zone on the
+# page.
+#
+# Both grammar pieces are copied from SoftwareRetailAnalytics.twbx, unpacked
+# 2026-10-25 through the Tableau MCP server (the same file the Overview's zone
+# grammar came from). It carries two paramctrl zones and a boolean-calculation
+# filter, so neither shape is a guess:
+#   <zone h=.. id=.. mode='compact' param='[Parameters].[X]' type-v2='paramctrl' w=.. x=.. y=.. />
+#   <filter class='categorical' column='[ds].[none:<calc>:nk]'>
+#     <groupfilter function='member' level='[none:<calc>:nk]' member='true' .../>
+#   </filter>
+STATE_PARAM = "State select"
+STATE_PARAM_CAPTION = "State"
+STATE_ALL = "(All states)"
+STATE_MATCH = "state_match"
+STATE_MATCH_CAPTION = "State selection (Overview)"
+
+
+def state_parameter_column_xml(states: list[str]) -> str:
+    """The Overview's state selector, as a column of the Parameters datasource.
+
+    The caption is short ("State") because a dashboard paramctrl shows the
+    caption in its label column, and a 348 px zone truncated "State select" to
+    "State s.." in the 2026-10-25 render.
+    """
+    return parameter_column_xml(
+        STATE_PARAM_CAPTION, STATE_PARAM, [STATE_ALL] + states, STATE_ALL
+    )
+
+
+def state_match_formula(default_states: list[str] | None = None) -> str:
+    """The selector's calculated filter, in Tableau formula syntax.
+
+    Two flavours, because the three panes answer different questions:
+
+    * the maps show whoever is picked, and all 37 on "(All states)";
+    * the composition bar must ALSO keep its 17-bar default (the user's
+      2026-10-22 decision, docs/SHEET_DIMENSIONS.md D-052) when nobody has
+      picked anything, or the sheet opens as a wall of 37 slivers. So its
+      "(All states)" arm carries the 17-name list, and a single pick
+      overrides it -- which is what stops a pick outside those 17 drawing a
+      silently empty pane (the failure AGENTS.md warns about: a filter that
+      matches nothing looks like a valid chart with no data).
+
+    Single quotes inside the formula are escaped as &apos; and the string
+    literals use &quot;, the serialisation Tableau itself writes for a
+    calculation attribute.
+    """
+    param = f"[Parameters].[{STATE_PARAM}]"
+    if default_states is None:
+        return f"[state] = {param} OR {param} = &quot;{STATE_ALL}&quot;"
+    in_default = " OR ".join(
+        f"[state] = &quot;{escape(name)}&quot;" for name in default_states
+    )
+    return (
+        f"{param} = [state] OR "
+        f"({param} = &quot;{STATE_ALL}&quot; AND ({in_default}))"
+    )
+
+
+def state_match_calc_xml(indent: str, default_states: list[str] | None = None,
+                         with_instance: bool = True) -> str:
+    """The calculated field (+ its column-instance), for a deps or datasource block.
+
+    A boolean calculation serialises as ``datatype='boolean' type='nominal'
+    role='dimension'`` with a ``<calculation class='tableau' formula=... />``
+    child, and it carries a nominal column-instance -- the shape of
+    ``Latest Month Filter`` in SoftwareRetailAnalytics.twb (2026-10-25).
+
+    ``with_instance=False`` at DATASOURCE level: the datasource declares the
+    field, the worksheet's dependency block declares the instance its filter
+    references. That is one declaration per scope, the state Tableau itself
+    writes, rather than the same instance twice.
+    """
+    column = (
+        f"{indent}<column caption='{escape(STATE_MATCH_CAPTION)}' datatype='boolean'"
+        f" name='[{STATE_MATCH}]' role='dimension' type='nominal'>\n"
+        f"{indent}  <calculation class='tableau' formula='{state_match_formula(default_states)}' />\n"
+        f"{indent}</column>\n"
+    )
+    if not with_instance:
+        return column
+    return column + (
+        f"{indent}<column-instance column='[{STATE_MATCH}]' derivation='None'"
+        f" name='[none:{STATE_MATCH}:nk]' pivot='key' type='nominal' />\n"
+    )
+
+
+def state_match_filter_xml(ds_name: str) -> str:
+    """The worksheet filter that makes the calculation bite.
+
+    ``member='true'`` on a boolean level, with the three ``user:ui-*`` hints
+    Tableau writes on every categorical filter it produces itself.
+    """
+    return (
+        f"          <filter class='categorical' column='[{ds_name}].[none:{STATE_MATCH}:nk]'>\n"
+        f"            <groupfilter function='member' level='[none:{STATE_MATCH}:nk]'"
+        " member='true' user:ui-domain='database' user:ui-enumeration='inclusive'"
+        " user:ui-marker='enumerate' />\n"
+        "          </filter>\n"
+    )
+
+
+def state_parameter_deps_xml(states: list[str]) -> str:
+    """The sheet-level mirror of the selector parameter.
+
+    Packet A4's rule, unchanged: the sheet's copy is the one that binds the
+    value, so a calculation reading a parameter without this block evaluates
+    against nothing.
+    """
+    return (
+        "          <datasource-dependencies datasource='Parameters'>\n"
+        + state_parameter_column_xml(states)
         + "          </datasource-dependencies>\n"
     )
 
@@ -1438,10 +1577,12 @@ def overview_dashboard_xml() -> tuple[str, str]:
         return round(px / size[1] * 100_000)
 
     body = size[1] - header_h
-    # The maps are indifferent to height; the composition bar is not. 400 px of
-    # map and 536 px of bars is the split that keeps 17 stacked bars readable at
-    # 9 pt (a 200/700 split was tried first and the rows collided).
-    map_h = 400
+    # 2026-10-25: the page gained a state selector and two colour legends. The
+    # maps kept their 372 px of height and ceded 250 px of width each to a legend
+    # column; the composition bar gained the freed strip and now gets 556 px,
+    # about 32 px per bar at the 17-bar default (the old 400/536 split was tuned
+    # for 17 bars and no legend at all).
+    map_h = 372
     panels = [
         # (sheet name, x, y, w, h) in canvas pixels.
         # Three panels, not four: at this canvas the composition bar and the time
@@ -1451,12 +1592,48 @@ def overview_dashboard_xml() -> tuple[str, str]:
         # The maps survive any size, so they take the top row; the composition
         # takes the full width below it, where 17 stacked bars finally breathe.
         # The time panel stays a tab -- it is a page, not a card.
-        ("Where poverty sits", 0, header_h, 790, map_h),
-        (atlas_text.SPATIAL_MAP_TITLE, 790 + gap, header_h,
-         1600 - 790 - gap, map_h),
+        #
+        # 2026-10-25: both legends share ONE column on the far right (330 px),
+        # stacked. Attempt 1 put them in a 76 px strip UNDER the maps: one
+        # horizontal row of five swatches, every band label clipped to
+        # "1. under ..". Attempt 2 gave each map its own 250 px column: the
+        # spatial legend's sentences ("Better off than average, neighbours
+        # better off") still clipped, and the right map was placed under the left
+        # legend by an offset mistake the render caught. One column, two stacks,
+        # and the maps keep 627 px each.
+        ("Where poverty sits", 0, header_h, 480, map_h),
+        (atlas_text.SPATIAL_MAP_TITLE, 488, header_h, 480, map_h),
         (atlas_text.DIMENSIONS_TITLE, 0, header_h + map_h + gap, 1600,
          body - map_h - gap),
     ]
+
+    # The two colour legends, one per map, as DASHBOARD ZONES rather than window
+    # cards: a card belongs to a sheet's own window and does not travel into a
+    # dashboard (FIX_LEDGER O6), which is why the page showed no legend until
+    # now. The zone shape is SoftwareRetailAnalytics.twb's (2026-10-25):
+    # name = the sheet it belongs to, pane-specification-id = that sheet's pane
+    # (0, the default single pane this builder writes), param = the colour field.
+    # Each map encodes a different field, so each needs its own legend.
+    legends = [
+        ("Where poverty sits", POLY_DS_NAME, "mpi_band", 976, 624, header_h, 190),
+        (atlas_text.SPATIAL_MAP_TITLE, SPATIAL_POLY_DS_NAME, "spatial_group",
+         976, 624, header_h + 190, map_h - 190),
+    ]
+    legend_zones = "".join(
+        f"          <zone h='{uy(h)}' id='{20 + i}' name='{escape(sheet)}'"
+        f" pane-specification-id='0' param='[{ds}].[none:{field}:nk]'"
+        f" type-v2='color' w='{ux(w)}' x='{ux(x)}' y='{uy(y)}' />\n"
+        for i, (sheet, ds, field, x, w, y, h) in enumerate(legends)
+    )
+    # The selector, a `paramctrl` zone: package A (SoftwareRetailAnalytics) carries
+    # two of these and no window card for either, so the zone alone is the whole
+    # declaration. It sits in the title band's right-hand fifth, over the running
+    # text zone's last 350 px, which is why that zone narrowed to 1236 px.
+    selector_zone = (
+        f"          <zone h='{uy(44)}' id='30' mode='compact'"
+        f" param='[Parameters].[{STATE_PARAM}]' type-v2='paramctrl'"
+        f" w='{ux(348)}' x='{ux(1244)}' y='{uy(10)}' />\n"
+    )
 
     zones = (
         # The page's own title band. A text zone rather than the dashboard's
@@ -1464,7 +1641,7 @@ def overview_dashboard_xml() -> tuple[str, str]:
         # carries, but it did not render here (2026-10-24 render), while a text
         # zone is the object our three reference dashboards already prove.
         f"          <zone forceUpdate='true' h='{uy(header_h)}' id='9'"
-        f" type-v2='text' w='100000' x='0' y='0'>\n"
+        f" type-v2='text' w='{ux(1236)}' x='0' y='0'>\n"
         f"            <formatted-text>\n"
         f"              <run bold='true' fontsize='16'>{escape(atlas_text.OVERVIEW_TITLE)}</run>"
         f"<run fontsize='10'>  {escape(atlas_text.OVERVIEW_SUBTITLE)}</run>\n"
@@ -1473,6 +1650,7 @@ def overview_dashboard_xml() -> tuple[str, str]:
         f"              <format attr='margin' value='8' />\n"
         f"            </zone-style>\n"
         f"          </zone>\n"
+        f"{selector_zone}"
     ) + "".join(
         f"          <zone h='{uy(h)}' id='{10 + i}' name='{escape(name)}'"
         f" w='{ux(w)}' x='{ux(x)}' y='{uy(y)}'>\n"
@@ -1485,7 +1663,7 @@ def overview_dashboard_xml() -> tuple[str, str]:
         f"            </zone-style>\n"
         f"          </zone>\n"
         for i, (name, x, y, w, h) in enumerate(panels)
-    )
+    ) + legend_zones
     dashboard = (
         f"    <dashboard name='{escape(SHEET_OVERVIEW)}'>\n"
         f"      <style />\n"
@@ -1650,7 +1828,9 @@ def build_workbook(spatial_technical: str,
             f"{atlas_text.MPI_LEGEND_TITLE} ({atlas_text.MPI_LEGEND_EXPANSION})"
         ),
     }
-    poly_deps = deps_xml(POLY_COLUMNS, poly_captions)
+    poly_deps = deps_xml(
+        POLY_COLUMNS, poly_captions, calcs=state_match_calc_xml("            ")
+    )
 
     # The cluster map's caption also has to say what is being compared: a field
     # captioned "Neighbourhood type" alone invites a reading about people moving.
@@ -1664,7 +1844,10 @@ def build_workbook(spatial_technical: str,
         "spatial_lag_mpi_pct": atlas_text.SPATIAL_FIELD_NEIGHBOURS,
         "neighbours": "Number of states it borders",
     }
-    spatial_poly_deps = deps_xml(SPATIAL_POLY_COLUMNS, spatial_poly_captions)
+    spatial_poly_deps = deps_xml(
+        SPATIAL_POLY_COLUMNS, spatial_poly_captions,
+        calcs=state_match_calc_xml("            "),
+    )
 
     # ---- the cluster map's tooltip ------------------------------------------
     # The same per-state numbers the poverty map's hover carries, plus the four
@@ -1672,9 +1855,22 @@ def build_workbook(spatial_technical: str,
     # technical footer. The paragraph that says how to read *this* surface is a
     # parameter, because it used to be shared with the Moran scatter, which was
     # withdrawn on 2026-10-18; the frozen lines and the footer stay single-sourced.
-    def spatial_tooltip_runs(ds: str, reading: str) -> str:
-        """The runs inside a spatial sheet's customized tooltip."""
+    def spatial_tooltip_runs(ds: str) -> str:
+        """The runs inside the cluster map's customized tooltip.
 
+        2026-10-25, the second pass on this hover: the user's note was that the
+        text was too much ("reduce it so its precise and concise"). What it
+        carried was a four-line essay (the frozen SPATIAL_READER_LINES), a
+        "how to read this surface" paragraph, a reading heading and a technical
+        footer -- eleven lines of prose behind a 40 px hover box.
+
+        What is left is the numbers and the one caveat that may not be dropped:
+        a neighbourhood type is vocabulary that invites a spillover reading, so
+        SPATIAL_NO_CAUSE stays. The four frozen lines are not lost -- they move
+        to "How we did it" (docs/spatial_preregistration.md, amendment 3), where
+        long prose belongs. The reading is now carried by the legend
+        (type-v2='color' zone on the Overview) and the sheet's subtitle.
+        """
         def fld(column: str, kind: str = "sum", attrs: str = "") -> str:
             return f"              <run{attrs}><![CDATA[<{ref(column, kind, ds)}>]]></run>\n"
 
@@ -1684,9 +1880,8 @@ def build_workbook(spatial_technical: str,
         return (
             fld("state", "dim", " bold='true' fontsize='13'")
             + txt(" &#183; ")
-            + fld("spatial_group", "dim")
-            + txt("&#10;")
-            + txt("Poverty score: ", " bold='true'")
+            + fld("spatial_group")
+            + txt("&#10;Poverty score: ", " bold='true'")
             + fld("mpi_pct", "sum", " bold='true'")
             + txt("%", " bold='true'")
             + txt("&#10;Made up of: ")
@@ -1695,14 +1890,8 @@ def build_workbook(spatial_technical: str,
             + fld("neighbours")
             + txt(" states it borders: ")
             + fld("spatial_lag_mpi_pct")
-            + txt("%&#10;&#10;")
-            + txt(reading + "&#10;&#10;", " italic='true'")
-            + txt(atlas_text.SPATIAL_READING_HEADING + "&#10;", " bold='true'")
-            + txt(escape(" ".join(atlas_text.SPATIAL_READER_LINES)))
-            + txt("&#10;")
-            + txt(escape(atlas_text.SPATIAL_NO_CAUSE) + "&#10;", " italic='true'")
-            + txt("Technical details&#10;", " bold='true'")
-            + txt(escape(spatial_technical))
+            + txt("%")
+            + txt("&#10;&#10;" + escape(atlas_text.SPATIAL_NO_CAUSE), " italic='true'")
         )
 
     # ---- sheet 1: the filled map -------------------------------------------
@@ -1830,7 +2019,8 @@ def build_workbook(spatial_technical: str,
         ),
         ds_name=POLY_DS_NAME,
         ds_caption=POLY_DS_CAPTION,
-        deps=poly_deps,
+        deps=poly_deps + state_parameter_deps_xml(dim_bar_order),
+        filters=state_match_filter_xml(POLY_DS_NAME),
         tooltip=map_tooltip_runs(),
         # Tableau's default polygon border is a hairline, and at the map's size the
         # states read as one field of colour: you cannot see which state the cursor
@@ -1881,8 +2071,9 @@ def build_workbook(spatial_technical: str,
         ),
         ds_name=SPATIAL_POLY_DS_NAME,
         ds_caption=SPATIAL_POLY_DS_CAPTION,
-        deps=spatial_poly_deps,
-        tooltip=spatial_tooltip_runs(SPATIAL_POLY_DS_NAME, atlas_text.SPATIAL_MAP_READING),
+        deps=spatial_poly_deps + state_parameter_deps_xml(dim_bar_order),
+        filters=state_match_filter_xml(SPATIAL_POLY_DS_NAME),
+        tooltip=spatial_tooltip_runs(SPATIAL_POLY_DS_NAME),
         # The same white strokes sheet 1 carries, so the country reads as the same
         # country drawn twice rather than as two different maps of two different places.
         mark_formats=(("has-stroke", "true"), ("stroke-color", "#FFFFFF"), ("stroke-size", "3")),
@@ -2086,13 +2277,15 @@ def build_workbook(spatial_technical: str,
         """The Measure Names whitelist, the manual bar order, and the state
         filter's default-checked set.
 
-        The default view's membership is the reading of the user's request
-        (2026-10-22: "show five states in poorest and 12 in other, give me the
-        option of adding more states"): ranks 1-5 (the five poorest states)
-        and ranks 13-24 (the first twelve states of the Other 25, MPI-adjacent
-        to the poorest group). Every state stays on the checklist card, so the
-        reader can add or remove any of the 37. The bar order is MPI
-        descending, so ``order[:12]`` is the Poorest 12 by construction.
+        The default view's membership moved from a 17-member filter to the
+        Overview's state parameter on 2026-10-25 (amendment 2,
+        docs/SHEET_DIMENSIONS.md). The 17 is unchanged -- ranks 1-5 (the five
+        poorest states) and ranks 13-24 (the first twelve of the Other 25) --
+        but it now lives in the ``state_match`` calculation, because a
+        parameter pick must be able to override it and two ANDed filters
+        cannot: a pick outside those 17 used to draw a silently empty pane.
+        The bar order is still MPI descending, so ``order[:12]`` is the
+        Poorest 12 by construction.
         """
         members = "".join(
             "          <groupfilter function='member' level='[:Measure Names]' "
@@ -2103,26 +2296,22 @@ def build_workbook(spatial_technical: str,
             f"            <bucket>&quot;{escape(state)}&quot;</bucket>\n"
             for state in order
         )
-        # The multi-member default: union user:op='manual' over member
-        # groupfilters, the Measure Names filter's own proven shape, applied
-        # to the state column (the single-member state filter of the time
-        # panel has no union because it ticks one member).
-        state_members = "".join(
-            f"            <groupfilter function='member' level='[none:state:nk]' "
-            f"member=\"&quot;{escape(state)}&quot;\" />\n"
-            for state in order[:5] + order[12:24]
-        )
+        # The multi-member union grammar the state filter used to carry (and
+        # that the Measure Names filter below still uses) lives on in
+        # state_match_filter_xml's single-member form instead: the parameter
+        # now decides membership.
+        # The state selector, not a 17-member union: see the docstring. A
+        # parameter pick reaches all three panes because the parameter is
+        # workbook-global and each extract carries its own copy of the calc.
+        # The comment above the old block explained the union grammar; that
+        # grammar still ships on the time panel's Measure Names filter.
         return (
             f"          <filter class='categorical' column='[{DIM_DS_NAME}].[:Measure Names]'>\n"
             "            <groupfilter function='union' user:op='manual'>\n"
             f"{members}"
             "            </groupfilter>\n"
             "          </filter>\n"
-            f"          <filter class='categorical' column='[{DIM_DS_NAME}].[none:state:nk]'>\n"
-            "            <groupfilter function='union' user:op='manual'>\n"
-            f"{state_members}"
-            "            </groupfilter>\n"
-            "          </filter>\n"
+            f"{state_match_filter_xml(DIM_DS_NAME)}"
             f"          <sort class='manual' column='[{DIM_DS_NAME}].[none:state:nk]' "
             "direction='ASC'>\n"
             "            <dictionary>\n"
@@ -2169,7 +2358,15 @@ def build_workbook(spatial_technical: str,
         # the raw field name and truncates. States its meaning plainly.
         "poverty_group": "Poverty group",
     })
-    dim_deps = deps_xml(DIM_COLUMNS, dim_captions)
+    # The composition's selector calc keeps the 17-bar default: "(All states)"
+    # resolves to the same 17 the sheet has shipped since 2026-10-22, and a
+    # single pick overrides it (docs/SHEET_DIMENSIONS.md, 2026-10-25 amendment).
+    dim_deps = deps_xml(
+        DIM_COLUMNS, dim_captions,
+        calcs=state_match_calc_xml(
+            "            ", dim_bar_order[:5] + dim_bar_order[12:24]
+        ),
+    )
 
     def dim_tooltip_runs(ds: str) -> str:
         """The runs inside the composition sheet's customized tooltip."""
@@ -2215,7 +2412,7 @@ def build_workbook(spatial_technical: str,
         encodings=(f"            <color column='[{DIM_DS_NAME}].[:Measure Names]' />\n"),
         ds_name=DIM_DS_NAME,
         ds_caption=DIM_DS_CAPTION,
-        deps=dim_deps,
+        deps=dim_deps + state_parameter_deps_xml(dim_bar_order),
         # The Measure Names whitelist (three members only: everything else with
         # a measure role was kept out of the extract at birth) and the manual
         # bar order, both computed above from the frozen lists / main().
@@ -2240,11 +2437,12 @@ def build_workbook(spatial_technical: str,
         "          <strip size='160'>\n"
         "            <card type='pages' />\n"
         "            <card type='filters' />\n"
-        "            <!-- the interactive state checklist: 37 members, 17\n"
-        "                 pre-ticked (5 poorest + first 12 of the rest). Grammar\n"
-        "                 is the time panel's proven filter-card shape, checklist\n"
-        "                 mode because the reader ticks several states. -->\n"
-        f"            <card mode='checklist' param='[{DIM_DS_NAME}].[none:state:nk]' type='filter' values='database' />\n"
+        "            <!-- the state selector, 2026-10-25: the SAME parameter the\n"
+        "                 Overview dashboard's paramctrl zone drives. The old\n"
+        "                 17-of-37 checklist card is retired with the filter it\n"
+        "                 bound to: two controls over one row set could not be\n"
+        "                 reconciled (docs/SHEET_DIMENSIONS.md, amendment 2). -->\n"
+        f"            <card mode='compact' param='[Parameters].[{STATE_PARAM}]' type='parameter' />\n"
         "            <card type='marks' />\n"
         "          </strip>\n"
         "        </edge>\n"
@@ -2582,6 +2780,7 @@ def build_workbook(spatial_technical: str,
         # from XML. The colours come from atlas_text.MPI_BANDS, so the workbook's
         # fill and the matplotlib QA gate cannot drift apart.
         palette=("mpi_band", list(atlas_text.MPI_BANDS)),
+        calcs=state_match_calc_xml("      ", with_instance=False),
     )
     spatial_poly_ds = datasource_xml(
         SPATIAL_POLY_COLUMNS, SPATIAL_POLY_HYPER, spatial_poly_rows,
@@ -2595,6 +2794,7 @@ def build_workbook(spatial_technical: str,
             "spatial_group",
             [(words, colour) for _code, words, colour in atlas_text.SPATIAL_QUADRANTS],
         ),
+        calcs=state_match_calc_xml("      ", with_instance=False),
     )
     # The time panel's datasource: same shape, with a palette for the generated
     # Measure Names field -- its buckets are the quoted field references of the six
@@ -2631,6 +2831,9 @@ def build_workbook(spatial_technical: str,
             [(f"[{DIM_DS_NAME}].[sum:{name}:qk]", colour)
              for name, _caption, colour in atlas_text.DIMENSION_SHARES],
             "[:Measure Names]",
+        ),
+        calcs=state_match_calc_xml(
+            "      ", dim_bar_order[:5] + dim_bar_order[12:24], with_instance=False
         ),
     )
     # The KPI board's datasource: the drawn sheet's 20 marks, with the ds-level
@@ -2676,7 +2879,7 @@ def build_workbook(spatial_technical: str,
     aliases_marker = "      <aliases enabled='yes' />\n"
     calc_at_ds = pairs_calc_columns_xml()
     pairs_ds = pairs_ds.replace(aliases_marker, aliases_marker + calc_at_ds, 1)
-    parameters_ds = parameters_ds_xml(PAIRS_DEFAULT_X, PAIRS_DEFAULT_Y)
+    parameters_ds = parameters_ds_xml(PAIRS_DEFAULT_X, PAIRS_DEFAULT_Y, dim_bar_order)
     # The KPI silhouettes, embedded in the workbook (see shape_pack_xml); the
     # real tree order puts <external> after the window/dashboard blocks and
     # before the workbook element closes.
@@ -3128,6 +3331,9 @@ def main() -> int:
         | {name for name, _type, _role in DIM_COLUMNS}
         | {name for name, _type, _role in KP_COLUMNS}
         | {PAIRS_X_CALC, PAIRS_Y_CALC}
+        # The Overview's state selector: a calculated field, so no extract holds
+        # it, but three datasources and three worksheets declare it by name.
+        | {STATE_MATCH}
     )
     xml = build_workbook(
         spatial_context_line(spatial_global), len(poly_reader),

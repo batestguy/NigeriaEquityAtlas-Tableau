@@ -103,3 +103,61 @@ sitting in `docs/PUBLISH.md` as a GUI click.
    `goto-sheet` **button zone** (`<button action='tabdoc:goto-sheet …'>` with a
    `<button-visual-state><image-path>`), the shape the reference file uses 81
    times.
+
+---
+
+## 2026-10-25 — the state selector and the two colour legends
+
+Status: **built and render-verified** in Tableau Public 2026.2 (captures
+`%TEMP%\opencode\overview_final3.png`, `filter_kano_test.png`,
+`dim_tab_check.png`). Grammar and dead ends: `docs/FIX_LEDGER.md` §Q.
+
+### The page now carries four kinds of zone
+
+| Zone | Kind | Geometry (canvas px) |
+|---|---|---|
+| title band | `type-v2='text'` | 0,0 1236x64 |
+| state selector | `type-v2='paramctrl'` | 1244,10 348x44 |
+| `Where poverty sits` | embedded sheet | 0,64 480x372 |
+| `Where poverty clusters` | embedded sheet | 488,64 480x372 |
+| MPI band legend | `type-v2='color'` | 976,64 624x190 |
+| Neighbourhood legend | `type-v2='color'` | 976,254 624x182 |
+| `How poverty is made up` | embedded sheet | 0,444 1600x556 |
+
+The maps ceded 310 px of width to the legend column. The composition gained the
+freed 76 px of height (528 -> 556) and is now 32 px per bar at the 17-bar default.
+
+### What the selector does
+
+One workbook parameter, `State select` (caption **State**), list domain:
+`(All states)` then the 37 states. Each of the three extracts carries a calculated
+boolean `state_match` and the sheet filters on it, so a pick moves **all three
+panes at once** — which a filter card could not do, since the panes read three
+different datasources (§Q3). `(All states)` is the shipped default.
+
+On the composition the "(All states)" arm also carries the 17-bar default, so the
+page opens exactly as it did before; a pick overrides it. The composition tab's
+old 17-of-37 checklist card is retired in favour of the same parameter card
+(`docs/SHEET_DIMENSIONS.md`, amendment 2).
+
+### What the legends do
+
+Each map gets its own `type-v2='color'` zone bound by `name` to its sheet. The
+title is the colour field's caption, so both titles say what is being compared:
+`MPI band (Multidimensional Poverty Index)` and `Neighbourhood type (this state's
+poverty, beside the states it borders')`. Members are whatever is in view: three
+of the four neighbourhood types at "(All states)", one member per legend when a
+single state is picked.
+
+This **closes the colour-legend question for the dashboard**, and it narrowed the
+old open item: a legend zone draws even though `Where poverty sits`'s own window
+card does not. The card defect on that **tab** stays open (`docs/PUBLISH.md`).
+
+### Publish-time checks added
+
+1. The selector lists `(All states)` plus 37 names, and picking one moves all
+   three panes together (hover a map afterwards to confirm the number belongs to
+   that state).
+2. Both legend titles print in full and every member label is complete.
+3. The composition still opens on 17 bars; the left control on that tab reads
+   `(All states)`.

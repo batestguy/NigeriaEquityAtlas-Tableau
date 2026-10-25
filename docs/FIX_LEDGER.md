@@ -1046,9 +1046,107 @@ needs roughly its tab size divided by two to stay legible; below that it is
 decoration.
 
 ### O6. Cards do not travel with a sheet into a dashboard
-**Severity IMPROVEMENT - status known**
+**Severity IMPROVEMENT - status CLOSED 2026-10-25 (all three zone types proven)**
 Filter cards, parameter cards and colour legends are **window** objects; an
 embedded worksheet zone is just the sheet. So a dashboard built from sheets that
 depend on their cards loses the interactivity silently. Adding it back means
-`filter` / `paramctrl` / `color` zones -- three types we have not proven, all
-present in the reference file (O1) when the time comes.
+`filter` / `paramctrl` / `color` zones.
+**Resolved 2026-10-25 (section Q): `paramctrl` and `color` zones both render on
+the Overview. The `filter` zone type was not needed** -- see Q3 for why a filter
+card could never have done this job.
+
+---
+
+## Q. The Overview's state selector and legends (2026-10-25)
+
+The ask: "selection of states button and a filter so that when a state is selected
+it shows values on all panes in dashboard", plus "add legends explaining the colors
+for both charts", and (for the cluster map) "the text from tool bar is too much,
+reduce it so its precise and concise".
+
+### Q1. A `paramctrl` zone is the whole declaration
+**Severity IMPROVEMENT - status done, render-verified**
+Grammar, byte-copied from `SoftwareRetailAnalytics.twbx` (downloaded and unpacked
+2026-10-25 through the Tableau MCP server, the same file as O1):
+
+```
+<zone h='4272' id='106' mode='compact' param='[Parameters].[Parameter 1]'
+      type-v2='paramctrl' w='11111' x='83750' y='62524' />
+```
+
+No `<card>` in the dashboard's `<window>` is required -- the reference carries two
+paramctrl zones and no parameter card on either dashboard window. Ours renders in
+the title band as "State (All states)". The caption is the label column, so a long
+caption truncates: "State select" shipped first and printed as "State s.."; the
+caption is now "State" while the internal name stays `State select`.
+
+### Q2. A colour legend is a *zone*, and its shape sets its orientation
+**Severity IMPROVEMENT - status done, render-verified**
+```
+<zone h='..' id='200' name='<sheet>' pane-specification-id='0'
+      param='[ds].[none:<field>:nk]' type-v2='color' w='..' x='..' y='..' />
+```
+`name` is the worksheet the legend belongs to, `pane-specification-id` is that
+sheet's pane (0 -- this builder writes panes with no id attribute, which is pane 0).
+Two zones, one per map, because each map encodes a different field.
+
+**The zone's aspect ratio decides the orientation, and a wide short zone is a trap.**
+First attempt: one 76 px strip under each map, 790 px wide -> Tableau drew a single
+horizontal row of five swatches and clipped every member to "1. under ..", "2. 5%
+to ..". A legend nobody can read is not a legend. Second attempt: a 250 px column
+beside each map -> better, but the cluster map's member labels ARE sentences
+("Better off than average, neighbours better off") and still clipped. Final: both
+legends stacked in one 624 px column on the far right; both read in full, and the
+maps keep 480 px each.
+
+**Member lists are data-driven**: at "(All states)" the cluster legend shows three
+of its four types because no state carries the fourth in 2021; picking Kano
+collapses both legends to the single member in view. That is correct, not a defect.
+
+### Q3. A dashboard filter card cannot span three extracts -- a parameter can
+**Severity DEFECT (design) - status worked around by design**
+The three panes read three datasources (`Nigeria MPI polygons`, `Spatial polygons`,
+`Poverty composition`). A filter card applies only to worksheets on its own
+datasource, so "one filter, all panes" is not expressible with a card. Parameters
+are workbook-global, so the selector is:
+
+* one string parameter `State select`, list domain, 38 members (`(All states)` +
+  37 states), in the inline `Parameters` datasource;
+* one calculated boolean `state_match` **per extract**, formula
+  `[state] = [Parameters].[State select] OR [Parameters].[State select] = "(All states)"`;
+* the sheet's `<datasource-dependencies datasource='Parameters'>` mirror (packet
+  A4's rule: the sheet copy is the one that binds), plus a categorical filter
+  `member='true'` on the calc.
+
+Verified end to end without clicking: building once with the parameter's default
+set to `Kano` rendered Kano's polygon alone on both maps, Kano's single bar on the
+composition, and both legends collapsed to one member. Default reverted to
+`(All states)`.
+
+### Q4. Two ANDed filters cannot be overridden -- so the composition's 17-member filter had to go
+**Severity DEFECT - status done, documented as an amendment**
+The composition sheet's default view was a `state` filter with a 17-member manual
+union (D-052). Adding `state_match` beside it would AND the two, so a pick outside
+those 17 (Kano, say) would draw a **silently empty pane** -- the failure AGENTS.md
+warns about. The union is therefore replaced by the parameter calc, whose
+"(All states)" arm carries the same 17 names, so the shipped default is unchanged
+(verified: status bar reads "17 rows by 1 column") while any single pick now
+overrides it. The left-rail checklist card is retired in favour of the same
+parameter card the dashboard uses, which also removed a two-controls-one-row-set
+inconsistency. See `docs/SHEET_DIMENSIONS.md`, amendment 2.
+
+### Q5. `--` inside an XML comment is a hard build error
+**Severity TRAP - status known**
+A `<!-- ... bound to -- two controls ... -->` comment made the whole workbook fail
+`ElementTree` with "invalid token", naming only a line and column. Two hyphens are
+illegal inside an XML comment. Cost: one build cycle.
+
+### Q6. The boolean filter's serialisation
+**Severity IMPROVEMENT - status done**
+A boolean calculation is `datatype='boolean' role='dimension' type='nominal'`, with
+`<calculation class='tableau' formula='...' />`; string literals inside the formula
+use `&quot;`, and the filter that reads it is a categorical filter with
+`<groupfilter function='member' level='[none:<calc>:nk]' member='true' />`. The
+calc is declared at datasource level (column only) and its `<column-instance>` is
+declared inside the worksheet's `<datasource-dependencies>` -- one declaration per
+scope, which is the shape `Latest Month Filter` carries in the reference file.
