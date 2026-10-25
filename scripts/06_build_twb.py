@@ -1801,23 +1801,30 @@ def cover_dashboard_xml() -> tuple[str, str]:
     def uy(px: float) -> int:
         return round(px / size[1] * 100_000)
 
-    def para(runs: str) -> str:
-        return f"              {runs}\n"
+    def line(runs: str, size: str, gap: int = 1) -> str:
+        """One rendered line = the runs, then standalone break runs.
 
-    toc = ""
-    for i, (name, line) in enumerate(atlas_text.COVER_TOC, 1):
-        toc += para(
-            f"<run bold='true' fontsize='15'>{i}   {escape(name)}</run>&#10;"
-        )
-        toc += para(f"<run fontsize='10'>{escape(line)}</run>&#10;&#10;")
+        The break MUST be its own <run>: appending &#10; inside a text run
+        renders as nothing (the cover's first build came out as one run-on
+        paragraph). Copied from the reference table's zones in this same
+        workbook, which prefix every break with an explicit fontsize.
+        """
+        brk = f"<run fontsize='{size}'>&#10;</run>"
+        return f"              {runs}{brk * gap}\n"
 
     body = (
-        para(f"<run bold='true' fontsize='30'>{escape(atlas_text.COVER_TITLE)}</run>&#10;&#10;")
-        + para(f"<run fontsize='13'>{escape(atlas_text.COVER_SUBTITLE)}</run>&#10;&#10;&#10;")
-        + para(f"<run fontsize='10'>{escape(atlas_text.COVER_INTRO)}</run>&#10;&#10;&#10;")
-        + para("<run bold='true' fontsize='11'>CONTENTS</run>&#10;&#10;")
-        + toc
+        line(f"<run bold='true' fontsize='30'>{escape(atlas_text.COVER_TITLE)}</run>",
+             "30", 2)
+        + line(f"<run fontsize='13'>{escape(atlas_text.COVER_SUBTITLE)}</run>", "13", 3)
+        + line(f"<run fontsize='10'>{escape(atlas_text.COVER_INTRO)}</run>", "10", 4)
+        + line("<run bold='true' fontsize='11'>CONTENTS</run>", "11", 3)
     )
+    for i, (name, desc) in enumerate(atlas_text.COVER_TOC, 1):
+        body += line(
+            f"<run bold='true' fontsize='15'>{i}   {escape(name)}</run>", "15", 1
+        )
+        body += line(f"<run fontsize='10'>{escape(desc)}</run>", "10", 3)
+
     zones = (
         # 1. THE ILLUSTRATION IS ADDED IN THE GUI, not here.
         # A `type-v2='bitmap'` zone with `param='Image/cover.jpg'` and the file
@@ -1845,7 +1852,7 @@ def cover_dashboard_xml() -> tuple[str, str]:
         f"          <zone forceUpdate='true' h='{uy(96)}' id='10'"
         f" type-v2='text' w='{ux(panel_w)}' x='0' y='{uy(size[1] - 96)}'>\n"
         f"            <formatted-text>\n"
-        f"              <run fontsize='7.5'>{escape(atlas_text.COVER_CREDIT)}</run>\n"
+        f"              <run fontsize='8'>{escape(atlas_text.COVER_CREDIT)}</run>\n"
         f"            </formatted-text>\n"
         f"            <zone-style>\n"
         f"              <format attr='background-color' value='#0B2E1D' />\n"
@@ -2981,7 +2988,7 @@ def build_workbook(spatial_technical: str,
     # every sentence a reader needs from those five sheets is now a row of this
     # table, which is why withdrawing them cost the atlas no claim.
     reference_tabs = table_dashboards()
-    # cover_dash, cover_window = cover_dashboard_xml()  # pending a packet: see docs/DASHBOARD.md
+    # cover_dash, cover_window = cover_dashboard_xml()  # see docs/DASHBOARD.md
     overview_dash, overview_window = overview_dashboard_xml()
     context_dash, context_window = context_dashboard_xml()
 

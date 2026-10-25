@@ -304,3 +304,21 @@ The illustration's provenance is still **UNKNOWN** in `docs/POLISH_PLAN.md`.
 Tableau Public is a public upload under the author's name: the terms must be
 recorded before the cover ships.
 
+
+### The cover page: what was found (2026-10-25, second attempt)
+
+Two hard findings from three builds, both worth keeping:
+
+1. **A non-integer `fontsize` fails the whole workbook load with no dialog.**
+   `fontsize='7.5'` in a `<run>` made Tableau open an empty window while the XML
+   validated clean. Integer sizes only. This is the first attribute in the project
+   that fails *silently at load* and is invisible to schema validation.
+2. **Line breaks in a dashboard text zone did not render** even when serialised
+   exactly as the working reference table does it (`<run fontsize='N'>&#10;</run>`
+   as its own element). The page rendered as one run-on paragraph, so the cover
+   tab is **not wired in**: `cover_dashboard_xml()` is complete and commented,
+   and the call site is commented out with a pointer here.
+
+Both need the packet treatment (one variable per build, cover page alone in a
+scratch workbook). Until then the GUI route at the top of this file is the way to
+ship the image, and it works today.
