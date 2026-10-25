@@ -244,3 +244,23 @@ Two changes, both word-count only:
 The stage-5 gate's own paragraph was cut from nine lines to three for the same
 reason; it is a QA artefact, not a published page, but it had become the longest
 block of prose in the repo's renders.
+
+## Amendment 2 (2026-10-25) — the row headers no longer break mid-word
+
+"Intensity A · rank" rendered as `Intensit / y / ran / k` because the header
+column sat at Tableau's default width. The sheet now pins it:
+
+```
+<style-rule element='header'>
+  <format attr='width' field='[federated.0mpitrends].[:Measure Names]' value='168' />
+</style-rule>
+```
+
+render-verified. Every caption now wraps at a space or fits on one line. This is
+the same rule shape D-053 recorded as ineffective for the composition's group
+header; it works on a Measure Names column, so that finding was specific to the
+field it was tried on (`FIX_LEDGER` §R3).
+
+**Still open:** the Measure Names checklist lists `Count of Migrated Data`, a
+generated member the union filter excludes — ticking it draws an empty pane. The
+card lists the domain, not the filtered set (`FIX_LEDGER` §R5).

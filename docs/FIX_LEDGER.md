@@ -1169,3 +1169,52 @@ Stage 6 now asserts both leading fields of that tooltip are `[none:...:nk]`
 references, so the state name and the type label cannot silently become
 aggregates again. General rule: in a tooltip, everything that is *words* must be
 `none:`; only the numbers take `sum:`.
+
+---
+
+## R. The three remaining tabs (2026-10-25)
+
+Two defects that only a render could show, one grammar win, and one left alone.
+
+### R1. The pairs board's axes named my internals
+**Severity DEFECT - status done, render-verified**
+The two calculated axis fields were captioned "Pair X position" / "Pair Y position",
+so a reader saw `Avg. Pair X position` above an axis whose measure is chosen from a
+dropdown. A Tableau axis title is the field caption and cannot follow a parameter,
+so the captions are now "value of the chosen X measure" / "... Y ..." -- the axis
+reads "Avg. value of the chosen X measure", and the two dropdown cards above it name
+the actual measures. Renaming the caption cannot break the CASE formula, which
+compares the parameter's member, not the caption.
+
+### R2. The pane-split column header printed "povert.."
+**Severity DEFECT - status done**
+`poverty_group`'s caption was the field name, and at the header width Tableau
+truncated it to "povert.." over the plot. The column's values already read
+"Poorest 12" / "Other 25", so the pairs datasource now captions it **Group**.
+
+### R3. A field-scoped header WIDTH rule does work -- the time panel's rows were breaking mid-word
+**Severity DEFECT - status done, render-verified**
+"Intensity A · rank" rendered as `Intensit / y / ran / k`. The header column was at
+Tableau's default width. `<style-rule element='header'><format attr='width'
+field='[ds].[:Measure Names]' value='168' />` fixes it -- and note this is the same
+rule shape D-053 recorded as "tried and did not take" for the composition's GROUP
+header. It takes on a Measure Names column; the earlier failure was field-scoped to
+`poverty_group`, so the lesson is narrower than D-053 implies: the rule works, that
+field did not.
+Result: every caption on the panel now wraps at a space or fits on one line.
+
+### R4. The pairs board's quadratic band still leaves the frame at the edges
+**Severity IMPROVEMENT - status open, deliberate**
+In the Poorest-12 pane the fitted curve and its band dive below zero at the left
+edge, and in the Other 25 pane the upper band leaves the top. A parabola fitted to a
+narrow x-range extrapolates hard, and the fitted upper curve can go negative where
+the data cannot. Options are a linear fit (contradicts the 2026-10-24 request), a
+clipped axis (hides points), or leaving it. Left as is; the subtitle says the line
+describes its pane and is not a test. Revisit if it is read as a forecast.
+
+### R5. The time panel's checklist still lists one measure that cannot draw
+**Severity IMPROVEMENT - status open**
+The Measure Names checklist shows `Count of Migrated Data`, a generated member that
+the six-measure union filter excludes. Ticking it adds a pane with no data. The card
+lists the domain, not the filtered set, and no card attribute changes that. The
+union filter protects the sheet; the card cannot be trimmed from XML here.

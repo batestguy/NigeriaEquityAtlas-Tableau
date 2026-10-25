@@ -316,3 +316,22 @@ own marks** — a degree-2 least-squares fit — not a result:
 3. The subtitle's three lines still fit the title block at the published window
    size (it grew by one clause, 2026-10-24).
 
+
+## Amendment 4 (2026-10-25) — axis captions and the pane-split header
+
+- The two axis calculations are captioned **"value of the chosen X measure"** and
+  **"value of the chosen Y measure"** (they were "Pair X position" / "Pair Y
+  position", so the axes printed my internal names). A Tableau axis title is the
+  field caption and cannot follow a parameter; the two dropdown cards above the
+  plot name the chosen measures, so the axis only has to say what kind of number
+  it is showing.
+- The pane-split field's caption is now **"Group"**; `poverty_group` truncated to
+  "povert.." at the header width and printed over the plot.
+- The subtitle is one line: "Any two measures, one point per state-round · panes
+  split on the poorest 12 · 0 = none · the line describes its pane, not a test".
+  It lost "compare within a pane" and "logged axes" (the axis says 0) and kept
+  the sentence that forbids reading the line as a test.
+- **Open, deliberate:** the quadratic band still leaves the frame at the edges of
+  a pane. A parabola on a narrow x-range extrapolates hard and can bend below
+  zero, which the measure cannot. Left as asked for on 2026-10-24; revisit if a
+  reader takes it as a forecast (`FIX_LEDGER` §R4).

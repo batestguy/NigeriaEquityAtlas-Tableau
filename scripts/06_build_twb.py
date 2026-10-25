@@ -771,8 +771,8 @@ PAIRS_HYPER = "pairs_board.hyper"
 SHEET_PAIRS_TITLE = atlas_text.PAIRS_TITLE
 PAIRS_X_CALC = "pair_x_sel"
 PAIRS_Y_CALC = "pair_y_sel"
-PAIRS_X_CALC_CAPTION = "Pair X position"
-PAIRS_Y_CALC_CAPTION = "Pair Y position"
+PAIRS_X_CALC_CAPTION = "value of the chosen X measure"
+PAIRS_Y_CALC_CAPTION = "value of the chosen Y measure"
 PAIRS_PARAM_X = "X axis measure"
 PAIRS_PARAM_Y = "Y axis measure"
 
@@ -1174,7 +1174,13 @@ def pairs_captions() -> dict[str, str]:
     both built from this map), and the menu entry text must equal the caption,
     because the CASE WHEN compares the member to the caption string.
     """
-    return {field: label for label, field in PAIRS_MENU}
+    captions = {field: label for label, field in PAIRS_MENU}
+    # The pane-split column's own header printed "povert.." (a truncated
+    # poverty_group) over the plot. The values beneath it already read
+    # "Poorest 12" / "Other 25", so the column header only needs a word that
+    # fits at the header width.
+    captions["poverty_group"] = "Group"
+    return captions
 
 
 def pairs_tooltip_runs() -> str:
@@ -2202,6 +2208,18 @@ def build_workbook(spatial_technical: str,
             "          <style-rule element='axis'>\n"
             f"            <format attr='display' class='0' field='[{PANEL_DS_NAME}].[Multiple Values]' "
             "scope='rows' value='false' />\n"
+            "          </style-rule>\n"
+            # 2026-10-25: the row headers were breaking MID-WORD ("Intensit /
+            # y / ran / k"), which reads as a rendering fault rather than a
+            # label. The header column was sized by Tableau's default; this
+            # pins it. Same field-scoped width rule the KPI board (230 px on
+            # `kpi`) and the composition sheet (92 px on `poverty_group`) already
+            # ship, so the grammar is proven in this workbook. The field here is
+            # the generated Measure Names dimension, referenced bare like its
+            # palette buckets.
+            "          <style-rule element='header'>\n"
+            f"            <format attr='width' field='[{PANEL_DS_NAME}].[:Measure Names]' "
+            "value='168' />\n"
             "          </style-rule>\n"
         )
 

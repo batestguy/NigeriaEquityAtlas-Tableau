@@ -534,8 +534,7 @@ PANEL_DEFAULT_STATE = "Bauchi"
 PAIRS_TITLE = "How measures pair"
 PAIRS_SUBTITLE = (
     "Any two measures, one point per state-round \u00b7 panes split on the "
-    "poorest 12: compare within a pane \u00b7 the line describes its pane only "
-    "\u00b7 logged axes, 0 = none \u00b7 points, not a test"
+    "poorest 12 \u00b7 0 = none \u00b7 the line describes its pane, not a test"
 )
 # The board's circle fill: the atlas's Okabe-Ito green (the same green the
 # living-standards share prints), single-sourced so the two sheets agree.
