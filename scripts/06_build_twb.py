@@ -1793,7 +1793,7 @@ def cover_dashboard_xml() -> tuple[str, str]:
 
     with _Image.open(COVER_IMAGE) as _im:
         size = _im.size
-    panel_w = 566
+    panel_w = 616
 
     def ux(px: float) -> int:
         return round(px / size[0] * 100_000)

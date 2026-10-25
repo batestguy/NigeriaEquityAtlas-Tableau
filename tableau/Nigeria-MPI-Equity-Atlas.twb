@@ -1507,7 +1507,7 @@
   <dashboards>
     <dashboard name='Start here'>
       <style />
-      <size maxheight='672' maxwidth='1408' minheight='672' minwidth='1408' />
+      <size maxheight='636' maxwidth='1408' minheight='636' minwidth='1408' />
       <zones>
         <zone h='100000' id='1' type-v2='layout-basic' w='100000' x='0' y='0'>
           <zone h='100000' id='2' param='Image/cover.jpg' type-v2='bitmap' w='100000' x='0' y='0'>
@@ -1515,14 +1515,14 @@
               <format attr='margin' value='0' />
             </zone-style>
           </zone>
-          <zone h='100000' id='9' type-v2='text' w='40199' x='0' y='0'>
+          <zone h='100000' id='9' type-v2='text' w='43750' x='0' y='0'>
             <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>1   Overview</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>2   A state, in context</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
               <format attr='background-color' value='#F4F1EA' />
             </zone-style>
           </zone>
-          <zone h='12500' id='10' type-v2='text' w='40199' x='0' y='87500'>
+          <zone h='13208' id='10' type-v2='text' w='43750' x='0' y='86792'>
             <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated.</run></formatted-text>
             <zone-style>
               <format attr='margin' value='14' />
