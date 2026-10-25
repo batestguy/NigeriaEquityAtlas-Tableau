@@ -54,7 +54,12 @@ context only, never the fill. `poverty_group` stays a bare label in the extract,
 tooltip's first line carries the static suffix that completes it — `Bauchi · Poorest 12
 of the 37 states, by MPI`.
 
-**Remaining manual step:** publishing, and it needs your account login. Tableau Public
+**Published (2026-10-25):**
+https://public.tableau.com/app/profile/jerry.bannister/viz/Nigeria-MPI-Equity-Atlas
+— opens on `Start here`, whose two contents links navigate to the dashboards
+(`FIX_LEDGER` §U). It was published without a tab bar, so the cover links are the
+navigation. Republish from the GUI (File → Save to Tableau Public, same name) after
+each rebuild. The rest of this paragraph predates publishing. Tableau Public
 2026.2 **is installed** at `C:\Program Files\Tableau\Tableau Public 2026.2\bin\tabpublic.exe`
 (the old `C:\TableauPublic` 2025.1 path no longer exists) — nothing to install. The
 open-and-render check it unblocked has been done: the workbook loads with no error
