@@ -820,18 +820,7 @@ def build_dots() -> int:
         # the extract's row order, later rows over earlier ones. The hover
         # string above keeps its own order -- it is text, unaffected by draw
         # order.
-        # The direction guide comes FIRST, before the reversed silhouettes, so
-        # it draws underneath every reference mark rather than over them.
-        guide_member, _guide_colour = atlas_text.KPI_GUIDE[row["direction"]]
-        marks.append(
-            {
-                "kpi": label,
-                "series": guide_member,
-                "pos": f"{atlas_text.KPI_GUIDE_POS:.4f}",
-                "pos_label": "",
-                "hover": "",
-            }
-        )
+
         for series, value in reversed(list(raw.items())):
             if not value:
                 continue
@@ -859,9 +848,8 @@ def build_dots() -> int:
         marks,
         ["kpi", "series", "pos", "pos_label", "hover"],
     )
-    # 7 rows x (Nigeria + world) + 6 SSA rows = 20 reference marks, plus one
-    # direction guide per row (2026-10-25) = 27.
-    assert n == 27, f"kpi_dots.csv has {n} marks, expected 27"
+    # 7 rows x (Nigeria + world) + 6 SSA rows = 20.
+    assert n == 20, f"kpi_dots.csv has {n} marks, expected 20"
     print(f"\nwrote {PROCESSED / 'kpi_dots.csv'} ({n} marks)")
     return n
 

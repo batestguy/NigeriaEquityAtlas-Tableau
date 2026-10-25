@@ -228,3 +228,22 @@ therefore shows the six default measures.
 The two maps and the composition stay on the `Overview`; this page is the
 "into the detail" page, not a second front door. Nothing links the two pages yet
 (no `goto-sheet` button zone) — the tab bar is the navigation.
+## Axis labels, a final sweep (2026-10-25)
+
+Every axis on every surface was read off a render and fixed where it printed an
+internal name or said nothing:
+
+| Sheet | Before | After |
+|---|---|---|
+| How measures pair | `Avg. value of the chosen X measure` | `Avg. X` (and `Avg. Y`) â€” the dropdowns are already labelled "X axis measure" / "Y axis measure", so the axis only has to say *a mean of that* |
+| A state over time | `survey_year` (raw field name) | `Survey round` |
+| Where Nigeria stands | `Avg. Share of the row's largest reference` | unchanged â€” it says what it is |
+| Where Nigeria stands (rows) | `Poverty headcount (% of people) â–¼` | `Poverty headcount (%) Â· lower is better` |
+| Both maps | `Avg. lat` / `Avg. lon` | hidden (2026-10-24, `map_axis_hidden`) |
+| How poverty is made up | `Multiple Values` | hidden (`dim_table_style`) |
+
+Verified by capture on all three tabs. On the `A state, in context` page the KPI
+band's row labels truncate ("lower is bettâ€¦") because the band is 1316 px wide
+there; the tab shows them whole, and the page is a secondary surface for that
+board.
+

@@ -180,7 +180,7 @@
       <aliases enabled='yes' />
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
-      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='Survey round' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
       <column caption='Survey the round comes from' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='Movement OPHI&apos;s change test calls significant (*, **, ***)' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
       <column caption='Mean annual change since the previous round (MPI points/yr)' datatype='string' name='[mpi_change_label]' role='dimension' type='nominal' />
@@ -310,7 +310,7 @@
       </connection>
       <aliases enabled='yes' />
       <column caption='Indicator' datatype='string' name='[kpi]' role='dimension' type='nominal' />
-      <column caption='Reference point / direction' datatype='string' name='[series]' role='dimension' type='nominal' />
+      <column caption='Reference point (2021)' datatype='string' name='[series]' role='dimension' type='nominal' />
       <column caption='Values' datatype='string' name='[hover]' role='dimension' type='nominal' />
       <column caption='Share of the row&apos;s largest reference' datatype='real' default-format='0.0' name='[pos]' role='measure' type='quantitative' />
       <column caption='Share (one decimal)' datatype='string' name='[pos_label]' role='dimension' type='nominal' />
@@ -337,12 +337,6 @@
             <map to='#E69F00'>
               <bucket>&quot;World (2021)&quot;</bucket>
             </map>
-            <map to='#D55E00'>
-              <bucket>&quot;lower is better&quot;</bucket>
-            </map>
-            <map to='#6A51A3'>
-              <bucket>&quot;higher is better&quot;</bucket>
-            </map>
           </encoding>
           <encoding attr='shape' field='[none:series:nk]' type='shape'>
             <map to='KPI_Geo/nigeria.png'>
@@ -353,12 +347,6 @@
             </map>
             <map to='KPI_Geo/world.png'>
               <bucket>&quot;World (2021)&quot;</bucket>
-            </map>
-            <map to='KPI_Geo/arrow_left.png'>
-              <bucket>&quot;lower is better&quot;</bucket>
-            </map>
-            <map to='KPI_Geo/arrow_right.png'>
-              <bucket>&quot;higher is better&quot;</bucket>
             </map>
           </encoding>
         </style-rule>
@@ -379,10 +367,10 @@
         <relation connection='hyper.0mpipairs' name='Extract' table='[Extract].[Extract]' type='table' />
       </connection>
       <aliases enabled='yes' />
-      <column caption='value of the chosen X measure' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
+      <column caption='X' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
         <calculation class='tableau' formula='CASE [Parameters].[X axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
       </column>
-      <column caption='value of the chosen Y measure' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
+      <column caption='Y' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
         <calculation class='tableau' formula='CASE [Parameters].[Y axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
       </column>
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
@@ -1138,7 +1126,7 @@
           <datasource-dependencies>
       <column caption='pcode' datatype='string' name='[pcode]' role='dimension' type='nominal' />
       <column caption='state' datatype='string' name='[state]' role='dimension' type='nominal' semantic-role='[State].[Name]' />
-      <column caption='survey_year' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
+      <column caption='Survey round' datatype='integer' name='[survey_year]' role='dimension' type='ordinal' />
       <column caption='Survey the round comes from' datatype='string' name='[survey]' role='dimension' type='nominal' />
       <column caption='Movement OPHI&apos;s change test calls significant (*, **, ***)' datatype='string' name='[mpi_change_significant]' role='dimension' type='nominal' />
       <column caption='Mean annual change since the previous round (MPI points/yr)' datatype='string' name='[mpi_change_label]' role='dimension' type='nominal' />
@@ -1275,7 +1263,7 @@
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>Where Nigeria stands</run><run fontsize='9'>  How Nigeria compares with Africa, the world and the SDG target, 2021 · each row is its own scale · ▼ lower is better, ▲ higher is better</run>
+            <run bold='true' fontsize='13'>Where Nigeria stands</run><run fontsize='9'>  How Nigeria compares with Africa, the world and the SDG target, 2021 · each row is its own scale, and says which way is better</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -1286,7 +1274,7 @@
           </datasources>
           <datasource-dependencies>
       <column caption='Indicator' datatype='string' name='[kpi]' role='dimension' type='nominal' />
-      <column caption='Reference point / direction' datatype='string' name='[series]' role='dimension' type='nominal' />
+      <column caption='Reference point (2021)' datatype='string' name='[series]' role='dimension' type='nominal' />
       <column caption='Values' datatype='string' name='[hover]' role='dimension' type='nominal' />
       <column caption='Share of the row&apos;s largest reference' datatype='real' default-format='0.0' name='[pos]' role='measure' type='quantitative' />
       <column caption='Share (one decimal)' datatype='string' name='[pos_label]' role='dimension' type='nominal' />
@@ -1298,13 +1286,13 @@
           </datasource-dependencies>
           <sort class='manual' column='[federated.0kpiboard].[none:kpi:nk]' direction='ASC'>
             <dictionary>
-            <bucket>&quot;Poverty headcount (% of people) ▼&quot;</bucket>
-            <bucket>&quot;Under-5 deaths per 1,000 births ▼&quot;</bucket>
-            <bucket>&quot;Open defecation (% of people) ▼&quot;</bucket>
-            <bucket>&quot;Safely managed sanitation (%) ▲&quot;</bucket>
-            <bucket>&quot;Basic drinking water (% of people) ▲&quot;</bucket>
-            <bucket>&quot;Electricity access (% of people) ▲&quot;</bucket>
-            <bucket>&quot;Clean cooking fuel (% of people) ▲&quot;</bucket>
+            <bucket>&quot;Poverty headcount (%) · lower is better&quot;</bucket>
+            <bucket>&quot;Under-5 deaths / 1,000 births · lower is better&quot;</bucket>
+            <bucket>&quot;Open defecation (%) · lower is better&quot;</bucket>
+            <bucket>&quot;Safely managed sanitation (%) · higher is better&quot;</bucket>
+            <bucket>&quot;Basic drinking water (%) · higher is better&quot;</bucket>
+            <bucket>&quot;Electricity access (%) · higher is better&quot;</bucket>
+            <bucket>&quot;Clean cooking fuel (%) · higher is better&quot;</bucket>
             </dictionary>
           </sort>
           <aggregation value='true' />
@@ -1313,7 +1301,7 @@
             <encoding attr='space' class='0' field='[federated.0kpiboard].[avg:pos:qk]' field-type='quantitative' major-origin='0' major-spacing='0.5' scope='cols' type='space' />
           </style-rule>
           <style-rule element='header'>
-            <format attr='width' field='[federated.0kpiboard].[none:kpi:nk]' value='230' />
+            <format attr='width' field='[federated.0kpiboard].[none:kpi:nk]' value='330' />
           </style-rule>
 </style>
       <panes>
@@ -1394,10 +1382,10 @@
       <column caption='Capital rainfall, 1991-2020 mean (mm/yr)' datatype='real' name='[baseline_precip_mm]' role='measure' type='quantitative' />
       <column caption='Latitude (capital)' datatype='real' name='[lat]' role='measure' type='quantitative' semantic-role='[Geographical].[Latitude]' />
       <column caption='Longitude (capital)' datatype='real' name='[lon]' role='measure' type='quantitative' semantic-role='[Geographical].[Longitude]' />
-            <column caption='value of the chosen X measure' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
+            <column caption='X' datatype='real' name='[pair_x_sel]' role='measure' type='quantitative'>
         <calculation class='tableau' formula='CASE [Parameters].[X axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
       </column>
-            <column caption='value of the chosen Y measure' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
+            <column caption='Y' datatype='real' name='[pair_y_sel]' role='measure' type='quantitative'>
         <calculation class='tableau' formula='CASE [Parameters].[Y axis measure]&#10;WHEN &quot;H (% poor)&quot; THEN [headcount_ratio_pct]&#10;WHEN &quot;MPI&quot; THEN [mpi]&#10;WHEN &quot;Depth (avg deprivation among the poor, %)&quot; THEN [intensity_pct]&#10;WHEN &quot;Capital temperature in the round (C)&quot; THEN [temp_mean_c]&#10;WHEN &quot;UCDP events per 100k&quot; THEN [events_per_100k]&#10;WHEN &quot;UCDP events per 100k, log(1+rate)&quot; THEN [log1p_events_per_100k]&#10;WHEN &quot;UCDP deaths per 100k&quot; THEN [fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, log(1+rate)&quot; THEN [log1p_fatalities_per_100k]&#10;WHEN &quot;UCDP deaths per 100k, upper estimate&quot; THEN [fatalities_per_100k_high]&#10;WHEN &quot;UCDP deaths per 100k, upper, log(1+rate)&quot; THEN [log1p_fatalities_per_100k_high]&#10;WHEN &quot;MPI standard error (2021)&quot; THEN [mpi_se]&#10;WHEN &quot;H standard error (2021)&quot; THEN [headcount_se]&#10;WHEN &quot;Vulnerable to poverty, % of population (2021)&quot; THEN [vulnerable_pct]&#10;WHEN &quot;In severe poverty, % of population (2021)&quot; THEN [severe_pct]&#10;WHEN &quot;Health share of the MPI (2021)&quot; THEN [contrib_health_pct]&#10;WHEN &quot;Education share of the MPI (2021)&quot; THEN [contrib_education_pct]&#10;WHEN &quot;Living standards share of the MPI (2021)&quot; THEN [contrib_living_standards_pct]&#10;WHEN &quot;Population (thousands)&quot; THEN [population_thousands]&#10;WHEN &quot;People in MPI poverty (thousands)&quot; THEN [mpi_poor_thousands]&#10;WHEN &quot;Capital rainfall in the survey year (mm)&quot; THEN [precip_total_mm]&#10;WHEN &quot;Capital temperature, 1991-2020 mean (C)&quot; THEN [baseline_temp_c]&#10;WHEN &quot;Capital rainfall, 1991-2020 mean (mm/yr)&quot; THEN [baseline_precip_mm]&#10;WHEN &quot;Latitude (capital)&quot; THEN [lat]&#10;WHEN &quot;Longitude (capital)&quot; THEN [lon]&#10;END' />
       </column>
       <column-instance column='[pair_x_sel]' derivation='Avg' name='[avg:pair_x_sel:qk]' pivot='key' type='quantitative' />
@@ -3693,183 +3681,6 @@ jSWztg9RE1bvtbwMIakLykfcHli/X5cUocNJpXEiy3HUKLxSq+JlAKdO52juej+aSiRNOj/vPfHztkqt
 lRvAGq0v4KbAfy8X+GJE/KoT0JdnqFY10uMVXJYq1FKFyzIOxnBQicF262N03WHKA5tixqE36di4w8g8cJyKPVKv
 H/oHDjM/kQKnM4+XMo/6piZeajhkL6ZoPL8RbrlhGS2ZLZK9zNeXVlpppZVWWmmllVZaaaWVVlpppZVWWmmllVZa
 aaWVVlpppZVWWmmllVZaaaWVVlpppZVWWmmlYTXs/wcVilMUZ7I5RQAAAABJRU5ErkJggg==</shape>
-      <shape name='KPI_Geo/arrow_left.png'>iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAVsUlEQVR4nO3dDZCdVX3H8e95Xu/dzW5eCYTWaNQE
-SBCDieJQLaTWASQ6KGwSSDYEFHwpaGmBUm3dXBmmUAUGUrVGFJIASnaqDlaE6YyBim9twnsSCFU0VpCQl91sdu+9
-z31eOufZrBOpqAm7e3fv/X1mNslMdpLn7r3n/5xznv/5/0FERERERERERERERERERERERERERERERERERERERERE
-RERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERE
-RERERERERERERERERETkEFmGsV/6oYg0mawLJ/8djP2q9/WIyCjIB3wHrv3zj5czd+uFdG7rZOrQ3+lNkJGQ322k
-vvIBbn/pJtmylBP+tMh3AsOH+oa+oUsBQEaGAkAd2TG/sQPXQLZ2Id6zF9PZEvLw5CKvcx12Duwnqef1SePz6n0B
-TX3X78IsKZFs7mBieytXFVyu6U9J9pTJkpSC16o7v4wszQDquNFnSqQ/WsXsyW3cPSnkUweqZJUaccHVwJfRoRnA
-KLMbfaaUT+3N0xdwVmi4OfQ47sUBKkDoGNzM/uVoX5g0JQWA0Z3y28Efb+pgwrEtXBS43OA4FHcNEHmGgutApFW/
-jCIFgNGd8sdblnHspCKrCx6X9Mck5Qq1wCXIsjwBSGRUKQCMMLvL75RI7Nh+bAWntHnc0B5w2p4q5SghCBz8VANf
-6kQBYARtXoC/sJtaFzidF7PEhZtClxkvDFAxUPANJh3JCxD5AxQARmq934FjuqltPp9pE30uDxyuTlMKLw4QBS4F
-+30a/FJvCgAjMOW3v9usPpvSOymk1B5w3r4ytUpMreARaMovY4UCwDDKTsNzuomXADs6WVwMKXkub9k9QDnOCAIP
-V4NfxhIFgGGQp/F34JtuovvOJJx9DJf4DiXHMGVXP1XHHFzva7NPxhgFgOFY75+Gu6Sb6Icd/MnUIiXf5YO1FHrK
-RL5DaL9P630ZixQAXoWh47umm/jx5bxzYsg/Fjze3VulVk0woav1voxtCgBHKLsU36ylZv+8/UKWtwV8xoHX7y5T
-zcD3HBxN+WWsUwA4skd8dvBH33ofbfMm86nA42NpRtveCpFjCPPzvSPzfokMKwWAw0zpfXYv/pw1VB9ZztyJAdcW
-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
-ERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERER
-ERERERERERERERERERERERERERERERERERERERERERERERERERERERERYQT9H1NxptnFwlfzAAAAAElFTkSuQmCC</shape>
-      <shape name='KPI_Geo/arrow_right.png'>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</shape>
     </shapes>
   </external>
 </workbook>

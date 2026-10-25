@@ -642,8 +642,7 @@ POVERTY_GROUP_REST = "Other 25"
 KPI_TITLE = "Where Nigeria stands"
 KPI_SUBTITLE = (
     "How Nigeria compares with Africa, the world and the SDG target, 2021 "
-    "\u00b7 each row is its own scale \u00b7 \u25bc lower is better, \u25b2 "
-    "higher is better"
+    "\u00b7 each row is its own scale, and says which way is better"
 )
 # One shape mark per reference point, three members, the shapes ARE the
 # series identity (a map of Nigeria / Africa / the world -- KPI_SHAPE_FILES
@@ -708,19 +707,19 @@ KPI_SHAPE_FILES: dict[str, str] = {
 # (% of people)" -> "... (%)"), the same units, fewer words.
 KPI_ROW_LABELS: dict[str, str] = {
     "Multidimensional poverty headcount (national)":
-        "Poverty headcount (% of people) \u25bc",
-    "Under-five mortality rate": "Under-5 deaths per 1,000 births \u25bc",
-    "Open defecation": "Open defecation (% of people) \u25bc",
-    "Safely managed sanitation": "Safely managed sanitation (%) \u25b2",
-    "At least basic drinking water": "Basic drinking water (% of people) \u25b2",
-    "Access to electricity": "Electricity access (% of people) \u25b2",
+        "Poverty headcount (%) \u00b7 lower is better",
+    "Under-five mortality rate": "Under-5 deaths / 1,000 births \u00b7 lower is better",
+    "Open defecation": "Open defecation (%) \u00b7 lower is better",
+    "Safely managed sanitation": "Safely managed sanitation (%) \u00b7 higher is better",
+    "At least basic drinking water": "Basic drinking water (%) \u00b7 higher is better",
+    "Access to electricity": "Electricity access (%) \u00b7 higher is better",
     "Access to clean cooking fuels and technologies":
-        "Clean cooking fuel (% of people) \u25b2",
+        "Clean cooking fuel (%) \u00b7 higher is better",
 }
 # The two glyphs, keyed to the benchmarks CSV's `direction` values.
 KPI_DIRECTION_ARROW: dict[str, str] = {
-    "lower_is_better": "\u25bc",
-    "higher_is_better": "\u25b2",
+    "lower_is_better": "\u00b7 lower is better",
+    "higher_is_better": "\u00b7 higher is better",
 }
 # Short source names for the hover line, keyed to the WDI code. The full
 # provenance (fetch date, licence, exact series) stays in the benchmarks CSV

@@ -445,3 +445,38 @@ is good, which the sheet already said in words.
 **Recorded because it changes a frozen sheet:** the board's mark set grew from 20
 to 27. Stage 5's gate draws the same arrows from the same PNGs and asserts one
 guide per row.
+
+---
+
+## Amendment 3 (2026-10-25) — the arrows are gone; the words are in the row labels
+
+**Supersedes amendment 2.** The author's follow-up: "Instead of adding legends
+for arrows to where nigeria stands why not just add a short statement in front or
+behind arrows saying lower is better or higher is better".
+
+**Why the arrows could not stay.** Tableau builds a colour legend from the colour
+field's *domain*: any member drawn in its own colour appears in the legend, and
+there is no card attribute that filters one out. The arrows therefore either kept
+their two legend entries (what the author rejected) or lost their colour. So they
+came off, and the statement moved to where it belongs on every row:
+
+| Row | Header now reads |
+|---|---|
+| Poverty headcount | `Poverty headcount (%) · lower is better` |
+| Under-5 deaths | `Under-5 deaths / 1,000 births · lower is better` |
+| Open defecation | `Open defecation (%) · lower is better` |
+| Sanitation · water · electricity · clean cooking | `… · higher is better` |
+
+The legend is back to **three entries** — Nigeria, sub-Saharan Africa, the world —
+under `Reference point (2021)`, and the board is back to **20 marks**. The header
+column widened 230 -> 330 px to hold the longer labels; the subtitle dropped its
+glyph key ("▼ lower is better, ▲ higher is better") and now says "each row is its
+own scale, and says which way is better".
+
+Row labels lost "of people" where the unit is a percentage: `Poverty headcount
+(%)`. The reference table still defines each one, and the hover still prints the
+values.
+
+**Cost, stated plainly:** the board no longer has a coloured visual cue per row —
+the direction is words, not colour. If the colour matters more than the clean
+legend, amendment 2's build is one commit back (`4ce7d2f`).
