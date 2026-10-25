@@ -1017,3 +1017,31 @@ CONTEXT_SUBTITLE = (
     "national benchmarks \u00b7 the bottom band compares Nigeria with Africa and "
     "the world, never with a state"
 )
+
+
+# --- the KPI board's direction guides (2026-10-25) ---------------------------
+# One extra mark per row, drawn before the silhouettes: a coloured arrow at the
+# left edge pointing the way that is GOOD on that row. Lower-is-better rows point
+# left (toward zero), higher-is-better rows point right (up the scale). The
+# user's ask: "a colorful arrow guide ... per row ... lower is better with
+# colorful arrows going left, or higher is better ... in opposite direction".
+#
+# Colour is the semantic carrier, shape is the direction: vermillion for "less is
+# better", purple for "more is better", both Okabe-Ito so they stay distinct from
+# the three reference hues (green / blue / amber) and from each other under every
+# common colour-vision deficiency.
+#
+# NOT an animation: Tableau Public has no animation model, and the atlas has no
+# scripting surface in the published viz. A static coloured arrow per row is the
+# whole of what the medium allows.
+KPI_GUIDE: dict[str, tuple[str, str]] = {
+    "lower_is_better": ("lower is better", "#D55E00"),
+    "higher_is_better": ("higher is better", "#6A51A3"),
+}
+KPI_GUIDE_SHAPE_FILES: dict[str, str] = {
+    "lower is better": "arrow_left.png",
+    "higher is better": "arrow_right.png",
+}
+# Where the guide sits on the row's 0..1 scale. Not 0: a mark centred on the axis
+# line is half-clipped by the pane edge.
+KPI_GUIDE_POS = 0.02

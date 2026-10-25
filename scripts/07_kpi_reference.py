@@ -518,6 +518,41 @@ def _draw_globe(fill: str) -> bytes:
     return buf.getvalue()
 
 
+def _draw_arrow(fill: str, points_right: bool) -> bytes:
+    """A bold chevron, pointing right or left, on the shared icon canvas.
+
+    Same conventions as _draw_globe: 4x supersample, contrast rides alpha (the
+    colour card tints the PNG by alpha -- FIX_LEDGER K3), then _finish_icon
+    trims and centres it. The atlas has no animatable surface, so the guide is a
+    still arrow; the direction does the talking.
+    """
+    from PIL import Image, ImageDraw
+    import numpy as np
+
+    ss = 4
+    side = ICON_CANVAS * ss
+    # Arrow in 0..1 coordinates: a shaft plus a head, one polygon.
+    outline = [
+        (0.04, 0.42), (0.60, 0.42), (0.60, 0.22), (0.96, 0.50),
+        (0.60, 0.78), (0.60, 0.58), (0.04, 0.58),
+    ]
+    if not points_right:
+        outline = [(1.0 - x, y) for x, y in outline]
+
+    mask = Image.new("L", (side, side), 0)
+    ImageDraw.Draw(mask).polygon(
+        [(x * side, y * side) for x, y in outline], fill=255
+    )
+    arr = np.zeros((side, side, 4), dtype=np.uint8)
+    arr[..., 0:3] = _fill_rgba(fill)[0:3]
+    arr[..., 3] = np.asarray(mask, dtype=np.uint8)
+    out = Image.fromarray(arr, "RGBA")
+    out = out.resize((ICON_CANVAS, ICON_CANVAS), Image.LANCZOS)
+    buf = io.BytesIO()
+    out.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def _finish_icon(png_bytes: bytes, dest: Path, fill: str) -> None:
     """Trim transparent margins, re-center on the shared square canvas, save."""
     from PIL import Image
@@ -599,6 +634,16 @@ def build_shape_images() -> None:
         SHAPES_SRC / atlas_text.KPI_SHAPE_FILES["World (2021)"],
         fills["World (2021)"],
     )
+
+    # 3. The two direction guides (2026-10-25): one arrow per row, pointing the
+    # way that is good on that row. Same canvas, same alpha convention, so the
+    # three reference icons and the two guides line up as one mark set.
+    for direction, (member, colour) in atlas_text.KPI_GUIDE.items():
+        _finish_icon(
+            _draw_arrow(colour, points_right=(direction == "higher_is_better")),
+            SHAPES_SRC / atlas_text.KPI_GUIDE_SHAPE_FILES[member],
+            colour,
+        )
 
     # 3. Authoring copy inside the Tableau repository (env-derived, never a
     # hardcoded absolute path; the workbook embeds its shapes, so this copy is
@@ -775,6 +820,18 @@ def build_dots() -> int:
         # the extract's row order, later rows over earlier ones. The hover
         # string above keeps its own order -- it is text, unaffected by draw
         # order.
+        # The direction guide comes FIRST, before the reversed silhouettes, so
+        # it draws underneath every reference mark rather than over them.
+        guide_member, _guide_colour = atlas_text.KPI_GUIDE[row["direction"]]
+        marks.append(
+            {
+                "kpi": label,
+                "series": guide_member,
+                "pos": f"{atlas_text.KPI_GUIDE_POS:.4f}",
+                "pos_label": "",
+                "hover": "",
+            }
+        )
         for series, value in reversed(list(raw.items())):
             if not value:
                 continue
@@ -802,8 +859,9 @@ def build_dots() -> int:
         marks,
         ["kpi", "series", "pos", "pos_label", "hover"],
     )
-    # 7 rows x (Nigeria + world) + 6 SSA rows = 20.
-    assert n == 20, f"kpi_dots.csv has {n} marks, expected 20"
+    # 7 rows x (Nigeria + world) + 6 SSA rows = 20 reference marks, plus one
+    # direction guide per row (2026-10-25) = 27.
+    assert n == 27, f"kpi_dots.csv has {n} marks, expected 27"
     print(f"\nwrote {PROCESSED / 'kpi_dots.csv'} ({n} marks)")
     return n
 

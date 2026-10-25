@@ -1258,3 +1258,38 @@ labels truncate sooner than they will at full size.
 **Severity DECISION - status overridden on the record**
 See `docs/SHEET_KPI.md` amendment 1. The rule stands inside that sheet; the page
 carries a separating subtitle and keeps the band visually distinct.
+
+---
+
+## T. The KPI direction guides (2026-10-25)
+
+### T1. A per-row coloured signpost is a MARK, not a header or an annotation
+**Severity IMPROVEMENT - status done, render-verified**
+Tableau cannot colour a row header per member, cannot animate, and cannot place
+text at a fixed axis position per row without a mark. So the guide is a `Shape`
+mark at `pos = 0.02`, one per row, appended to the extract *before* the row's
+reference marks so it draws underneath them. Its member name is the sentence
+("lower is better" / "higher is better"), which turns the existing colour legend
+into the direction key for free -- no second legend, no new zone.
+
+Two consequences worth knowing:
+
+- **Shape size is per-sheet, not per-mark.** The guides render at the same 4.0
+  factor as the silhouettes, so they are as tall as the maps. That reads as
+  deliberate at this board's scale; a different sheet would want a smaller pane
+  factor.
+- **The draw order matters.** Appended after the silhouettes, the arrow would sit
+  on top of Nigeria's map where they collide at the left edge. First-in-row is
+  the fix, and it is the same rule the "Nigeria drawn last" dodge already uses.
+
+### T2. Two asserts to keep the guides honest
+**Severity GUARD - status done**
+Stage 6 now fails if a guide mark carries a hover (it is not a reference point)
+and if a reference mark carries none. Stage 5 counts guides: exactly one per row,
+seven in all, and draws them from the same PNGs the workbook embeds.
+
+### T3. The gate had to grow with the sheet
+**Severity DEFECT (would have been) - status done**
+`05_preview.py` asserted 20 marks; the extract is 27 now. That assert is the
+reason the gate is worth its cost -- it caught the change before the render did,
+and the gate now draws the arrows at the same positions with the same images.

@@ -560,3 +560,17 @@ On the published viz:
    Africa and World in full.
 4. **The time tab** now carries a `Panel state` parameter card in place of its
    old state dropdown; confirm it still opens on Bauchi.
+
+## 2026-10-25 — the KPI direction guides (new checks)
+
+`Where Nigeria stands` gained one coloured arrow per row (vermillion pointing
+left = lower is better, purple pointing right = higher is better), drawn before
+the silhouettes (`docs/SHEET_KPI.md` amendment 2). On the published viz:
+
+1. **Every row shows an arrow at the left edge**: the first three point left and
+   are vermillion; the last four point right and are purple.
+2. **The legend** is titled `Reference point / direction` and lists five
+   entries — the two direction sentences plus the three reference points.
+3. **No arrow prints a number**, and no arrow shows a hover.
+4. If the arrows are missing entirely, the embedded shapes were lost in the
+   re-save; the row headers' ▼/▲ glyphs still carry the direction.

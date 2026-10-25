@@ -401,3 +401,47 @@ unchanged — only its neighbours are new.
 
 Recorded here rather than in a commit message because a future reader of this
 file needs to know the rule was overridden deliberately, by the author, and why.
+
+---
+
+## Amendment 2 (2026-10-25) — a coloured direction guide on every row
+
+**The ask.** "A colorful arrow guide ... to each row of the variable of where
+Nigeria stands saying lower is better with colorful arrows ... going left, or
+higher is better ... in opposite direction, this should come before the maps on
+the same row."
+
+**What ships.** One extra **mark** per row, drawn before the silhouettes: a bold
+chevron at the left edge of the row's scale, pointing the way that is good on
+that row.
+
+| Direction | Arrow | Colour | Rows |
+|---|---|---|---|
+| lower is better | points **left**, toward zero | vermillion `#D55E00` | poverty headcount, under-5 mortality, open defecation |
+| higher is better | points **right**, up the scale | purple `#6A51A3` | sanitation, drinking water, electricity, clean cooking |
+
+Both are Okabe-Ito hues chosen to clear the three reference colours (green / blue
+/ amber) and each other under common colour-vision deficiency. Shape carries the
+direction, colour carries the meaning — so the guide survives greyscale printing.
+
+**How.** The guide is a `Shape` mark at `pos = 0.02` on the same axis, from two
+new icons in `data/reference/kpi_shapes` (`arrow_left.png`, `arrow_right.png`,
+drawn by stage 7 on the same canvas and alpha convention as the silhouettes, so
+Tableau's colour card tints them like the rest). Its series member is
+`lower is better` / `higher is better`, which makes **the colour legend the
+direction key**: its title is now "Reference point / direction" and the two new
+entries print the sentence. The marks carry no label and no hover — a signpost is
+not a reference point — and stage 6 asserts both. The extract is 27 marks
+(20 reference + 7 guides).
+
+The row headers keep their `▼`/`▲` glyphs: the subtitle refers to them, and the
+glyph is the accessible fallback if the shapes fail to load.
+
+**Not an animation, and it cannot be.** Tableau Public has no animation model and
+the published viz exposes no scripting surface; a still arrow per row is the
+whole of what the medium allows. No claim changes: the guide says which direction
+is good, which the sheet already said in words.
+
+**Recorded because it changes a frozen sheet:** the board's mark set grew from 20
+to 27. Stage 5's gate draws the same arrows from the same PNGs and asserts one
+guide per row.

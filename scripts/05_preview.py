@@ -664,28 +664,42 @@ def visual_kpi_board() -> None:
     bind to atlas_text.KPI_SERIES so gate and workbook palette cannot drift.
     """
     col = read(KPI_DOTS)
-    assert len(col) == 20, f"KPI dots gate has {len(col)} rows, expected 20"
-    colours = dict(atlas_text.KPI_SERIES)
+    # 2026-10-25: seven of the 27 marks are DIRECTION GUIDES (one coloured arrow
+    # per row, pointing the way that is good on that row). They carry no hover
+    # and no label, so they are validated as guides and drawn as arrows rather
+    # than as reference points.
+    guides = {member for member, _c in atlas_text.KPI_GUIDE.values()}
+    guide_colours = {member: colour for member, colour in atlas_text.KPI_GUIDE.values()}
+    colours = {**dict(atlas_text.KPI_SERIES), **guide_colours}
+    assert len(col) == 27, f"KPI dots gate has {len(col)} rows, expected 27"
     rows: list[tuple[str, list[tuple[str, float, str]]]] = []
     for row in col:
         pos = float(row["pos"])
         assert 0 < pos <= 1.0, f"{row['kpi']} / {row['series']}: pos {pos:.3f} out of (0, 1]"
         assert row["series"] in colours, (
             f"series {row['series']!r} has no colour in atlas_text.KPI_SERIES"
+            " or atlas_text.KPI_GUIDE"
         )
-        assert row["hover"].strip(), f"{row['kpi']}: empty hover"
-        # The printed number is the mark's TRUE share of the row's largest
-        # reference; `pos` may be dodged left to clear a neighbour, so the gate
-        # must print pos_label the way the sheet does, not f"{pos:.1f}".
-        label = row["pos_label"].strip()
-        assert label, f"{row['kpi']} / {row['series']}: empty pos_label"
-        assert len(label.split(".")[-1]) == 1, (
-            f"{row['kpi']} / {row['series']}: pos_label {label!r} is not one decimal"
-        )
+        if row["series"] in guides:
+            assert row["hover"] == "", f"{row['kpi']}: a guide should carry no hover"
+            label = ""
+        else:
+            assert row["hover"].strip(), f"{row['kpi']}: empty hover"
+            # The printed number is the mark's TRUE share of the row's largest
+            # reference; `pos` may be dodged left to clear a neighbour, so the
+            # gate must print pos_label the way the sheet does, not pos.
+            label = row["pos_label"].strip()
+            assert label, f"{row['kpi']} / {row['series']}: empty pos_label"
+            assert len(label.split(".")[-1]) == 1, (
+                f"{row['kpi']} / {row['series']}: pos_label {label!r} is not one decimal"
+            )
         if not rows or rows[-1][0] != row["kpi"]:
             rows.append((row["kpi"], []))
         rows[-1][1].append((row["series"], pos, label))
     assert len(rows) == 7, f"KPI dots gate has {len(rows)} rows of marks, expected 7"
+    assert sum(1 for _n, ms in rows for s, _p, _l in ms if s in guides) == 7, (
+        "every KPI row needs exactly one direction guide"
+    )
 
     fig, ax = plt.subplots(figsize=(9.6, 6.0))
     # Bottom reserved for a horizontal legend OUTSIDE the plot: the older
@@ -695,11 +709,15 @@ def visual_kpi_board() -> None:
     fig.subplots_adjust(left=0.295, right=0.985, top=0.74, bottom=0.17)
     names = [r[0] for r in rows]
     shapes_dir = Path(__file__).resolve().parent.parent / "data" / "reference" / "kpi_shapes"
-    assert atlas_text.KPI_SHAPE_FILES and set(atlas_text.KPI_SHAPE_FILES) == set(colours), (
-        "KPI_SHAPE_FILES and KPI_SERIES name different member sets"
+    assert atlas_text.KPI_SHAPE_FILES and (
+        set(atlas_text.KPI_SHAPE_FILES) | set(atlas_text.KPI_GUIDE_SHAPE_FILES)
+    ) == set(colours), (
+        "KPI_SHAPE_FILES/KPI_GUIDE_SHAPE_FILES and the colour map name different "
+        "member sets"
     )
     images = {}
-    for member, fname in atlas_text.KPI_SHAPE_FILES.items():
+    for member, fname in {**atlas_text.KPI_SHAPE_FILES,
+                          **atlas_text.KPI_GUIDE_SHAPE_FILES}.items():
         path = shapes_dir / fname
         assert path.exists(), (
             f"missing silhouette {fname}: run scripts/07_kpi_reference.py first"
@@ -719,6 +737,17 @@ def visual_kpi_board() -> None:
                 (pos, y), frameon=False, zorder=3,
             )
             ax.add_artist(ab)
+            if series in guides:
+                # A direction guide carries no number: it is a signpost, not a
+                # reference point.
+                if series not in handle_seen:
+                    handle_seen.add(series)
+                    handles.append(plt.Line2D(
+                        [], [], marker="<" if "lower" in series else ">",
+                        linestyle="none", markersize=9,
+                        markerfacecolor=colours[series],
+                        markeredgecolor="none", label=series))
+                continue
             # The sheet prints each mark's TRUE share at one decimal beside it
             # (the 2026-10-23 label pass); the gate prints the same string from
             # the same column -- pos_label, never the dodged `pos` -- so a
@@ -743,7 +772,7 @@ def visual_kpi_board() -> None:
     ax.grid(axis="x", color="#dddddd", linewidth=0.6, zorder=0)
     ax.spines[["top", "right"]].set_visible(False)
     fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False,
-               fontsize=8, title="Reference point (2021)", title_fontsize=8,
+               fontsize=8, title="Reference point / direction", title_fontsize=8,
                bbox_to_anchor=(0.64, 0.005))
 
     titles(ax, atlas_text.KPI_TITLE, atlas_text.KPI_SUBTITLE, width=84)
