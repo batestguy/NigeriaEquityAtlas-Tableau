@@ -18,3 +18,8 @@ hyperd.log
 
 # Machine-specific map (user name, drive layout, credential locations). Local only -- see docs/HANDOFF.md section 8
 ENVIRONMENTS.md
+
+# Local only: another tool's state, and the demo's source music (the finished
+# video, docs/demo/atlas_demo.mp4, is committed; the track itself is not).
+.codewhale/
+Motherland_Sound_Sultan_Naijapals.mp3
