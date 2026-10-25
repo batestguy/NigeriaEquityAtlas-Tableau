@@ -191,12 +191,16 @@
       <column caption='Conflict events/100k · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_events]' role='measure' type='quantitative' />
       <column caption='Conflict deaths/100k · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_deaths]' role='measure' type='quantitative' />
       <column caption='Capital temp · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_temp]' role='measure' type='quantitative' />
+      <column caption='State shown in the panel' datatype='boolean' name='[panel_state_match]' role='dimension' type='nominal'>
+        <calculation class='tableau' formula='[state] = [Parameters].[Panel state]' />
+      </column>
       <column-instance column='[rank_mpi]' derivation='Sum' name='[sum:rank_mpi:qk]' pivot='key' type='quantitative' />
       <column-instance column='[rank_headcount]' derivation='Sum' name='[sum:rank_headcount:qk]' pivot='key' type='quantitative' />
       <column-instance column='[rank_intensity]' derivation='Sum' name='[sum:rank_intensity:qk]' pivot='key' type='quantitative' />
       <column-instance column='[rank_events]' derivation='Sum' name='[sum:rank_events:qk]' pivot='key' type='quantitative' />
       <column-instance column='[rank_deaths]' derivation='Sum' name='[sum:rank_deaths:qk]' pivot='key' type='quantitative' />
       <column-instance column='[rank_temp]' derivation='Sum' name='[sum:rank_temp:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[panel_state_match]' derivation='None' name='[none:panel_state_match:nk]' pivot='key' type='nominal' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
       <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
@@ -479,6 +483,48 @@
         <calculation class='tableau' formula='&quot;(All states)&quot;' />
         <members>
           <member value='&quot;(All states)&quot;' />
+          <member value='&quot;Bauchi&quot;' />
+          <member value='&quot;Jigawa&quot;' />
+          <member value='&quot;Kebbi&quot;' />
+          <member value='&quot;Sokoto&quot;' />
+          <member value='&quot;Zamfara&quot;' />
+          <member value='&quot;Yobe&quot;' />
+          <member value='&quot;Gombe&quot;' />
+          <member value='&quot;Katsina&quot;' />
+          <member value='&quot;Borno&quot;' />
+          <member value='&quot;Taraba&quot;' />
+          <member value='&quot;Kano&quot;' />
+          <member value='&quot;Niger&quot;' />
+          <member value='&quot;Plateau&quot;' />
+          <member value='&quot;Nasarawa&quot;' />
+          <member value='&quot;Adamawa&quot;' />
+          <member value='&quot;Kaduna&quot;' />
+          <member value='&quot;Benue&quot;' />
+          <member value='&quot;Kwara&quot;' />
+          <member value='&quot;Ogun&quot;' />
+          <member value='&quot;Oyo&quot;' />
+          <member value='&quot;Cross River&quot;' />
+          <member value='&quot;Bayelsa&quot;' />
+          <member value='&quot;Kogi&quot;' />
+          <member value='&quot;Ondo&quot;' />
+          <member value='&quot;Ekiti&quot;' />
+          <member value='&quot;Delta&quot;' />
+          <member value='&quot;Akwa Ibom&quot;' />
+          <member value='&quot;Abia&quot;' />
+          <member value='&quot;FCT&quot;' />
+          <member value='&quot;Edo&quot;' />
+          <member value='&quot;Rivers&quot;' />
+          <member value='&quot;Ebonyi&quot;' />
+          <member value='&quot;Osun&quot;' />
+          <member value='&quot;Enugu&quot;' />
+          <member value='&quot;Imo&quot;' />
+          <member value='&quot;Anambra&quot;' />
+          <member value='&quot;Lagos&quot;' />
+        </members>
+      </column>
+      <column caption='Panel state' datatype='string' name='[Panel state]' param-domain-type='list' role='measure' type='nominal' value='&quot;Bauchi&quot;'>
+        <calculation class='tableau' formula='&quot;Bauchi&quot;' />
+        <members>
           <member value='&quot;Bauchi&quot;' />
           <member value='&quot;Jigawa&quot;' />
           <member value='&quot;Kebbi&quot;' />
@@ -1091,6 +1137,61 @@
       <column caption='Conflict events/100k · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_events]' role='measure' type='quantitative' />
       <column caption='Conflict deaths/100k · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_deaths]' role='measure' type='quantitative' />
       <column caption='Capital temp · rank' datatype='integer' default-format='&quot;R&quot;0' name='[rank_temp]' role='measure' type='quantitative' />
+            <column caption='State shown in the panel' datatype='boolean' name='[panel_state_match]' role='dimension' type='nominal'>
+              <calculation class='tableau' formula='[state] = [Parameters].[Panel state]' />
+            </column>
+            <column-instance column='[panel_state_match]' derivation='None' name='[none:panel_state_match:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
+      <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
+      <column-instance column='[survey]' derivation='None' name='[none:survey:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_label]' derivation='None' name='[none:mpi_change_label:nk]' pivot='key' type='nominal' />
+      <column-instance column='[mpi_change_significant]' derivation='None' name='[none:mpi_change_significant:nk]' pivot='key' type='nominal' />
+      <column-instance column='[deaths_high_label]' derivation='None' name='[none:deaths_high_label:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <datasource-dependencies datasource='Parameters'>
+      <column caption='Panel state' datatype='string' name='[Panel state]' param-domain-type='list' role='measure' type='nominal' value='&quot;Bauchi&quot;'>
+        <calculation class='tableau' formula='&quot;Bauchi&quot;' />
+        <members>
+          <member value='&quot;Bauchi&quot;' />
+          <member value='&quot;Jigawa&quot;' />
+          <member value='&quot;Kebbi&quot;' />
+          <member value='&quot;Sokoto&quot;' />
+          <member value='&quot;Zamfara&quot;' />
+          <member value='&quot;Yobe&quot;' />
+          <member value='&quot;Gombe&quot;' />
+          <member value='&quot;Katsina&quot;' />
+          <member value='&quot;Borno&quot;' />
+          <member value='&quot;Taraba&quot;' />
+          <member value='&quot;Kano&quot;' />
+          <member value='&quot;Niger&quot;' />
+          <member value='&quot;Plateau&quot;' />
+          <member value='&quot;Nasarawa&quot;' />
+          <member value='&quot;Adamawa&quot;' />
+          <member value='&quot;Kaduna&quot;' />
+          <member value='&quot;Benue&quot;' />
+          <member value='&quot;Kwara&quot;' />
+          <member value='&quot;Ogun&quot;' />
+          <member value='&quot;Oyo&quot;' />
+          <member value='&quot;Cross River&quot;' />
+          <member value='&quot;Bayelsa&quot;' />
+          <member value='&quot;Kogi&quot;' />
+          <member value='&quot;Ondo&quot;' />
+          <member value='&quot;Ekiti&quot;' />
+          <member value='&quot;Delta&quot;' />
+          <member value='&quot;Akwa Ibom&quot;' />
+          <member value='&quot;Abia&quot;' />
+          <member value='&quot;FCT&quot;' />
+          <member value='&quot;Edo&quot;' />
+          <member value='&quot;Rivers&quot;' />
+          <member value='&quot;Ebonyi&quot;' />
+          <member value='&quot;Osun&quot;' />
+          <member value='&quot;Enugu&quot;' />
+          <member value='&quot;Imo&quot;' />
+          <member value='&quot;Anambra&quot;' />
+          <member value='&quot;Lagos&quot;' />
+        </members>
+      </column>
       <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:ok]' pivot='key' type='ordinal' />
       <column-instance column='[state]' derivation='None' name='[none:state:nk]' pivot='key' type='nominal' />
       <column-instance column='[survey_year]' derivation='None' name='[none:survey_year:nk]' pivot='key' type='nominal' />
@@ -1109,8 +1210,8 @@
           <groupfilter function='member' level='[:Measure Names]' member="&quot;[federated.0mpitrends].[sum:rank_temp:qk]&quot;" />
             </groupfilter>
           </filter>
-          <filter class='categorical' column='[federated.0mpitrends].[none:state:nk]'>
-            <groupfilter function='member' level='[none:state:nk]' member="&quot;Bauchi&quot;" />
+          <filter class='categorical' column='[federated.0mpitrends].[none:panel_state_match:nk]'>
+            <groupfilter function='member' level='[none:panel_state_match:nk]' member='true' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
           </filter>
           <aggregation value='true' />
         </view>
@@ -1436,6 +1537,53 @@
           <zone h='19000' id='20' name='Where poverty sits' pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type-v2='color' w='39000' x='61000' y='6400' />
           <zone h='18200' id='21' name='Where poverty clusters' pane-specification-id='0' param='[federated.0mpispatialpoly].[none:spatial_group:nk]' type-v2='color' w='39000' x='61000' y='25400' />
           <zone h='55600' id='22' name='How poverty is made up' pane-specification-id='0' param='[federated.0mpidimshare].[:Measure Names]' type-v2='color' w='18250' x='81750' y='44400' />
+        </zone>
+      </zones>
+    </dashboard>
+    <dashboard name='A state, in context'>
+      <style />
+      <size maxheight='1300' maxwidth='1600' minheight='1300' minwidth='1600' />
+      <zones>
+        <zone h='100000' id='1' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone forceUpdate='true' h='11538' id='9' type-v2='text' w='62500' x='0' y='0'>
+            <formatted-text>
+              <run bold='true' fontsize='16'>A state, in context</run><run fontsize='10'>  One state's ranks over four rounds, any two measures for every state, and the national benchmarks · the bottom band compares Nigeria with Africa and the world, never with a state</run>
+            </formatted-text>
+            <zone-style>
+              <format attr='margin' value='8' />
+            </zone-style>
+          </zone>
+          <zone h='3077' id='30' mode='compact' param='[Parameters].[Panel state]' type-v2='paramctrl' w='35625' x='63750' y='769' />
+          <zone h='3077' id='31' mode='compact' param='[Parameters].[X axis measure]' type-v2='paramctrl' w='35625' x='63750' y='4615' />
+          <zone h='3077' id='32' mode='compact' param='[Parameters].[Y axis measure]' type-v2='paramctrl' w='35625' x='63750' y='8462' />
+          <zone h='47692' id='10' name='A state over time' w='55000' x='0' y='11538'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+          <zone h='47692' id='11' name='How measures pair' w='44500' x='55500' y='11538'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+          <zone h='39385' id='12' name='Where Nigeria stands' w='82250' x='0' y='59846'>
+            <layout-cache type-h='cell' type-w='cell' />
+            <zone-style>
+              <format attr='border-color' value='#d9d9d9' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='2' />
+            </zone-style>
+          </zone>
+          <zone h='39385' id='20' name='Where Nigeria stands' pane-specification-id='0' param='[federated.0kpiboard].[none:series:nk]' type-v2='color' w='17250' x='82750' y='59846' />
         </zone>
       </zones>
     </dashboard>
@@ -2397,6 +2545,20 @@
       </viewpoints>
       <active id='-1' />
     </window>
+    <window class='dashboard' name='A state, in context'>
+      <viewpoints>
+        <viewpoint name='A state over time'>
+          <zoom type='entire-view' />
+        </viewpoint>
+        <viewpoint name='How measures pair'>
+          <zoom type='entire-view' />
+        </viewpoint>
+        <viewpoint name='Where Nigeria stands'>
+          <zoom type='entire-view' />
+        </viewpoint>
+      </viewpoints>
+      <active id='-1' />
+    </window>
     <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
@@ -2501,7 +2663,7 @@
             <card type='pages' />
             <card type='filters' />
             <card mode='checklist' param='[federated.0mpitrends].[:Measure Names]' type='filter' values='database' />
-            <card mode='dropdown' param='[federated.0mpitrends].[none:state:nk]' type='filter' values='database' />
+            <card mode='compact' param='[Parameters].[Panel state]' type='parameter' />
             <card type='marks' />
           </strip>
         </edge>

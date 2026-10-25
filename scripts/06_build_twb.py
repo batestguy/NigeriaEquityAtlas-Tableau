@@ -719,6 +719,7 @@ SHEET_TIME_TITLE = "A state over time"
 # The dashboard's sheet name. Its title and subtitle come from atlas_text (the
 # same two strings the stage-5 gate would print if it drew the board).
 SHEET_OVERVIEW = "Overview"
+SHEET_CONTEXT = "A state, in context"
 PANEL_EXCLUDED = {
     "conflict_exposure_index", "temp_anomaly_c", "precip_anomaly_pct",
     "events", "fatalities", "fatalities_low", "fatalities_high",
@@ -1013,6 +1014,7 @@ def parameters_ds_xml(def_x: str, def_y: str, states: list[str]) -> str:
         + parameter_column_xml(PAIRS_PARAM_X, PAIRS_PARAM_X, labels, def_x)
         + parameter_column_xml(PAIRS_PARAM_Y, PAIRS_PARAM_Y, labels, def_y)
         + state_parameter_column_xml(states)
+        + panel_state_column_xml(states)
         + "    </datasource>\n"
     )
 
@@ -1066,6 +1068,41 @@ STATE_PARAM_CAPTION = "State"
 STATE_ALL = "(All states)"
 STATE_MATCH = "state_match"
 STATE_MATCH_CAPTION = "State selection (Overview)"
+
+# The time panel needs exactly ONE state, so it cannot share the Overview's
+# selector: that one's "(All states)" arm would draw 37 lines into every pane.
+# It gets its own parameter, and its dropdown card is retired the same way the
+# composition's was -- the filter becomes parameter-driven, so the card has
+# nothing left to bind to and a dashboard can carry a `paramctrl` zone instead.
+PANEL_STATE_PARAM = "Panel state"
+PANEL_STATE_CAPTION = "Panel state"
+PANEL_STATE_MATCH = "panel_state_match"
+PANEL_STATE_MATCH_CAPTION = "State shown in the panel"
+
+
+def panel_state_column_xml(states: list[str]) -> str:
+    """The time panel's state parameter (no "(All)" member, by design)."""
+    return parameter_column_xml(
+        PANEL_STATE_CAPTION, PANEL_STATE_PARAM, states,
+        atlas_text.PANEL_DEFAULT_STATE,
+    )
+
+
+def panel_state_calc_xml(indent: str, with_instance: bool = True) -> str:
+    """The time panel's calculated filter: the picked state, one row per round."""
+    column = (
+        f"{indent}<column caption='{escape(PANEL_STATE_MATCH_CAPTION)}'"
+        f" datatype='boolean' name='[{PANEL_STATE_MATCH}]' role='dimension'"
+        " type='nominal'>\n"
+        f"{indent}  <calculation class='tableau' formula='[state] = [Parameters].[{PANEL_STATE_PARAM}]' />\n"
+        f"{indent}</column>\n"
+    )
+    if not with_instance:
+        return column
+    return column + (
+        f"{indent}<column-instance column='[{PANEL_STATE_MATCH}]' derivation='None'"
+        f" name='[none:{PANEL_STATE_MATCH}:nk]' pivot='key' type='nominal' />\n"
+    )
 
 
 def state_parameter_column_xml(states: list[str]) -> str:
@@ -1144,9 +1181,29 @@ def state_match_filter_xml(ds_name: str) -> str:
     ``member='true'`` on a boolean level, with the three ``user:ui-*`` hints
     Tableau writes on every categorical filter it produces itself.
     """
+    return calc_true_filter_xml(ds_name, STATE_MATCH)
+
+
+def panel_state_deps_xml(states: list[str]) -> str:
+    """The panel sheet's mirror of its state parameter.
+
+    Packet A4's rule, and this sheet proved it the hard way (2026-10-25): with no
+    mirror, the calculation bound to an arbitrary list member and the panel
+    opened on Sokoto instead of its Bauchi default, while the parameter's own
+    ``value`` attribute in the file still read Bauchi. The mirror is what binds.
+    """
     return (
-        f"          <filter class='categorical' column='[{ds_name}].[none:{STATE_MATCH}:nk]'>\n"
-        f"            <groupfilter function='member' level='[none:{STATE_MATCH}:nk]'"
+        "          <datasource-dependencies datasource='Parameters'>\n"
+        + panel_state_column_xml(states)
+        + "          </datasource-dependencies>\n"
+    )
+
+
+def calc_true_filter_xml(ds_name: str, field: str) -> str:
+    """``<filter>`` keeping the rows where a boolean calculation is true."""
+    return (
+        f"          <filter class='categorical' column='[{ds_name}].[none:{field}:nk]'>\n"
+        f"            <groupfilter function='member' level='[none:{field}:nk]'"
         " member='true' user:ui-domain='database' user:ui-enumeration='inclusive'"
         " user:ui-marker='enumerate' />\n"
         "          </filter>\n"
@@ -1709,6 +1766,123 @@ def overview_dashboard_xml() -> tuple[str, str]:
     return dashboard, window
 
 
+def context_dashboard_xml() -> tuple[str, str]:
+    """The second data dashboard: "A state, in context" (2026-10-25).
+
+    Three shipped sheets on one 1600x1300 page, at the author's request: the time
+    panel top-left, the pairs board top-right, the national benchmarks full width
+    at the bottom.
+
+    **This page knowingly contradicts a frozen guardrail, on the record.**
+    ``docs/SHEET_KPI.md`` says "No state-level panel ... this one stays national",
+    because a state's line beside a world average invites comparing the two. The
+    author asked for the three together (2026-10-25); the override is written up
+    as amendment 1 in that file, and the mitigation is here: the page subtitle
+    says the bottom band is a national comparison, and the KPI band keeps its own
+    title, subtitle and direction key rather than borrowing the page's.
+
+    **Controls.** Three ``paramctrl`` zones, because cards do not travel into a
+    dashboard (``FIX_LEDGER`` O6):
+
+    * the time panel's state -- its OWN parameter, not the Overview's selector:
+      that one has an ``(All states)`` arm, which on a six-pane panel would draw
+      37 lines into every pane;
+    * the pairs board's X and Y measures, whose parameters already existed.
+
+    The panel's Measure Names checklist stays on its tab. Turning it into a
+    dashboard control would need a third parameter and a whitelist calculation,
+    which is a bigger change than this page is worth today.
+    """
+    size = (1600, 1300)
+    gap = 8
+    header_h = 150
+
+    def ux(px: float) -> int:
+        return round(px / size[0] * 100_000)
+
+    def uy(px: float) -> int:
+        return round(px / size[1] * 100_000)
+
+    panels = [
+        # (sheet, x, y, w, h). The time panel needs height (six stacked panes);
+        # the pairs board needs height too (two panes, each with a fitted band);
+        # the KPI board needs width (long row labels plus three silhouettes).
+        (SHEET_TIME_TITLE, 0, header_h, 880, 620),
+        (atlas_text.PAIRS_TITLE, 888, header_h, 712, 620),
+        (SHEET_KPI_TITLE, 0, header_h + 620 + gap, 1316, 512),
+    ]
+    # The KPI board's colour card cannot travel; the three reference points are
+    # what the silhouettes mean, so the legend is a zone of its own.
+    kpi_legend = (
+        f"          <zone h='{uy(512)}' id='20' name='{escape(SHEET_KPI_TITLE)}'"
+        f" pane-specification-id='0'"
+        f" param='[{KP_DS_NAME}].[none:series:nk]'"
+        f" type-v2='color' w='{ux(276)}' x='{ux(1324)}'"
+        f" y='{uy(header_h + 620 + gap)}' />\n"
+    )
+    controls = "".join(
+        f"          <zone h='{uy(40)}' id='{30 + i}' mode='compact'"
+        f" param='[Parameters].[{param}]' type-v2='paramctrl'"
+        f" w='{ux(570)}' x='{ux(1020)}' y='{uy(10 + 50 * i)}' />\n"
+        for i, param in enumerate(
+            (PANEL_STATE_PARAM, PAIRS_PARAM_X, PAIRS_PARAM_Y)
+        )
+    )
+    zones = (
+        f"          <zone forceUpdate='true' h='{uy(header_h)}' id='9'"
+        f" type-v2='text' w='{ux(1000)}' x='0' y='0'>\n"
+        f"            <formatted-text>\n"
+        f"              <run bold='true' fontsize='16'>{escape(atlas_text.CONTEXT_TITLE)}</run>"
+        f"<run fontsize='10'>  {escape(atlas_text.CONTEXT_SUBTITLE)}</run>\n"
+        f"            </formatted-text>\n"
+        f"            <zone-style>\n"
+        f"              <format attr='margin' value='8' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+        f"{controls}"
+    ) + "".join(
+        f"          <zone h='{uy(h)}' id='{10 + i}' name='{escape(name)}'"
+        f" w='{ux(w)}' x='{ux(x)}' y='{uy(y)}'>\n"
+        f"            <layout-cache type-h='cell' type-w='cell' />\n"
+        f"            <zone-style>\n"
+        f"              <format attr='border-color' value='#d9d9d9' />\n"
+        f"              <format attr='border-style' value='solid' />\n"
+        f"              <format attr='border-width' value='1' />\n"
+        f"              <format attr='margin' value='2' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+        for i, (name, x, y, w, h) in enumerate(panels)
+    ) + kpi_legend
+    dashboard = (
+        f"    <dashboard name='{escape(SHEET_CONTEXT)}'>\n"
+        f"      <style />\n"
+        f"      <size maxheight='{size[1]}' maxwidth='{size[0]}'"
+        f" minheight='{size[1]}' minwidth='{size[0]}' />\n"
+        f"      <zones>\n"
+        f"        <zone h='100000' id='1' type-v2='layout-basic' w='100000'"
+        f" x='0' y='0'>\n"
+        f"{zones}"
+        f"        </zone>\n"
+        f"      </zones>\n"
+        f"    </dashboard>\n"
+    )
+    viewpoints = "".join(
+        f"        <viewpoint name='{escape(name)}'>\n"
+        f"          <zoom type='entire-view' />\n"
+        f"        </viewpoint>\n"
+        for name, _x, _y, _w, _h in panels
+    )
+    window = (
+        f"    <window class='dashboard' name='{escape(SHEET_CONTEXT)}'>\n"
+        f"      <viewpoints>\n"
+        f"{viewpoints}"
+        f"      </viewpoints>\n"
+        f"      <active id='-1' />\n"
+        f"    </window>\n"
+    )
+    return dashboard, window
+
+
 def table_dashboards() -> list[tuple[str, str]]:
     """The reference table, in three parts: one dashboard per content group.
 
@@ -2154,7 +2328,10 @@ def build_workbook(spatial_technical: str,
     # The six rank measures carry the sheet's own number format: the custom format
     # "R"0 (escaped) on the FIELD -- see col_block for the serialization finding.
     panel_formats = {name: "&quot;R&quot;0" for name, _c, _k in atlas_text.PANEL_MEASURES}
-    panel_deps = deps_xml(PANEL_COLUMNS, panel_captions, panel_formats)
+    panel_deps = deps_xml(
+        PANEL_COLUMNS, panel_captions, panel_formats,
+        calcs=panel_state_calc_xml("            "),
+    )
 
     def panel_filters() -> str:
         """Worksheet-level filters, copied from the real workbooks' grammar.
@@ -2169,17 +2346,17 @@ def build_workbook(spatial_technical: str,
             f"member=\"&quot;[{PANEL_DS_NAME}].[sum:{name}:qk]&quot;\" />\n"
             for name, _caption, _colour in atlas_text.PANEL_MEASURES
         )
-        state = escape(atlas_text.PANEL_DEFAULT_STATE)
+        # 2026-10-25: the single-member state filter became the Panel state
+        # parameter's calculation, so a dashboard can carry the control
+        # (`paramctrl`) instead of a card that cannot travel. The parameter
+        # defaults to PANEL_DEFAULT_STATE, so the tab still opens on Bauchi.
         return (
             f"          <filter class='categorical' column='[{PANEL_DS_NAME}].[:Measure Names]'>\n"
             "            <groupfilter function='union' user:op='manual'>\n"
             f"{members}"
             "            </groupfilter>\n"
             "          </filter>\n"
-            f"          <filter class='categorical' column='[{PANEL_DS_NAME}].[none:state:nk]'>\n"
-            "            <groupfilter function='member' level='[none:state:nk]' "
-            f"member=\"&quot;{state}&quot;\" />\n"
-            "          </filter>\n"
+            f"{calc_true_filter_xml(PANEL_DS_NAME, PANEL_STATE_MATCH)}"
         )
 
     def panel_table_style() -> str:
@@ -2285,7 +2462,7 @@ def build_workbook(spatial_technical: str,
         encodings=panel_encodings,
         ds_name=PANEL_DS_NAME,
         ds_caption=PANEL_DS_CAPTION,
-        deps=panel_deps,
+        deps=panel_deps + panel_state_deps_xml(dim_bar_order),
         filters=panel_filters(),
         table_style=panel_table_style(),
         tooltip=panel_tooltip_runs(PANEL_DS_NAME),
@@ -2693,9 +2870,11 @@ def build_workbook(spatial_technical: str,
     # table, which is why withdrawing them cost the atlas no claim.
     reference_tabs = table_dashboards()
     overview_dash, overview_window = overview_dashboard_xml()
+    context_dash, context_window = context_dashboard_xml()
 
     dashboards = ("  <dashboards>\n"
                   + overview_dash
+                  + context_dash
                   + "".join(xml for _name, xml in reference_tabs)
                   + "  </dashboards>\n")
     # One window per part, in the same order, so the tab bar reads words -> needs ->
@@ -2716,7 +2895,7 @@ def build_workbook(spatial_technical: str,
     # FIRST, because a workbook opens on its first window and a reader should land
     # on the page that shows four sheets at once rather than on one of them.
     windows = f"""  <windows source-height='1500'>
-{overview_window}    <window class='worksheet' name='Where poverty sits'>
+{overview_window}{context_window}    <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
           <strip size='160'>
@@ -2781,7 +2960,7 @@ def build_workbook(spatial_technical: str,
             <card type='pages' />
             <card type='filters' />
             <card mode='checklist' param='[{PANEL_DS_NAME}].[:Measure Names]' type='filter' values='database' />
-            <card mode='dropdown' param='[{PANEL_DS_NAME}].[none:state:nk]' type='filter' values='database' />
+            <card mode='compact' param='[Parameters].[{PANEL_STATE_PARAM}]' type='parameter' />
             <card type='marks' />
           </strip>
         </edge>
@@ -2850,6 +3029,7 @@ def build_workbook(spatial_technical: str,
              for name, _caption, colour in atlas_text.PANEL_MEASURES],
             "[:Measure Names]",
         ),
+        calcs=panel_state_calc_xml("      ", with_instance=False),
     )
     # The composition sheet's datasource: the same Measure Names palette shape
     # the panel's carries -- quoted column-instance keys for the three share
@@ -3367,9 +3547,10 @@ def main() -> int:
         | {name for name, _type, _role in DIM_COLUMNS}
         | {name for name, _type, _role in KP_COLUMNS}
         | {PAIRS_X_CALC, PAIRS_Y_CALC}
-        # The Overview's state selector: a calculated field, so no extract holds
-        # it, but three datasources and three worksheets declare it by name.
-        | {STATE_MATCH}
+        # The Overview's state selector and the time panel's own state parameter:
+        # calculated fields no extract holds, but four datasources and four
+        # worksheets declare them by name.
+        | {STATE_MATCH, PANEL_STATE_MATCH}
     )
     xml = build_workbook(
         spatial_context_line(spatial_global), len(poly_reader),

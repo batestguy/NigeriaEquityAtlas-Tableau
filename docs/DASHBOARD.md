@@ -175,3 +175,56 @@ Also in this pass: the cluster hover's `spatial_group` was restored to a `none:`
 dimension reference (a `sum:` aggregate over a string column prints an aggregate
 instead of the member's words) and stage 6 now asserts both leading hover fields
 are dimension references (`FIX_LEDGER` §Q7).
+
+---
+
+## 2026-10-25 (second page) — "A state, in context"
+
+Status: **built and render-verified** (captures `%TEMP%\opencode\context_only2.png`
+at full size, `context_whole2.png` with the canvas scaled to see the whole page).
+Build: `06_build_twb.py::context_dashboard_xml()`.
+
+The author asked for `Where Nigeria stands`, `How measures pair` and
+`A state over time` on one page. This is that page — and it **overrides a frozen
+rule** in `docs/SHEET_KPI.md` ("No state-level panel"), recorded as amendment 1
+there with the mitigation.
+
+### Layout (1600 x 1300)
+
+| Zone | Sheet | Geometry (px) |
+|---|---|---|
+| title band (text) | — | 0,0 1000x150 |
+| panel state control | `paramctrl` | 1020,10 570x40 |
+| pairs X control | `paramctrl` | 1020,60 570x40 |
+| pairs Y control | `paramctrl` | 1020,110 570x40 |
+| top left | `A state over time` | 0,150 880x620 |
+| top right | `How measures pair` | 888,150 712x620 |
+| bottom band | `Where Nigeria stands` | 0,778 1316x512 |
+| KPI colour legend | `type-v2='color'` | 1324,778 276x512 |
+
+The page is **1300 tall**, so in a 1030 px window it does not fit on screen —
+by design, a reader scrolls. It renders correctly at full size and, because zone
+coordinates are fractions of the canvas, it can be checked whole by rebuilding
+with a smaller `<size>` (see `FIX_LEDGER` §S3).
+
+### Controls, and why there are three
+
+Cards do not travel (`FIX_LEDGER` O6). Without zones the two interactive sheets
+would open frozen, so:
+
+- **Panel state** — the time panel's own parameter (caption "Panel state"),
+  driving `[state] = [Parameters].[Panel state]`. It is deliberately **not** the
+  Overview's `State select`: that one has an `(All states)` member, which on a
+  six-pane panel would draw 37 lines into every pane. The tab carries the same
+  control as a parameter card, replacing its old dropdown.
+- **X axis / Y axis** — the pairs board's two existing parameters.
+
+**Not provided:** the panel's Measure Names checklist. Turning it into a
+dashboard control needs a third parameter plus a whitelist calculation; the page
+therefore shows the six default measures.
+
+### What is deliberately absent
+
+The two maps and the composition stay on the `Overview`; this page is the
+"into the detail" page, not a second front door. Nothing links the two pages yet
+(no `goto-sheet` button zone) — the tab bar is the navigation.

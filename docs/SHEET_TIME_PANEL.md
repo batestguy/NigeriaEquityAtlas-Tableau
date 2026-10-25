@@ -264,3 +264,24 @@ field it was tried on (`FIX_LEDGER` §R3).
 **Still open:** the Measure Names checklist lists `Count of Migrated Data`, a
 generated member the union filter excludes — ticking it draws an empty pane. The
 card lists the domain, not the filtered set (`FIX_LEDGER` §R5).
+
+## Amendment 3 (2026-10-25) — the state filter is parameter-driven
+
+The panel's single-member `state` filter (Bauchi, on load) is now a categorical
+filter on a boolean calculation, `[state] = [Parameters].[Panel state]`, and the
+parameter's default is the same `PANEL_DEFAULT_STATE`. Reason: cards do not
+travel into a dashboard (`FIX_LEDGER` O6), so without a parameter the panel would
+appear frozen on any page that shows it; with one, a `paramctrl` zone drives it
+(the tab carries the same control as a parameter card, replacing the dropdown).
+
+Two findings from the build, both in `FIX_LEDGER` §S:
+
+- **The sheet-level Parameters mirror is what binds the value.** Built without
+  it, the panel opened on **Sokoto** while the parameter's own `value` attribute
+  in the file still read `"Bauchi"`. Packet A4's rule, re-proved the hard way.
+- The panel's own parameter is **separate from the Overview's `State select`** on
+  purpose: that one has an `(All states)` member, which on a six-pane panel would
+  draw 37 lines into every pane.
+
+Nothing else about the sheet changed: same six-measure whitelist, same rank
+amendment, same header width rule, same `PANEL_DEFAULT_STATE` on load.

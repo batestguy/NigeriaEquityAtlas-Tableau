@@ -1004,3 +1004,16 @@ def table_rows() -> list[tuple[str, str, list[TableRow]]]:
                 assert text.strip(), f"empty {column!r} in the table row {row['word']!r}"
     return groups
 
+
+
+# --- the second data dashboard (2026-10-25) ----------------------------------
+# Reader text for "A state, in context": the page that carries the time panel,
+# the pairs board and the KPI board together at the author's request. The
+# subtitle carries the page's one guardrail in words -- the bottom band is a
+# national comparison, not a state one (docs/SHEET_KPI.md amendment 1).
+CONTEXT_TITLE = "A state, in context"
+CONTEXT_SUBTITLE = (
+    "One state's ranks over four rounds, any two measures for every state, and the "
+    "national benchmarks \u00b7 the bottom band compares Nigeria with Africa and "
+    "the world, never with a state"
+)

@@ -366,3 +366,38 @@ dodged value) and plots `pos`, so gate and sheet agree mark for mark.
   `Share of the row's largest reference` (was "…largest reference point"), the
   Label pill's caption is `Share (one decimal)` (was "Value beside the map"),
   and the tooltip's caption is `Values` (was "Values behind this mark").
+
+---
+
+## Amendment 1 (2026-10-25) — the KPI board shares a page with state-level sheets
+
+**This overrides a frozen rule in this file.** The rule above says:
+
+> **No state-level panel.** The benchmarks are national; putting a state on
+> this sheet would compare a state with a world average as if they were the same
+> kind of thing. The state panel the atlas already has is the time tab; this one
+> stays national.
+
+**What changed.** The author asked for `A state over time`, `How measures pair`
+and `Where Nigeria stands` on one dashboard. That page now exists:
+**"A state, in context"** (`docs/DASHBOARD.md`, second data dashboard, tab 2).
+
+**What the rule was protecting, and what is done about it.** The risk is not that
+the three sheets exist together; it is that adjacency invites reading a state's
+figure against a world average. Mitigations on the page, all visible:
+
+- the page subtitle ends "the bottom band compares Nigeria with Africa and the
+  world, never with a state";
+- the KPI band keeps its own title, its own subtitle ("each row is its own
+  scale"), its own direction key and its own colour legend — it is not restyled
+  to match the sheets above it;
+- the band sits full width **below** a rule of separation: the two state-level
+  panes occupy the top row, the national band the bottom.
+
+**What is still forbidden, unchanged.** No state may be coloured, labelled or
+filtered onto the KPI board itself; no claim may compare a state with a world,
+continental or SDG figure; the board's own rows remain national. The sheet is
+unchanged — only its neighbours are new.
+
+Recorded here rather than in a commit message because a future reader of this
+file needs to know the rule was overridden deliberately, by the author, and why.

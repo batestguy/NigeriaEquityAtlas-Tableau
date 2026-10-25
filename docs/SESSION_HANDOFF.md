@@ -971,3 +971,15 @@ One defensible finding beats three undefendable ones. Lead with the group
 contrast; keep the conflict layer as an honest null with its power floor attached;
 drop or relabel the climate layer; and put the caveats on the canvas where a
 reviewer will actually read them.
+
+### 2026-10-25, later — the second dashboard
+
+`A state, in context` (tab 2): time panel + pairs board + KPI board on one
+1600x1300 page, at the author's request. It **overrides** "No state-level panel"
+in `SHEET_KPI.md` (amendment 1, with the mitigation recorded). Three `paramctrl`
+zones make the two interactive sheets usable, since cards do not travel: the
+panel's own state parameter and the pairs X/Y. Two findings worth keeping:
+a parameter without a **sheet-level mirror** binds to an arbitrary member (the
+panel opened on Sokoto while the file said Bauchi), and a page taller than the
+window can be verified whole by rebuilding a scratch copy with a smaller
+`<size>` (`FIX_LEDGER` §S).

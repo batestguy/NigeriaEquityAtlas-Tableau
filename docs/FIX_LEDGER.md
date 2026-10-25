@@ -1218,3 +1218,43 @@ The Measure Names checklist shows `Count of Migrated Data`, a generated member t
 the six-measure union filter excludes. Ticking it adds a pane with no data. The card
 lists the domain, not the filtered set, and no card attribute changes that. The
 union filter protects the sheet; the card cannot be trimmed from XML here.
+
+---
+
+## S. The second dashboard (2026-10-25)
+
+### S1. A parameter without a sheet-level mirror binds to an arbitrary member
+**Severity DEFECT - status done, guard installed**
+The time panel's state became parameter-driven. Built WITHOUT a
+`<datasource-dependencies datasource='Parameters'>` mirror in the worksheet, the
+panel opened on **Sokoto** — while the parameter's own `value` attribute in the
+file still read `"Bauchi"`, and the calculation was correct. Adding the mirror
+(`panel_state_deps_xml`) fixed it, and the panel now opens on Bauchi both as a
+tab and on the dashboard.
+
+This re-proves packet A4's rule ("the sheet mirror is the one that binds the
+value") the hard way: schema validation cannot see it, the XML reads right, and
+only the render exposes it. **Rule: every calculation that reads a parameter
+needs the mirror in each worksheet that uses it.**
+
+### S2. Two parameters with the same caption are legal but confusing to read
+**Severity IMPROVEMENT - status done**
+`State select` and `Panel state` were both captioned "State". Nothing broke
+(parameters bind by name, not caption), but a 570 px `paramctrl` truncated the
+label to "Panel s.." and the two were indistinguishable in a capture. The panel's
+is now captioned **"Panel state"**.
+
+### S3. Verifying a page taller than the window
+**Severity TRAP -> technique - status recorded**
+A 1600x1300 dashboard cannot be seen whole in a 1030 px window, mouse-wheel
+scrolling does not reliably reach the canvas, and `PrintWindow` captures only what
+is on screen. Zone coordinates are 1/100000 of the canvas on each axis, so
+rebuilding a scratch copy with a smaller `<size>` **scales the whole page** and
+the capture shows every zone in place. Used here to check the KPI band and its
+legend (`%TEMP%\opencode\scale_dash.py`). The scaled capture is for layout only —
+labels truncate sooner than they will at full size.
+
+### S4. The KPI board now shares a page with state-level sheets
+**Severity DECISION - status overridden on the record**
+See `docs/SHEET_KPI.md` amendment 1. The rule stands inside that sheet; the page
+carries a separating subtitle and keeps the band visually distinct.

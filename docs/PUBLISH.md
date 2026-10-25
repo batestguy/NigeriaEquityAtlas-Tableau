@@ -538,3 +538,25 @@ from a packet:
 Note on the old colour-legend item above: the legend **zone** on the dashboard
 draws, which is new evidence that only the sheet-1 **window card** is broken. The
 `Analysis -> Legends -> Colour Legend` click is now needed for the *tab* only.
+
+## 2026-10-25 — the second dashboard (new checks)
+
+`A state, in context` is tab 2, 1600x1300, carrying `A state over time`,
+`How measures pair` and `Where Nigeria stands` (`docs/DASHBOARD.md`). It
+**overrides** the "no state-level panel" rule in `docs/SHEET_KPI.md` (amendment
+1); the mitigation is the page subtitle plus the KPI band's own title, subtitle,
+direction key and legend.
+
+On the published viz:
+
+1. **The page scrolls**: it is 1300 px tall, so a browser window shows the top
+   row and the KPI band is reached by scrolling. Confirm nothing is cut off at
+   the bottom.
+2. **The three controls** read `Panel state: Bauchi`, `X axis: H (% poor)`,
+   `Y axis: UCDP events per 100k, log(1+rate)`. Change the panel state and
+   confirm all six panes move together; change X and Y and confirm both scatter
+   panes re-fit, bands included.
+3. **The KPI legend** prints `Reference point (2021)` with Nigeria, sub-Saharan
+   Africa and World in full.
+4. **The time tab** now carries a `Panel state` parameter card in place of its
+   old state dropdown; confirm it still opens on Bauchi.
