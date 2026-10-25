@@ -161,3 +161,17 @@ card does not. The card defect on that **tab** stays open (`docs/PUBLISH.md`).
 2. Both legend titles print in full and every member label is complete.
 3. The composition still opens on 17 bars; the left control on that tab reads
    `(All states)`.
+
+### Second pass, same day — the composition's legend
+
+The Overview now carries **three** `type-v2='color'` zones: the two map legends
+(stacked, 624 px column) and the composition's `Measure Names` legend in the
+composition row's right-hand 292 px (`param='[federated.0mpidimshare].[:Measure
+Names]'`, referenced bare like its palette buckets). The composition pane is
+therefore 1300 px rather than 1600, which wraps its subtitle to two lines — read
+and accepted. The three members print as Education / Health / Living standards.
+
+Also in this pass: the cluster hover's `spatial_group` was restored to a `none:`
+dimension reference (a `sum:` aggregate over a string column prints an aggregate
+instead of the member's words) and stage 6 now asserts both leading hover fields
+are dimension references (`FIX_LEDGER` §Q7).

@@ -137,7 +137,6 @@
       <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[spatial_group]' derivation='Sum' name='[sum:spatial_group:qk]' pivot='key' type='quantitative' />
       <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
       <extract count='-1' enabled='true' units='records'>
         <connection access_mode='readonly' author-locale='en' class='hyper' dbname='Data/spatial_polygons.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
@@ -765,7 +764,6 @@
       <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[spatial_group]' derivation='Sum' name='[sum:spatial_group:qk]' pivot='key' type='quantitative' />
       <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <datasource-dependencies datasource='Parameters'>
@@ -822,7 +820,6 @@
       <column-instance column='[mpi_pct]' derivation='Sum' name='[sum:mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[spatial_lag_mpi_pct]' derivation='Sum' name='[sum:spatial_lag_mpi_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[neighbours]' derivation='Sum' name='[sum:neighbours:qk]' pivot='key' type='quantitative' />
-      <column-instance column='[spatial_group]' derivation='Sum' name='[sum:spatial_group:qk]' pivot='key' type='quantitative' />
       <column-instance column='[dim_hover]' derivation='None' name='[none:dim_hover:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <filter class='categorical' column='[federated.0mpispatialpoly].[none:state_match:nk]'>
@@ -858,7 +855,7 @@
             <formatted-text>
               <run bold='true' fontsize='13'><![CDATA[<[federated.0mpispatialpoly].[none:state:nk]>]]></run>
               <run> &#183; </run>
-              <run><![CDATA[<[federated.0mpispatialpoly].[sum:spatial_group:qk]>]]></run>
+              <run><![CDATA[<[federated.0mpispatialpoly].[none:spatial_group:nk]>]]></run>
               <run bold='true'>&#10;Poverty score: </run>
               <run bold='true'><![CDATA[<[federated.0mpispatialpoly].[sum:mpi_pct:qk]>]]></run>
               <run bold='true'>%</run>
@@ -1424,7 +1421,7 @@
               <format attr='margin' value='2' />
             </zone-style>
           </zone>
-          <zone h='55600' id='12' name='How poverty is made up' w='100000' x='0' y='44400'>
+          <zone h='55600' id='12' name='How poverty is made up' w='81250' x='0' y='44400'>
             <layout-cache type-h='cell' type-w='cell' />
             <zone-style>
               <format attr='border-color' value='#d9d9d9' />
@@ -1435,6 +1432,7 @@
           </zone>
           <zone h='19000' id='20' name='Where poverty sits' pane-specification-id='0' param='[federated.0mpipolygons].[none:mpi_band:nk]' type-v2='color' w='39000' x='61000' y='6400' />
           <zone h='18200' id='21' name='Where poverty clusters' pane-specification-id='0' param='[federated.0mpispatialpoly].[none:spatial_group:nk]' type-v2='color' w='39000' x='61000' y='25400' />
+          <zone h='55600' id='22' name='How poverty is made up' pane-specification-id='0' param='[federated.0mpidimshare].[:Measure Names]' type-v2='color' w='18250' x='81750' y='44400' />
         </zone>
       </zones>
     </dashboard>

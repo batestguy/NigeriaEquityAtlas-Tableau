@@ -1603,27 +1603,36 @@ def overview_dashboard_xml() -> tuple[str, str]:
         # and the maps keep 627 px each.
         ("Where poverty sits", 0, header_h, 480, map_h),
         (atlas_text.SPATIAL_MAP_TITLE, 488, header_h, 480, map_h),
-        (atlas_text.DIMENSIONS_TITLE, 0, header_h + map_h + gap, 1600,
+        # 2026-10-25 (second pass): the composition row cedes its right-hand
+        # 292 px to the third legend, so the bar keeps the height it just gained.
+        (atlas_text.DIMENSIONS_TITLE, 0, header_h + map_h + gap, 1300,
          body - map_h - gap),
     ]
 
-    # The two colour legends, one per map, as DASHBOARD ZONES rather than window
-    # cards: a card belongs to a sheet's own window and does not travel into a
-    # dashboard (FIX_LEDGER O6), which is why the page showed no legend until
-    # now. The zone shape is SoftwareRetailAnalytics.twb's (2026-10-25):
+    # The three colour legends, one per pane, as DASHBOARD ZONES rather than
+    # window cards: a card belongs to a sheet's own window and does not travel
+    # into a dashboard (FIX_LEDGER O6), which is why the page showed no legend
+    # until now. The zone shape is SoftwareRetailAnalytics.twb's (2026-10-25):
     # name = the sheet it belongs to, pane-specification-id = that sheet's pane
     # (0, the default single pane this builder writes), param = the colour field.
-    # Each map encodes a different field, so each needs its own legend.
+    # Each pane encodes a different field, so each needs its own legend. The
+    # composition's is `[:Measure Names]`, referenced bare like its palette
+    # buckets -- the generated field has no `none:` instance.
+    legend_y2 = header_h + map_h + gap
     legends = [
-        ("Where poverty sits", POLY_DS_NAME, "mpi_band", 976, 624, header_h, 190),
-        (atlas_text.SPATIAL_MAP_TITLE, SPATIAL_POLY_DS_NAME, "spatial_group",
+        ("Where poverty sits",
+         f"[{POLY_DS_NAME}].[none:mpi_band:nk]", 976, 624, header_h, 190),
+        (atlas_text.SPATIAL_MAP_TITLE,
+         f"[{SPATIAL_POLY_DS_NAME}].[none:spatial_group:nk]",
          976, 624, header_h + 190, map_h - 190),
+        (atlas_text.DIMENSIONS_TITLE, f"[{DIM_DS_NAME}].[:Measure Names]",
+         1308, 292, legend_y2, body - map_h - gap),
     ]
     legend_zones = "".join(
         f"          <zone h='{uy(h)}' id='{20 + i}' name='{escape(sheet)}'"
-        f" pane-specification-id='0' param='[{ds}].[none:{field}:nk]'"
+        f" pane-specification-id='0' param='{escape(param)}'"
         f" type-v2='color' w='{ux(w)}' x='{ux(x)}' y='{uy(y)}' />\n"
-        for i, (sheet, ds, field, x, w, y, h) in enumerate(legends)
+        for i, (sheet, param, x, w, y, h) in enumerate(legends)
     )
     # The selector, a `paramctrl` zone: package A (SoftwareRetailAnalytics) carries
     # two of these and no window card for either, so the zone alone is the whole
@@ -1877,10 +1886,10 @@ def build_workbook(spatial_technical: str,
         def txt(body: str, attrs: str = "") -> str:
             return f"              <run{attrs}>{body}</run>\n"
 
-        return (
+        out = (
             fld("state", "dim", " bold='true' fontsize='13'")
             + txt(" &#183; ")
-            + fld("spatial_group")
+            + fld("spatial_group", "dim")
             + txt("&#10;Poverty score: ", " bold='true'")
             + fld("mpi_pct", "sum", " bold='true'")
             + txt("%", " bold='true'")
@@ -1893,6 +1902,15 @@ def build_workbook(spatial_technical: str,
             + txt("%")
             + txt("&#10;&#10;" + escape(atlas_text.SPATIAL_NO_CAUSE), " italic='true'")
         )
+        # The first shortened build lost the state name and the type label without
+        # anything complaining: ``fld()`` defaults to kind="sum", so
+        # ``fld("spatial_group")`` serialised a sum: aggregate over a *dimension*,
+        # which prints an aggregate instead of the member's words. A tooltip is a
+        # popup window no PrintWindow capture can see, so the render could not
+        # catch it either. Both leading fields are asserted here instead.
+        assert "[none:state:nk]" in out, "cluster hover lost the state name"
+        assert "[none:spatial_group:nk]" in out, "cluster hover lost the type label"
+        return out
 
     # ---- sheet 1: the filled map -------------------------------------------
     # A genuine filled choropleth, drawn from shipped geometry rather than from

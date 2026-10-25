@@ -1150,3 +1150,22 @@ use `&quot;`, and the filter that reads it is a categorical filter with
 calc is declared at datasource level (column only) and its `<column-instance>` is
 declared inside the worksheet's `<datasource-dependencies>` -- one declaration per
 scope, which is the shape `Latest Month Filter` carries in the reference file.
+
+### Q7. Three legends, and the `sum:` kind trap in a hover
+**Severity DEFECT (self-inflicted) - status done, guarded**
+The composition pane got the third `type-v2='color'` zone in the same pass
+(`param='[federated.0mpidimshare].[:Measure Names]'`, the generated field
+referenced bare, the shape its palette buckets already use). Its zone sits in the
+composition row's right-hand 292 px, so the bar keeps its height.
+
+Shortening the cluster hover (Q-series above) demoted `spatial_group` from a
+dimension to a `sum:` aggregate: `fld()` defaults to `kind="sum"`, so
+`fld("spatial_group")` serialised `[sum:spatial_group:qk]` over a string column.
+Nothing failed -- schema validation resolves the field, and a tooltip is a popup
+window `PrintWindow` cannot capture, so the render could not show it either. The
+hover would have printed an aggregate where the neighbourhood type belongs.
+
+Stage 6 now asserts both leading fields of that tooltip are `[none:...:nk]`
+references, so the state name and the type label cannot silently become
+aggregates again. General rule: in a tooltip, everything that is *words* must be
+`none:`; only the numbers take `sum:`.
