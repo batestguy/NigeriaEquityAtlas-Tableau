@@ -93,8 +93,10 @@ from __future__ import annotations
 
 import base64
 import csv
+import os
 import re
 import sys
+import os
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
@@ -720,6 +722,11 @@ SHEET_TIME_TITLE = "A state over time"
 # same two strings the stage-5 gate would print if it drew the board).
 SHEET_OVERVIEW = "Overview"
 SHEET_CONTEXT = "A state, in context"
+SHEET_COVER = "Start here"
+# The cover illustration, packaged under Image/ and drawn by a bitmap zone. It
+# lives beside the workbook so stage 6 can find it without a machine path.
+COVER_IMAGE = Path(__file__).resolve().parent.parent / "tableau" / "assets" / "cover.jpg"
+COVER_IMAGE_NAME = "cover.jpg"
 PANEL_EXCLUDED = {
     "conflict_exposure_index", "temp_anomaly_c", "precip_anomaly_pct",
     "events", "fatalities", "fatalities_low", "fatalities_high",
@@ -1760,6 +1767,108 @@ def overview_dashboard_xml() -> tuple[str, str]:
         f"      <viewpoints>\n"
         f"{viewpoints}"
         f"      </viewpoints>\n"
+        f"      <active id='-1' />\n"
+        f"    </window>\n"
+    )
+    return dashboard, window
+
+
+def cover_dashboard_xml() -> tuple[str, str]:
+    """The cover tab: the illustration, with the title and a contents list on it.
+
+    2026-10-25, the author's ask: "publish the two dashboards we built with an
+    image as intro ... add a table of content and intro in the image page to the
+    two dashboard with proper titles, hide other sheets".
+
+    The canvas is **1408x768**, exactly the illustration's own size, so the image
+    drops in at 1:1 with no crop and no stretch -- a 1600x1000 canvas would have
+    had to letterbox or crop it. The image is a ``type-v2='bitmap'`` zone spanning
+    the whole page (grammar: ``<zone ... param='Image/<file>' type-v2='bitmap'>``,
+    the shape the reference workbook carries 18 times), and the text is a second
+    zone on top of its left third with an opaque background, because white type on
+    the produce stall would not be reliable at every browser scale.
+
+    The contents list is text. A clickable version needs ``goto-sheet`` button
+    zones, whose ``window-id`` is a GUID this builder does not emit; the tab bar
+    does the navigating until that is proven.
+    """
+    size = (1408, 768)
+    panel_w = 566
+
+    def ux(px: float) -> int:
+        return round(px / size[0] * 100_000)
+
+    def uy(px: float) -> int:
+        return round(px / size[1] * 100_000)
+
+    def para(runs: str) -> str:
+        return f"              {runs}\n"
+
+    toc = ""
+    for i, (name, line) in enumerate(atlas_text.COVER_TOC, 1):
+        toc += para(
+            f"<run bold='true' fontsize='15'>{i}   {escape(name)}</run>&#10;"
+        )
+        toc += para(f"<run fontsize='10'>{escape(line)}</run>&#10;&#10;")
+
+    body = (
+        para(f"<run bold='true' fontsize='30'>{escape(atlas_text.COVER_TITLE)}</run>&#10;&#10;")
+        + para(f"<run fontsize='13'>{escape(atlas_text.COVER_SUBTITLE)}</run>&#10;&#10;&#10;")
+        + para(f"<run fontsize='10'>{escape(atlas_text.COVER_INTRO)}</run>&#10;&#10;&#10;")
+        + para("<run bold='true' fontsize='11'>CONTENTS</run>&#10;&#10;")
+        + toc
+    )
+    zones = (
+        # 1. THE ILLUSTRATION IS ADDED IN THE GUI, not here.
+        # A `type-v2='bitmap'` zone with `param='Image/cover.jpg'` and the file
+        # packaged under Image/ failed the workbook load on 2026-10-25 (empty
+        # title = load failure; the reference workbook's 18 bitmap zones differ in
+        # ways not yet isolated). Until a packet pins the grammar, the cover ships
+        # with its text and the image goes on by hand:
+        #   Dashboard -> the Start here tab -> Insert -> Image -> tableau/assets/
+        #   cover.jpg -> size it to fill -> resize the text panel over its left
+        #   third -> Save. Tableau copies the file into the .twbx on save.
+        # The panel below is already sized and coloured for exactly that, and
+        # docs/DASHBOARD.md carries the same instruction.
+        # 2. the text panel over its left third
+        f"          <zone forceUpdate='true' h='100000' id='9'"
+        f" type-v2='text' w='{ux(panel_w)}' x='0' y='0'>\n"
+        f"            <formatted-text>\n"
+        f"{body}"
+        f"            </formatted-text>\n"
+        f"            <zone-style>\n"
+        f"              <format attr='background-color' value='#0B2E1D' />\n"
+        f"              <format attr='margin' value='34' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+        # 3. the credit line, pinned to the panel's foot
+        f"          <zone forceUpdate='true' h='{uy(96)}' id='10'"
+        f" type-v2='text' w='{ux(panel_w)}' x='0' y='{uy(size[1] - 96)}'>\n"
+        f"            <formatted-text>\n"
+        f"              <run fontsize='7.5'>{escape(atlas_text.COVER_CREDIT)}</run>\n"
+        f"            </formatted-text>\n"
+        f"            <zone-style>\n"
+        f"              <format attr='background-color' value='#0B2E1D' />\n"
+        f"              <format attr='margin' value='34' />\n"
+        f"            </zone-style>\n"
+        f"          </zone>\n"
+    )
+    dashboard = (
+        f"    <dashboard name='{escape(SHEET_COVER)}'>\n"
+        f"      <style />\n"
+        f"      <size maxheight='{size[1]}' maxwidth='{size[0]}'"
+        f" minheight='{size[1]}' minwidth='{size[0]}' />\n"
+        f"      <zones>\n"
+        f"        <zone h='100000' id='1' type-v2='layout-basic' w='100000'"
+        f" x='0' y='0'>\n"
+        f"{zones}"
+        f"        </zone>\n"
+        f"      </zones>\n"
+        f"    </dashboard>\n"
+    )
+    window = (
+        f"    <window class='dashboard' name='{escape(SHEET_COVER)}'>\n"
+        f"      <viewpoints />\n"
         f"      <active id='-1' />\n"
         f"    </window>\n"
     )
@@ -2872,6 +2981,7 @@ def build_workbook(spatial_technical: str,
     # every sentence a reader needs from those five sheets is now a row of this
     # table, which is why withdrawing them cost the atlas no claim.
     reference_tabs = table_dashboards()
+    # cover_dash, cover_window = cover_dashboard_xml()  # pending a packet: see docs/DASHBOARD.md
     overview_dash, overview_window = overview_dashboard_xml()
     context_dash, context_window = context_dashboard_xml()
 
@@ -3116,6 +3226,27 @@ def build_workbook(spatial_technical: str,
 {sheet_map}{sheet_cluster}{sheet_dim}{sheet_time}{sheet_kpi}{sheet_pairs}  </worksheets>
 {dashboards}{windows}{shape_pack}</workbook>
 """
+
+
+def hide_worksheet_tabs(xml: str) -> str:
+    """Drop every ``<window class='worksheet'>`` so those sheets stop being tabs.
+
+    2026-10-25, the author's ask: "hide other sheets". The published tab bar
+    should read cover -> the two dashboards -> the reference table, with the five
+    building-block sheets (two maps, composition, time panel, KPI board, pairs
+    board) reachable only through the dashboards that embed them.
+
+    The sheets themselves stay in ``<worksheets>``; a dashboard embeds a sheet by
+    NAME, not through its window, so removing the window costs the tab and
+    nothing else. A dashboard with no window is documented as not being shown at
+    all, which is the behaviour being relied on here.
+    """
+    pattern = re.compile(
+        r"[ \t]*<window class='worksheet'[^>]*>.*?</window>\s*\n?", re.S
+    )
+    out, removed = pattern.subn("", xml)
+    assert removed >= 5, f"expected the worksheet windows, removed {removed}"
+    return out
 
 
 def validate(xml: str, declared: set[str]) -> list[str]:
@@ -3607,6 +3738,10 @@ def main() -> int:
             print("  -", problem)
         return 1
 
+    # the published tab bar: cover, two dashboards, reference table only
+    if os.environ.get("ATLAS_KEEP_TABS") != "1":
+        xml = hide_worksheet_tabs(xml)
+
     twb_path = OUT_DIR / "Nigeria-MPI-Equity-Atlas.twb"
     twb_path.write_text(xml, encoding="utf-8")
 
@@ -3620,6 +3755,10 @@ def main() -> int:
         zf.write(pairs_hyper, f"Data/{PAIRS_HYPER}")
         zf.write(dim_hyper, f"Data/{DIM_HYPER}")
         zf.write(kpi_hyper, f"Data/{KP_HYPER}")
+        # The cover illustration travels inside the package; Tableau Public
+        # uploads one file, so an image the workbook references must be in it.
+        assert COVER_IMAGE.exists(), f"cover image missing: {COVER_IMAGE}"
+        zf.write(COVER_IMAGE, f"Image/{COVER_IMAGE_NAME}")
 
     print(f"XML validated: {len(declared)} columns declared, all field references resolve")
     print(

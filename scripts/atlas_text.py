@@ -1044,3 +1044,29 @@ KPI_GUIDE_SHAPE_FILES: dict[str, str] = {
 # Where the guide sits on the row's 0..1 scale. Not 0: a mark centred on the axis
 # line is half-clipped by the pane edge.
 KPI_GUIDE_POS = 0.02
+
+
+# --- the cover tab (2026-10-25) ----------------------------------------------
+# The image is the plate; this text sits on an opaque panel over its left third.
+# Wording obeys the cover guardlist in docs/POLISH_PLAN.md: the D6 title, no
+# north-vs-south statement, no party, no number, and a credit line that names the
+# vintages. The licence of the illustration is still UNKNOWN in that file and
+# must be recorded before publishing.
+COVER_TITLE = "One Country. Two Realities."
+COVER_SUBTITLE = "The Multidimensional Poverty Atlas of Nigeria's 37 States"
+COVER_INTRO = (
+    "Every figure is a published survey estimate for 2021, drawn as a band rather "
+    "than a rank: no state's position is separable from its neighbour's at 95%, so "
+    "the atlas compares groups and structures, never a league table."
+)
+COVER_TOC: list[tuple[str, str]] = [
+    ("Overview",
+     "Where poverty sits, where it clusters, and what each state's poverty is made of."),
+    ("A state, in context",
+     "One state's ranks over four rounds, any two measures for every state, and "
+     "the national benchmarks."),
+]
+COVER_CREDIT = (
+    "Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) \u00b7 "
+    "UCDP GED \u00b7 Open-Meteo. Illustration: AI-generated."
+)

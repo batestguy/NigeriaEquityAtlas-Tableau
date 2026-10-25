@@ -247,3 +247,60 @@ band's row labels truncate ("lower is bettâ€¦") because the band is 1316 px 
 there; the tab shows them whole, and the page is a secondary surface for that
 board.
 
+## The cover tab (2026-10-25) â€” built in the GUI, not in XML
+
+**Status: the XML route failed the load; the GUI route is the shipping path.**
+
+The author's ask: publish the two dashboards with an illustration as an intro
+page, with a contents list and intro text on it, and the other sheets hidden.
+
+### What is in the repo
+
+- `tableau/assets/cover.jpg` â€” the illustration (1408x768, 1.83:1). It is the
+  picture the polish plan asked for: two women, northern and southern attire,
+  embracing, against a green market.
+- `atlas_text.COVER_*` â€” the cover's words: the D6 title, the subtitle, a
+  three-sentence intro, the two contents entries, and the credit line.
+- `06_build_twb.py::cover_dashboard_xml()` â€” the page built as XML (1408x768 so
+  the image is 1:1; a 566 px opaque panel on the left third carrying the text).
+  **It is not wired into the workbook**, because every version of it failed to
+  load:
+  - full-bleed `type-v2='bitmap'` zone + the file packaged under `Image/` â€”
+    workbook opened with an empty title (the load-failure signature);
+  - the same zone with a `<zone-style>` child (the shape all 18 reference bitmap
+    zones carry) â€” same failure;
+  - the text panel alone, no bitmap at all â€” same failure.
+
+  So the fault is in the page, not only the image, and it is not yet isolated.
+  The next session should bisect it with a **single-dashboard packet**: the cover
+  page alone in a scratch workbook, one variable per build, the way Â§O did the
+  Overview. Schema-validity is not evidence here â€” the file validated and still
+  would not open.
+
+### The route that works, by hand (about two minutes)
+
+1. Open `tableau/Nigeria-MPI-Equity-Atlas.twbx`, go to the `Overview` tab.
+2. `Dashboard â†’ New Dashboard`; rename its tab **Start here**.
+3. With the new dashboard open: `Insert â†’ Image`, choose
+   `tableau/assets/cover.jpg`. Tableau copies the file into the workbook on save.
+4. Size the image to fill the page (the canvas is 16:10; the image is 1.83:1, so
+   drag it to the full width and let it crop top/bottom slightly).
+5. Add a text box over its left third, background `#0B2E1D`, and paste the words
+   from `atlas_text.COVER_TITLE`, `COVER_SUBTITLE`, `COVER_INTRO`, `COVER_TOC`
+   and `COVER_CREDIT`.
+6. Drag the **Start here** tab to the far left so it opens first.
+7. To hide the building-block sheets (both maps, composition, time panel, KPI
+   board, pairs board): right-click each tab â†’ **Hide**. They stay usable by the
+   dashboards; only their tabs go.
+8. `File â†’ Save to Tableau Public`.
+
+`scripts/06_build_twb.py::hide_worksheet_tabs()` does step 7 in XML and is
+exercised by `ATLAS_KEEP_TABS=1` (which keeps the tabs); it was left switched off
+because it could not be verified against a workbook that also had a cover.
+
+### Before publishing
+
+The illustration's provenance is still **UNKNOWN** in `docs/POLISH_PLAN.md`.
+Tableau Public is a public upload under the author's name: the terms must be
+recorded before the cover ships.
+
