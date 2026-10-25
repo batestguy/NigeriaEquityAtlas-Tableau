@@ -2295,15 +2295,15 @@ def build_workbook(spatial_technical: str,
         """The Measure Names whitelist, the manual bar order, and the state
         filter's default-checked set.
 
-        The default view's membership moved from a 17-member filter to the
-        Overview's state parameter on 2026-10-25 (amendment 2,
-        docs/SHEET_DIMENSIONS.md). The 17 is unchanged -- ranks 1-5 (the five
-        poorest states) and ranks 13-24 (the first twelve of the Other 25) --
-        but it now lives in the ``state_match`` calculation, because a
-        parameter pick must be able to override it and two ANDed filters
-        cannot: a pick outside those 17 used to draw a silently empty pane.
-        The bar order is still MPI descending, so ``order[:12]`` is the
-        Poorest 12 by construction.
+        The default view's membership moved from a fixed filter to the Overview's
+        state parameter on 2026-10-25 (amendment 2, docs/SHEET_DIMENSIONS.md),
+        and the default itself became the TOP HALF of each group the same day:
+        ranks 1-6 and ranks 13-24 -- 18 bars (atlas_text.composition_default).
+        It lives in the ``state_match`` calculation rather than a filter, because
+        a parameter pick must be able to override it and two ANDed filters
+        cannot: a pick outside the default used to draw a silently empty pane.
+        The bar order is still MPI descending, so each block prints its own
+        highest-ranked states first without a second sort.
         """
         members = "".join(
             "          <groupfilter function='member' level='[:Measure Names]' "
@@ -2382,7 +2382,7 @@ def build_workbook(spatial_technical: str,
     dim_deps = deps_xml(
         DIM_COLUMNS, dim_captions,
         calcs=state_match_calc_xml(
-            "            ", dim_bar_order[:5] + dim_bar_order[12:24]
+            "            ", atlas_text.composition_default(dim_bar_order)
         ),
     )
 
@@ -2851,7 +2851,7 @@ def build_workbook(spatial_technical: str,
             "[:Measure Names]",
         ),
         calcs=state_match_calc_xml(
-            "      ", dim_bar_order[:5] + dim_bar_order[12:24], with_instance=False
+            "      ", atlas_text.composition_default(dim_bar_order), with_instance=False
         ),
     )
     # The KPI board's datasource: the drawn sheet's 20 marks, with the ds-level

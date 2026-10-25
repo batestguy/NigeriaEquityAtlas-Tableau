@@ -522,7 +522,7 @@ from a packet:
 1. **The selector** in the title band reads `State` and lists `(All states)` plus
    the 37 states. Pick a state and confirm **all three panes move together** — both
    maps collapse to that polygon, the composition shows that one bar. Then set it
-   back to `(All states)` and confirm the composition returns to **17 bars**.
+   back to `(All states)` and confirm the composition returns to **18 bars** (6 of the 12, 12 of the 25).
 2. **All three legends** print their full titles and every member label:
    `MPI band (Multidimensional Poverty Index)` with five bands,
    `Neighbourhood type (this state's poverty, beside the states it borders')` with

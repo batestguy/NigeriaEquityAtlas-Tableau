@@ -590,9 +590,28 @@ PAIRS_TREND_COLOUR = "#4D4D4D"
 DIMENSIONS_TITLE = "How poverty is made up"
 DIMENSIONS_SUBTITLE = (
     "What each state's poverty is made of \u00b7 shares of the MPI, adding to "
-    "100 \u00b7 MPI order, not a ranking \u00b7 17 of 37 bars by default: the "
-    "left control picks a state"
+    "100 \u00b7 MPI order, not a ranking \u00b7 18 of 37 bars by default: the "
+    "top half of each group, the left control picks one"
 )
+
+# The composition sheet's default view: the top HALF of each poverty group.
+# The user's 2026-10-25 decision, replacing "5 poorest + 12 of the other 25":
+# "I dont mind showing 50 % of both categories but rank them properly per
+# category". Because the bar order is MPI descending and the Poorest 12 are
+# ranks 1-12 (the Other 25 are 13-37), taking the first N of each block is
+# exactly taking its highest-ranked states -- no second sort is needed.
+#
+# Both the workbook (stage 6, twice: datasource + sheet deps) and the QA gate
+# (stage 5) read this rule, so the drawn sheet and its preview cannot disagree
+# about which bars the default shows.
+COMPOSITION_DEFAULT_TOP = 6     # of the Poorest 12  (50%)
+COMPOSITION_DEFAULT_REST = 12   # of the Other 25    (48%)
+
+
+def composition_default(order: list[str]) -> list[str]:
+    """The states the composition bar shows on load, in MPI order."""
+    start = COMPOSITION_DEFAULT_TOP
+    return order[:start] + order[12:12 + COMPOSITION_DEFAULT_REST]
 DIMENSION_SHARES: list[tuple[str, str, str]] = [
     ("contrib_education_pct", "Education", "#0072B2"),
     ("contrib_health_pct", "Health", "#E69F00"),

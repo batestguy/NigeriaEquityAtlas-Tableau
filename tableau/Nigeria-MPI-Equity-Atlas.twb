@@ -258,7 +258,7 @@
       <column caption='Health' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
       <column caption='Living standards' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
       <column caption='State selection (Overview)' datatype='boolean' name='[state_match]' role='dimension' type='nominal'>
-        <calculation class='tableau' formula='[Parameters].[State select] = [state] OR ([Parameters].[State select] = &quot;(All states)&quot; AND ([state] = &quot;Bauchi&quot; OR [state] = &quot;Jigawa&quot; OR [state] = &quot;Kebbi&quot; OR [state] = &quot;Sokoto&quot; OR [state] = &quot;Zamfara&quot; OR [state] = &quot;Plateau&quot; OR [state] = &quot;Nasarawa&quot; OR [state] = &quot;Adamawa&quot; OR [state] = &quot;Kaduna&quot; OR [state] = &quot;Benue&quot; OR [state] = &quot;Kwara&quot; OR [state] = &quot;Ogun&quot; OR [state] = &quot;Oyo&quot; OR [state] = &quot;Cross River&quot; OR [state] = &quot;Bayelsa&quot; OR [state] = &quot;Kogi&quot; OR [state] = &quot;Ondo&quot;))' />
+        <calculation class='tableau' formula='[Parameters].[State select] = [state] OR ([Parameters].[State select] = &quot;(All states)&quot; AND ([state] = &quot;Bauchi&quot; OR [state] = &quot;Jigawa&quot; OR [state] = &quot;Kebbi&quot; OR [state] = &quot;Sokoto&quot; OR [state] = &quot;Zamfara&quot; OR [state] = &quot;Yobe&quot; OR [state] = &quot;Plateau&quot; OR [state] = &quot;Nasarawa&quot; OR [state] = &quot;Adamawa&quot; OR [state] = &quot;Kaduna&quot; OR [state] = &quot;Benue&quot; OR [state] = &quot;Kwara&quot; OR [state] = &quot;Ogun&quot; OR [state] = &quot;Oyo&quot; OR [state] = &quot;Cross River&quot; OR [state] = &quot;Bayelsa&quot; OR [state] = &quot;Kogi&quot; OR [state] = &quot;Ondo&quot;))' />
       </column>
       <column-instance column='[contrib_education_pct]' derivation='Sum' name='[sum:contrib_education_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[contrib_health_pct]' derivation='Sum' name='[sum:contrib_health_pct:qk]' pivot='key' type='quantitative' />
@@ -884,7 +884,7 @@
       <layout-options>
         <title>
           <formatted-text>
-            <run bold='true' fontsize='13'>How poverty is made up</run><run fontsize='9'>  What each state's poverty is made of · shares of the MPI, adding to 100 · MPI order, not a ranking · 17 of 37 bars by default: the left control picks a state</run>
+            <run bold='true' fontsize='13'>How poverty is made up</run><run fontsize='9'>  What each state's poverty is made of · shares of the MPI, adding to 100 · MPI order, not a ranking · 18 of 37 bars by default: the top half of each group, the left control picks one</run>
           </formatted-text>
         </title>
       </layout-options>
@@ -902,7 +902,7 @@
       <column caption='Health' datatype='real' name='[contrib_health_pct]' role='measure' type='quantitative' />
       <column caption='Living standards' datatype='real' name='[contrib_living_standards_pct]' role='measure' type='quantitative' />
             <column caption='State selection (Overview)' datatype='boolean' name='[state_match]' role='dimension' type='nominal'>
-              <calculation class='tableau' formula='[Parameters].[State select] = [state] OR ([Parameters].[State select] = &quot;(All states)&quot; AND ([state] = &quot;Bauchi&quot; OR [state] = &quot;Jigawa&quot; OR [state] = &quot;Kebbi&quot; OR [state] = &quot;Sokoto&quot; OR [state] = &quot;Zamfara&quot; OR [state] = &quot;Plateau&quot; OR [state] = &quot;Nasarawa&quot; OR [state] = &quot;Adamawa&quot; OR [state] = &quot;Kaduna&quot; OR [state] = &quot;Benue&quot; OR [state] = &quot;Kwara&quot; OR [state] = &quot;Ogun&quot; OR [state] = &quot;Oyo&quot; OR [state] = &quot;Cross River&quot; OR [state] = &quot;Bayelsa&quot; OR [state] = &quot;Kogi&quot; OR [state] = &quot;Ondo&quot;))' />
+              <calculation class='tableau' formula='[Parameters].[State select] = [state] OR ([Parameters].[State select] = &quot;(All states)&quot; AND ([state] = &quot;Bauchi&quot; OR [state] = &quot;Jigawa&quot; OR [state] = &quot;Kebbi&quot; OR [state] = &quot;Sokoto&quot; OR [state] = &quot;Zamfara&quot; OR [state] = &quot;Yobe&quot; OR [state] = &quot;Plateau&quot; OR [state] = &quot;Nasarawa&quot; OR [state] = &quot;Adamawa&quot; OR [state] = &quot;Kaduna&quot; OR [state] = &quot;Benue&quot; OR [state] = &quot;Kwara&quot; OR [state] = &quot;Ogun&quot; OR [state] = &quot;Oyo&quot; OR [state] = &quot;Cross River&quot; OR [state] = &quot;Bayelsa&quot; OR [state] = &quot;Kogi&quot; OR [state] = &quot;Ondo&quot;))' />
             </column>
             <column-instance column='[state_match]' derivation='None' name='[none:state_match:nk]' pivot='key' type='nominal' />
       <column-instance column='[poverty_group]' derivation='None' name='[none:poverty_group:nk]' pivot='key' type='nominal' />

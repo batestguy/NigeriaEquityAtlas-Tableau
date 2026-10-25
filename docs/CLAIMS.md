@@ -183,3 +183,11 @@ coverage limits. That is worth more than a correlation we cannot defend.
 - W3C. WCAG 2.1 SC 1.4.1 (Use of Color), SC 1.4.11 (Non-text Contrast).
 
 Full audit trail with per-finding verdicts and quotes: `docs/FIX_LEDGER.md`.
+**The Poorest 12 / Other 25 boundary (audited 2026-10-25).** The split is at rank
+12 (Niger 0.2191) against rank 13 (Plateau 0.1945), **z = 0.66** — not separable,
+and 8 states could cross it on their 95% CIs. The rank-12 set is however exactly
+the set with MPI > 0.20, and the education-share contrast runs +16.1 to +16.8
+points for any cut between 8 and 18 states (+17.6 at 12). Permitted use: the group
+*contrast*, and "the states with the highest MPI" as a point-estimate description.
+Not permitted: presenting the 12 as a statistically separated class.
+`docs/SHEET_DIMENSIONS.md`, amendment 3.

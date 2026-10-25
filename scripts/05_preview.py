@@ -373,8 +373,11 @@ def visual_dimension_bars(rows: list[dict[str, str]]) -> None:
     parsed.sort(key=lambda t: -t[1])
     # The default view (see the docstring): all-per-state asserts above ran on
     # the full 37; the draw below is the 17 the workbook shows on load.
-    parsed = parsed[:5] + parsed[12:24]
-    assert len(parsed) == 17, f"default view has {len(parsed)} bars, expected 17"
+    parsed = parsed[:atlas_text.COMPOSITION_DEFAULT_TOP] + parsed[12:12 + atlas_text.COMPOSITION_DEFAULT_REST]
+    expected_default = atlas_text.COMPOSITION_DEFAULT_TOP + atlas_text.COMPOSITION_DEFAULT_REST
+    assert len(parsed) == expected_default, (
+        f"default view has {len(parsed)} bars, expected {expected_default}"
+    )
 
     # The workbook nests poverty_group above state on Rows, so the two groups
     # print as pane headers with a divider between them. The gate mirrors the

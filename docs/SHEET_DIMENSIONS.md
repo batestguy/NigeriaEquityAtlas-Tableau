@@ -187,3 +187,44 @@ constants.
 **Wording.** `atlas_text.DIMENSIONS_SUBTITLE` no longer says "the left card adds
 the rest" — it now reads "17 of 37 bars by default: the left control picks a
 state".
+
+---
+
+## Amendment 3 (2026-10-25) — the default is now the top half of each group, and the boundary is audited
+
+**The decision.** "I dont mind showing 50 % of both categories but rank them
+properly per category ... or if not possible just show the top-ranked per category
+and lets make do with state selection." So:
+
+- `atlas_text.COMPOSITION_DEFAULT_TOP = 6` (of the Poorest 12) and
+  `COMPOSITION_DEFAULT_REST = 12` (of the Other 25) — **18 bars**, replacing the
+  17 of amendment 2. Stage 6 reads the rule twice and stage 5 reads it once, so
+  the sheet and its gate cannot disagree about the default.
+- "Ranked properly per category" needed no new sort: the bar order is MPI
+  descending and the two blocks are contiguous runs (ranks 1-12 and 13-37), so the
+  first N of a block IS its N highest-ranked states.
+- Adding and removing *individual* states is **not available**, and this is the
+  fallback the instruction allowed. A sheet cannot read two filters at once: a
+  checklist card and the parameter's `state_match` would AND, so any state ticked
+  out but picked in the selector would draw an empty pane. What is available is
+  one state at a time (the `State` control) or all states.
+
+**The audit that prompted it.** Does "Poorest 12" really split the states that
+way? Checked against the published standard errors (`mpi_se`, 2021):
+
+| Test | Result |
+|---|---|
+| The cut (rank 12 Niger 0.2191, rank 13 Plateau 0.1945) | dz = +0.0246, **z = 0.66** |
+| Adjacent pairs ranks 9-16 | **7 of 7 non-separable** (z 0.20-0.67) |
+| States that could cross the line on 95% CIs | **8** (Plateau, Nasarawa, Adamawa, Kaduna up; Borno, Taraba, Kano, Niger down) |
+| Rank-12 set vs "MPI > 0.20" set | **identical**, no state in one and not the other |
+| Education gap, cut moved to 8/10/11/13/14/16/18 | **+16.1 to +16.8 pts** (vs +17.6 at 12) |
+
+So the boundary is not a statistical separation and never was — but the *contrast*
+the sheet is about does not depend on where the line is drawn, which is why the
+group claim survives while the ordering does not. Recorded so no caption ever
+presents the 12 as a statistically separated group.
+
+**Wording.** The subtitle now reads "18 of 37 bars by default: the top half of each
+group, the left control picks one", which says what the blocks show without
+claiming the groups are separable.
