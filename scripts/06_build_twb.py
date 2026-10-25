@@ -925,6 +925,10 @@ KP_COLUMNS: list[tuple[str, str, str]] = [
 KP_SHAPE_PALETTE: list[tuple[str, str]] = [
     (member, f"KPI_Geo/{fname}")
     for member, fname in atlas_text.KPI_SHAPE_FILES.items()
+] + [
+    # the two direction guides: one coloured arrow per row
+    (member, f"KPI_Geo/{fname}")
+    for member, fname in atlas_text.KPI_GUIDE_SHAPE_FILES.items()
 ]
 # The mark-box size factor: Shape marks draw at their default scale unless the
 # pane's mark style-rule pins one (CH24's Shape panes carry
@@ -2812,7 +2816,7 @@ def build_workbook(spatial_technical: str,
     # good/bad badge.
     kpi_captions = {
         "kpi": "Indicator",
-        "series": "Reference point (2021)",
+        "series": "Reference point / direction",
         # 2026-10-24 word budget: these are the axis title, the Label pill's
         # caption and the tooltip's caption, i.e. the words that print around the
         # marks. "Share of this row's largest reference point" and "Value beside
@@ -3185,7 +3189,9 @@ def build_workbook(spatial_technical: str,
         # The one-decimal field format must match the worksheet deps copy --
         # same rule as the captions (Tableau repeats it in both places).
         default_formats=kpi_formats,
-        palette=("series", list(atlas_text.KPI_SERIES)),
+        palette=("series", list(atlas_text.KPI_SERIES) + [
+            (member, colour) for member, colour in atlas_text.KPI_GUIDE.values()
+        ]),
         # The Shape marks' member -> silhouette mapping, in the same
         # ds-level style rule as the colour palette (grammar note at
         # KP_SHAPE_PALETTE).
@@ -3636,14 +3642,15 @@ def main() -> int:
     # checks is what would draw wrong: a series the palette has no colour for,
     # a position outside the row's own (0, 1], a row that lost its Nigeria
     # mark, or a hover line that reached the reader empty.
-    assert len(kpi_reader) == 20, (
-        f"kpi_dots.csv has {len(kpi_reader)} rows, expected 20"
+    assert len(kpi_reader) == 27, (
+        f"kpi_dots.csv has {len(kpi_reader)} rows, expected 27"
     )
     kp_series = {label for label, _colour in atlas_text.KPI_SERIES}
     # The direction guides (2026-10-25) are marks too: they carry a shape and a
     # colour like any series member, but they are not reference points and they
     # carry no hover of their own.
-    kp_all_series = kp_series
+    kp_guides = {member for member, _c in atlas_text.KPI_GUIDE.values()}
+    kp_all_series = kp_series | kp_guides
     # Every member the extract draws must have a shape mapped, and every
     # mapped file must exist (shape_pack_xml would fail on a build past this
     # assert anyway, but naming the check here makes the failure read right:
@@ -3665,7 +3672,10 @@ def main() -> int:
         assert 0 < pos <= 1.0, (
             f"{mark['kpi']} / {mark['series']}: pos {pos:.3f} out of (0, 1]"
         )
-        assert mark["hover"].strip(), f"{mark['kpi']}: empty hover"
+        if mark["series"] in kp_guides:
+            assert mark["hover"] == "", f"{mark['kpi']}: a guide has no hover"
+        else:
+            assert mark["hover"].strip(), f"{mark['kpi']}: empty hover"
         kpi_rows_seen.setdefault(mark["kpi"], set()).add(mark["series"])
     kp_expected = set(atlas_text.KPI_ROW_LABELS.values())
     assert set(kpi_rows_seen) == kp_expected, (
@@ -3674,7 +3684,7 @@ def main() -> int:
     )
     for kpi, series in kpi_rows_seen.items():
         assert "Nigeria (2021)" in series, f"{kpi}: no Nigeria mark"
-        assert len(series) in {2, 3}, f"{kpi}: unexpected mark set {sorted(series)}"
+        assert len(series) in {3, 4}, f"{kpi}: unexpected mark set {sorted(series)}"
     # SSA is absent exactly where WDI does not publish it: the headcount row.
     ssa_absent = [kpi for kpi, series in kpi_rows_seen.items()
                   if "sub-Saharan Africa (2021)" not in series]

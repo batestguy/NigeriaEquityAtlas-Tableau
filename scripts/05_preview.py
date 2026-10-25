@@ -668,8 +668,10 @@ def visual_kpi_board() -> None:
     # per row, pointing the way that is good on that row). They carry no hover
     # and no label, so they are validated as guides and drawn as arrows rather
     # than as reference points.
-    colours = dict(atlas_text.KPI_SERIES)
-    assert len(col) == 20, f"KPI dots gate has {len(col)} rows, expected 20"
+    guides = {member for member, _c in atlas_text.KPI_GUIDE.values()}
+    colours = {**dict(atlas_text.KPI_SERIES),
+               **{m: c for m, c in atlas_text.KPI_GUIDE.values()}}
+    assert len(col) == 27, f"KPI dots gate has {len(col)} rows, expected 27"
     rows: list[tuple[str, list[tuple[str, float, str]]]] = []
     for row in col:
         pos = float(row["pos"])
@@ -678,15 +680,19 @@ def visual_kpi_board() -> None:
             f"series {row['series']!r} has no colour in atlas_text.KPI_SERIES"
             " or atlas_text.KPI_GUIDE"
         )
-        assert row["hover"].strip(), f"{row['kpi']}: empty hover"
+        if row["series"] in guides:
+            assert row["hover"] == "", f"{row['kpi']}: a guide has no hover"
+        else:
+            assert row["hover"].strip(), f"{row['kpi']}: empty hover"
         # The printed number is the mark's TRUE share of the row's largest
         # reference; `pos` may be dodged left to clear a neighbour, so the
         # gate must print pos_label the way the sheet does, not pos.
         label = row["pos_label"].strip()
         assert label, f"{row['kpi']} / {row['series']}: empty pos_label"
-        assert len(label.split(".")[-1]) == 1, (
-            f"{row['kpi']} / {row['series']}: pos_label {label!r} is not one decimal"
-        )
+        if row["series"] not in guides:
+            assert len(label.split(".")[-1]) == 1, (
+                f"{row['kpi']} / {row['series']}: pos_label {label!r} is not one decimal"
+            )
         if not rows or rows[-1][0] != row["kpi"]:
             rows.append((row["kpi"], []))
         rows[-1][1].append((row["series"], pos, label))
@@ -700,11 +706,12 @@ def visual_kpi_board() -> None:
     fig.subplots_adjust(left=0.295, right=0.985, top=0.74, bottom=0.17)
     names = [r[0] for r in rows]
     shapes_dir = Path(__file__).resolve().parent.parent / "data" / "reference" / "kpi_shapes"
-    assert atlas_text.KPI_SHAPE_FILES and set(atlas_text.KPI_SHAPE_FILES) == set(colours), (
-        "KPI_SHAPE_FILES and KPI_SERIES name different member sets"
-    )
+    assert atlas_text.KPI_SHAPE_FILES and (
+        set(atlas_text.KPI_SHAPE_FILES) | set(atlas_text.KPI_GUIDE_SHAPE_FILES)
+    ) == set(colours), "KPI shape files and the colour map disagree"
     images = {}
-    for member, fname in atlas_text.KPI_SHAPE_FILES.items():
+    for member, fname in {**atlas_text.KPI_SHAPE_FILES,
+                          **atlas_text.KPI_GUIDE_SHAPE_FILES}.items():
         path = shapes_dir / fname
         assert path.exists(), (
             f"missing silhouette {fname}: run scripts/07_kpi_reference.py first"

@@ -1,21 +1,28 @@
 kpi,series,pos,pos_label,hover
+Poverty headcount (%) · lower is better,lower is better,0.0200,lower is better,
 Poverty headcount (%) · lower is better,World (2021),0.6667,0.7,Nigeria 33.0 · World 22.0 (109 developing countries) · no target · OPHI / UNDP global MPI (WDI 2021)
 Poverty headcount (%) · lower is better,Nigeria (2021),1.0000,1.0,Nigeria 33.0 · World 22.0 (109 developing countries) · no target · OPHI / UNDP global MPI (WDI 2021)
+"Under-5 deaths / 1,000 births · lower is better",lower is better,0.0200,lower is better,
 "Under-5 deaths / 1,000 births · lower is better",World (2021),0.3367,0.3,Nigeria 117.6 · sub-Saharan Africa 77.1 · World 39.6 · target 25 · UN IGME (WDI 2021)
 "Under-5 deaths / 1,000 births · lower is better",sub-Saharan Africa (2021),0.6556,0.7,Nigeria 117.6 · sub-Saharan Africa 77.1 · World 39.6 · target 25 · UN IGME (WDI 2021)
 "Under-5 deaths / 1,000 births · lower is better",Nigeria (2021),1.0000,1.0,Nigeria 117.6 · sub-Saharan Africa 77.1 · World 39.6 · target 25 · UN IGME (WDI 2021)
+Open defecation (%) · lower is better,lower is better,0.0200,lower is better,
 Open defecation (%) · lower is better,World (2021),0.3422,0.3,Nigeria 18.7 · sub-Saharan Africa 17.7 · World 6.4 · target 0 · WHO / UNICEF JMP (WDI 2021)
 Open defecation (%) · lower is better,sub-Saharan Africa (2021),0.9300,0.9,Nigeria 18.7 · sub-Saharan Africa 17.7 · World 6.4 · target 0 · WHO / UNICEF JMP (WDI 2021)
 Open defecation (%) · lower is better,Nigeria (2021),1.0000,1.0,Nigeria 18.7 · sub-Saharan Africa 17.7 · World 6.4 · target 0 · WHO / UNICEF JMP (WDI 2021)
+Safely managed sanitation (%) · higher is better,higher is better,0.0200,higher is better,
 Safely managed sanitation (%) · higher is better,World (2021),1.0000,1.0,Nigeria 30.8 · sub-Saharan Africa 24.7 · World 56.1 · target 100 · WHO / UNICEF JMP (WDI 2021)
 Safely managed sanitation (%) · higher is better,sub-Saharan Africa (2021),0.4403,0.4,Nigeria 30.8 · sub-Saharan Africa 24.7 · World 56.1 · target 100 · WHO / UNICEF JMP (WDI 2021)
 Safely managed sanitation (%) · higher is better,Nigeria (2021),0.5490,0.5,Nigeria 30.8 · sub-Saharan Africa 24.7 · World 56.1 · target 100 · WHO / UNICEF JMP (WDI 2021)
+Basic drinking water (%) · higher is better,higher is better,0.0200,higher is better,
 Basic drinking water (%) · higher is better,World (2021),1.0000,1.0,Nigeria 77.8 · sub-Saharan Africa 64.8 · World 90.4 · target 100 · WHO / UNICEF JMP (WDI 2021)
 Basic drinking water (%) · higher is better,sub-Saharan Africa (2021),0.7168,0.7,Nigeria 77.8 · sub-Saharan Africa 64.8 · World 90.4 · target 100 · WHO / UNICEF JMP (WDI 2021)
 Basic drinking water (%) · higher is better,Nigeria (2021),0.8606,0.9,Nigeria 77.8 · sub-Saharan Africa 64.8 · World 90.4 · target 100 · WHO / UNICEF JMP (WDI 2021)
+Electricity access (%) · higher is better,higher is better,0.0200,higher is better,
 Electricity access (%) · higher is better,World (2021),1.0000,1.0,Nigeria 59.5 · sub-Saharan Africa 50.7 · World 91.3 · target 100 · SE4All / UN statistics (WDI 2021)
 Electricity access (%) · higher is better,sub-Saharan Africa (2021),0.5553,0.6,Nigeria 59.5 · sub-Saharan Africa 50.7 · World 91.3 · target 100 · SE4All / UN statistics (WDI 2021)
 Electricity access (%) · higher is better,Nigeria (2021),0.6517,0.7,Nigeria 59.5 · sub-Saharan Africa 50.7 · World 91.3 · target 100 · SE4All / UN statistics (WDI 2021)
+Clean cooking fuel (%) · higher is better,higher is better,0.0200,higher is better,
 Clean cooking fuel (%) · higher is better,World (2021),1.0000,1.0,Nigeria 22.0 · sub-Saharan Africa 20.5 · World 72.4 · target 100 · SE4All / UN statistics (WDI 2021)
 Clean cooking fuel (%) · higher is better,sub-Saharan Africa (2021),0.2339,0.3,Nigeria 22.0 · sub-Saharan Africa 20.5 · World 72.4 · target 100 · SE4All / UN statistics (WDI 2021)
 Clean cooking fuel (%) · higher is better,Nigeria (2021),0.3039,0.3,Nigeria 22.0 · sub-Saharan Africa 20.5 · World 72.4 · target 100 · SE4All / UN statistics (WDI 2021)
