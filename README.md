@@ -12,6 +12,42 @@ numbered, independently runnable Python scripts.
 MICS 2021 baseline · 37 admin-1 units · poverty + conflict + climate + 4 survey rounds
 ```
 
+## See it live
+
+**[Open the atlas on Tableau Public →](https://public.tableau.com/app/profile/jerry.bannister/viz/Nigeria-MPI-Equity-Atlas)**
+
+[![Demo video: every click and filter in the atlas](docs/demo/01_cover.jpg)](docs/demo/atlas_demo.mp4)
+
+▶ **[Watch the 2:41 demo](docs/demo/atlas_demo.mp4)**: every click, hover and filter,
+recorded on the live viz. Music: *Motherland* by Sound Sultan.
+
+### What you can click
+
+| Where | Control | What it does |
+|---|---|---|
+| **Start here** (cover) | **1 Overview →** / **2 A state, in context →** | open the two dashboards |
+| **Overview** | **State** drop-down | filters all three panes to one state; `(All states)` restores the default |
+| | hover a state on the poverty map | MPI with its 95% interval, the headcount, average deprivation, number of poor people |
+| | hover a state on the cluster map | its neighbourhood type, and its poverty beside its neighbours' average |
+| | click a state, or a legend entry | highlights it; click again to clear |
+| | hover a bar segment | that state's share of poverty from health, education or living standards |
+| **A state, in context** | **Panel state** drop-down | the state shown on the time panel (rank of 37, six measures, four rounds) |
+| | **X axis / Y axis** drop-downs | any two of 24 measures on the pairs board, one quadratic fit and 95% band per pane |
+| | hover a point | names the state; on the benchmarks band, the values and the direction key |
+
+The three reference tabs (what the words mean, the list of basic needs, how it was
+made) are published too:
+[words](https://public.tableau.com/views/Nigeria-MPI-Equity-Atlas/Whatthewordsmean) ·
+[needs](https://public.tableau.com/views/Nigeria-MPI-Equity-Atlas/Thelistofbasicneeds) ·
+[method](https://public.tableau.com/views/Nigeria-MPI-Equity-Atlas/Howwedidit).
+
+| | |
+|---|---|
+| ![Overview, hover](docs/demo/03_overview_hover.jpg) | ![Overview filtered to Kano](docs/demo/04_overview_kano.jpg) |
+| *Overview: hover a state* | *Overview: the State control set to Kano* |
+| ![A state, in context](docs/demo/05_context.jpg) | ![National benchmarks](docs/demo/07_context_benchmarks.jpg) |
+| *A state, in context: time panel and pairs board* | *Where Nigeria stands: national benchmarks* |
+
 ## Quick start
 
 ```powershell
@@ -56,19 +92,24 @@ every source. Nothing in the pipeline needs a registration, an API key, or a log
 - **[docs/HANDOFF.md](docs/HANDOFF.md)** — state of the project, decisions taken,
   what is verified versus assumed, and the traps already paid for. **Read this first
   when picking this up cold.**
-- **[docs/PUBLISH.md](docs/PUBLISH.md)** — the one manual step: publishing to Tableau
-  Public, plus the one chart fragment still deliberately left to the GUI.
+- **[docs/PUBLISH.md](docs/PUBLISH.md)** — republishing to Tableau Public after a
+  rebuild (File → Save to Tableau Public, same name), and the checks to run on the
+  live viz.
 - **[docs/normalisation.md](docs/normalisation.md)** / **[docs/data_quality.md](docs/data_quality.md)**
   — metric definitions and caveats. Both are required reading before quoting a number.
 
 ## Three things worth knowing before using this
 
-1. **Conflict does not predict poverty in these data.** Spearman rho ranges from
-   +0.34 to −0.20 across the four survey rounds. It is reported as a negative result;
-   no single round should be quoted as the finding.
-2. **Climate is shown as a 1991–2020 baseline, not a single year's anomaly.** The
-   anomaly correlation flips sign between rounds (+0.81 in 2013, −0.43 in 2021), so
-   it measures weather. Baseline precipitation holds at rho = −0.80 (p < 0.001).
+1. **No conflict–poverty association is detectable, and this design could not
+   detect a moderate one.** Spearman rho runs +0.34, −0.20, +0.10, −0.06 across the
+   four survey rounds; at n = 37 the power is 0.75 at rho = 0.4. Say "no detectable
+   association at |rho| ≲ 0.4", never "not associated". Also, the conflict variable
+   undercounts where poverty is highest: five of the poorest 12 states record no UCDP
+   event in 2021. Never quote a single round.
+2. **Climate overlaps with poverty; it is not shown to drive it.** Baseline
+   (1991–2020) precipitation correlates with MPI at rho = −0.80, but precipitation
+   tracks latitude (−0.90), and latitude predicts MPI better (+0.82). That is consistent
+   with a development gradient, not identified as a climate effect.
 3. **Conflict data is UCDP, not ACLED.** ACLED was unobtainable in this environment.
    Event definitions differ, so magnitudes are not comparable to an ACLED figure.
 
