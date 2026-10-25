@@ -1780,23 +1780,19 @@ def overview_dashboard_xml() -> tuple[str, str]:
 def cover_dashboard_xml() -> tuple[str, str]:
     """The cover tab: the illustration, with the title and a contents list on it.
 
-    2026-10-25, the author's ask: "publish the two dashboards we built with an
-    image as intro ... add a table of content and intro in the image page to the
-    two dashboard with proper titles, hide other sheets".
+    Built on ``text_zone()`` -- the helper the three reference tabs use, and the
+    only text path in this workbook whose line breaks are known to render. The
+    hand-rolled ``<formatted-text>`` of the first three attempts serialised
+    break runs exactly the same way and still came out as one paragraph.
 
-    The canvas is **1408x768**, exactly the illustration's own size, so the image
-    drops in at 1:1 with no crop and no stretch -- a 1600x1000 canvas would have
-    had to letterbox or crop it. The image is a ``type-v2='bitmap'`` zone spanning
-    the whole page (grammar: ``<zone ... param='Image/<file>' type-v2='bitmap'>``,
-    the shape the reference workbook carries 18 times), and the text is a second
-    zone on top of its left third with an opaque background, because white type on
-    the produce stall would not be reliable at every browser scale.
-
-    The contents list is text. A clickable version needs ``goto-sheet`` button
-    zones, whose ``window-id`` is a GUID this builder does not emit; the tab bar
-    does the navigating until that is proven.
+    The canvas is the cropped illustration's own size, so the image is 1:1. The
+    text sits on an opaque panel over its left third: white type on the produce
+    stall is not reliable at every browser scale.
     """
-    size = (1408, 768)
+    from PIL import Image as _Image
+
+    with _Image.open(COVER_IMAGE) as _im:
+        size = _im.size
     panel_w = 566
 
     def ux(px: float) -> int:
@@ -1805,64 +1801,34 @@ def cover_dashboard_xml() -> tuple[str, str]:
     def uy(px: float) -> int:
         return round(px / size[1] * 100_000)
 
-    def line(runs: str, size: str, gap: int = 1) -> str:
-        """One rendered line = the runs, then standalone break runs.
-
-        The break MUST be its own <run>: appending &#10; inside a text run
-        renders as nothing (the cover's first build came out as one run-on
-        paragraph). Copied from the reference table's zones in this same
-        workbook, which prefix every break with an explicit fontsize.
-        """
-        brk = f"<run fontsize='{size}'>&#10;</run>"
-        return f"              {runs}{brk * gap}\n"
-
-    body = (
-        line(f"<run bold='true' fontsize='30'>{escape(atlas_text.COVER_TITLE)}</run>",
-             "30", 2)
-        + line(f"<run fontsize='13'>{escape(atlas_text.COVER_SUBTITLE)}</run>", "13", 3)
-        + line(f"<run fontsize='10'>{escape(atlas_text.COVER_INTRO)}</run>", "10", 4)
-        + line("<run bold='true' fontsize='11'>CONTENTS</run>", "11", 3)
-    )
+    # text_zone expects paragraphs of (text, bold, size, italic) tuples -- the
+    # shape _run_xml unpacks -- not the Run objects para() returns.
+    paragraphs: list[list[tuple]] = [
+        [(atlas_text.COVER_TITLE, True, 26, False)],
+        [(atlas_text.COVER_SUBTITLE, False, 12, False)],
+        [(atlas_text.COVER_INTRO, False, 9, False)],
+        [("CONTENTS", True, 10, False)],
+    ]
     for i, (name, desc) in enumerate(atlas_text.COVER_TOC, 1):
-        body += line(
-            f"<run bold='true' fontsize='15'>{i}   {escape(name)}</run>", "15", 1
-        )
-        body += line(f"<run fontsize='10'>{escape(desc)}</run>", "10", 3)
+        paragraphs.append([(f"{i}   {name}", True, 13, False)])
+        paragraphs.append([(desc, False, 9, False)])
 
     zones = (
-        # 1. THE ILLUSTRATION IS ADDED IN THE GUI, not here.
-        # A `type-v2='bitmap'` zone with `param='Image/cover.jpg'` and the file
-        # packaged under Image/ failed the workbook load on 2026-10-25 (empty
-        # title = load failure; the reference workbook's 18 bitmap zones differ in
-        # ways not yet isolated). Until a packet pins the grammar, the cover ships
-        # with its text and the image goes on by hand:
-        #   Dashboard -> the Start here tab -> Insert -> Image -> tableau/assets/
-        #   cover.jpg -> size it to fill -> resize the text panel over its left
-        #   third -> Save. Tableau copies the file into the .twbx on save.
-        # The panel below is already sized and coloured for exactly that, and
-        # docs/DASHBOARD.md carries the same instruction.
-        # 2. the text panel over its left third
-        f"          <zone forceUpdate='true' h='100000' id='9'"
-        f" type-v2='text' w='{ux(panel_w)}' x='0' y='0'>\n"
-        f"            <formatted-text>\n"
-        f"{body}"
-        f"            </formatted-text>\n"
+        f"          <zone h='100000' id='2' param='Image/{COVER_IMAGE_NAME}'"
+        f" type-v2='bitmap' w='100000' x='0' y='0'>\n"
         f"            <zone-style>\n"
-        f"              <format attr='background-color' value='#0B2E1D' />\n"
-        f"              <format attr='margin' value='34' />\n"
+        f"              <format attr='margin' value='0' />\n"
         f"            </zone-style>\n"
         f"          </zone>\n"
-        # 3. the credit line, pinned to the panel's foot
-        f"          <zone forceUpdate='true' h='{uy(96)}' id='10'"
-        f" type-v2='text' w='{ux(panel_w)}' x='0' y='{uy(size[1] - 96)}'>\n"
-        f"            <formatted-text>\n"
-        f"              <run fontsize='8'>{escape(atlas_text.COVER_CREDIT)}</run>\n"
-        f"            </formatted-text>\n"
-        f"            <zone-style>\n"
-        f"              <format attr='background-color' value='#0B2E1D' />\n"
-        f"              <format attr='margin' value='34' />\n"
-        f"            </zone-style>\n"
-        f"          </zone>\n"
+        + text_zone(
+            9, x=0, y=0, w=ux(panel_w), h=100000, paragraphs=paragraphs,
+            background="#F4F1EA",
+        )
+        + text_zone(
+            10, x=0, y=uy(size[1] - 84), w=ux(panel_w), h=uy(84),
+            paragraphs=[[(atlas_text.COVER_CREDIT, False, 7, False)]],
+            background="#F4F1EA",
+        )
     )
     dashboard = (
         f"    <dashboard name='{escape(SHEET_COVER)}'>\n"
@@ -2992,11 +2958,12 @@ def build_workbook(spatial_technical: str,
     # every sentence a reader needs from those five sheets is now a row of this
     # table, which is why withdrawing them cost the atlas no claim.
     reference_tabs = table_dashboards()
-    # cover_dash, cover_window = cover_dashboard_xml()  # see docs/DASHBOARD.md
+    cover_dash, cover_window = cover_dashboard_xml()
     overview_dash, overview_window = overview_dashboard_xml()
     context_dash, context_window = context_dashboard_xml()
 
     dashboards = ("  <dashboards>\n"
+                  + cover_dash
                   + overview_dash
                   + context_dash
                   + "".join(xml for _name, xml in reference_tabs)
@@ -3019,7 +2986,7 @@ def build_workbook(spatial_technical: str,
     # FIRST, because a workbook opens on its first window and a reader should land
     # on the page that shows four sheets at once rather than on one of them.
     windows = f"""  <windows source-height='1500'>
-{overview_window}{context_window}    <window class='worksheet' name='Where poverty sits'>
+{cover_window}{overview_window}{context_window}    <window class='worksheet' name='Where poverty sits'>
       <cards>
         <edge name='left'>
           <strip size='160'>

@@ -759,10 +759,11 @@ def build_dots() -> int:
         # the benchmarks CSV's `direction` column is the ground truth; assert
         # them against each other so a re-ordered or re-sourced row cannot leave
         # an arrow pointing the wrong way.
-        arrow = atlas_text.KPI_DIRECTION_ARROW[row["direction"]]
-        assert label.endswith(" " + arrow), (
-            f"{row['kpi']}: row label {label!r} does not end with {arrow!r}, "
-            f"but the benchmarks CSV says direction={row['direction']!r}"
+        # The direction is carried by the row's coloured arrow guide and its own
+        # label (2026-10-25, fourth pass); the row label is just the name and the
+        # unit again, because the appended sentence truncated in the header.
+        assert row["direction"] in atlas_text.KPI_DIRECTION_ARROW, (
+            f"{row['kpi']}: unknown direction {row['direction']!r}"
         )
         raw = {
             atlas_text.KPI_SERIES[0][0]: row["nigeria_wdi"] or row["nigeria_dataset"],

@@ -1298,13 +1298,13 @@
           </datasource-dependencies>
           <sort class='manual' column='[federated.0kpiboard].[none:kpi:nk]' direction='ASC'>
             <dictionary>
-            <bucket>&quot;Poverty headcount (%) · lower is better&quot;</bucket>
-            <bucket>&quot;Under-5 deaths / 1,000 births · lower is better&quot;</bucket>
-            <bucket>&quot;Open defecation (%) · lower is better&quot;</bucket>
-            <bucket>&quot;Safely managed sanitation (%) · higher is better&quot;</bucket>
-            <bucket>&quot;Basic drinking water (%) · higher is better&quot;</bucket>
-            <bucket>&quot;Electricity access (%) · higher is better&quot;</bucket>
-            <bucket>&quot;Clean cooking fuel (%) · higher is better&quot;</bucket>
+            <bucket>&quot;Poverty headcount (%)&quot;</bucket>
+            <bucket>&quot;Under-5 deaths / 1,000 births&quot;</bucket>
+            <bucket>&quot;Open defecation (%)&quot;</bucket>
+            <bucket>&quot;Safely managed sanitation (%)&quot;</bucket>
+            <bucket>&quot;Basic drinking water (%)&quot;</bucket>
+            <bucket>&quot;Electricity access (%)&quot;</bucket>
+            <bucket>&quot;Clean cooking fuel (%)&quot;</bucket>
             </dictionary>
           </sort>
           <aggregation value='true' />
@@ -1505,6 +1505,33 @@
     </worksheet>
   </worksheets>
   <dashboards>
+    <dashboard name='Start here'>
+      <style />
+      <size maxheight='672' maxwidth='1408' minheight='672' minwidth='1408' />
+      <zones>
+        <zone h='100000' id='1' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='100000' id='2' param='Image/cover.jpg' type-v2='bitmap' w='100000' x='0' y='0'>
+            <zone-style>
+              <format attr='margin' value='0' />
+            </zone-style>
+          </zone>
+          <zone h='100000' id='9' type-v2='text' w='40199' x='0' y='0'>
+            <formatted-text><run bold='true' fontcolor='#22252a' fontsize='26'>One Country. Two Realities.</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='12'>The Multidimensional Poverty Atlas of Nigeria's 37 States</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Every figure is a published survey estimate for 2021, drawn as a band rather than a rank: no state's position is separable from its neighbour's at 95%, so the atlas compares groups and structures, never a league table.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='10'>CONTENTS</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>1   Overview</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>Where poverty sits, where it clusters, and what each state's poverty is made of.</run><run fontsize='11'>Æ&#10;</run><run bold='true' fontcolor='#22252a' fontsize='13'>2   A state, in context</run><run fontsize='11'>Æ&#10;</run><run fontcolor='#22252a' fontsize='9'>One state's ranks over four rounds, any two measures for every state, and the national benchmarks.</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='14' />
+              <format attr='background-color' value='#F4F1EA' />
+            </zone-style>
+          </zone>
+          <zone h='12500' id='10' type-v2='text' w='40199' x='0' y='87500'>
+            <formatted-text><run fontcolor='#22252a' fontsize='7'>Data: OPHI/UNDP global MPI (Nigeria 2021 MICS, harmonised series) · UCDP GED · Open-Meteo. Illustration: AI-generated.</run></formatted-text>
+            <zone-style>
+              <format attr='margin' value='14' />
+              <format attr='background-color' value='#F4F1EA' />
+            </zone-style>
+          </zone>
+        </zone>
+      </zones>
+    </dashboard>
     <dashboard name='Overview'>
       <style />
       <size maxheight='1000' maxwidth='1600' minheight='1000' minwidth='1600' />
@@ -2543,6 +2570,10 @@
     </dashboard>
   </dashboards>
   <windows source-height='1500'>
+    <window class='dashboard' name='Start here'>
+      <viewpoints />
+      <active id='-1' />
+    </window>
     <window class='dashboard' name='Overview'>
       <viewpoints>
         <viewpoint name='Where poverty sits'>

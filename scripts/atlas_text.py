@@ -707,14 +707,14 @@ KPI_SHAPE_FILES: dict[str, str] = {
 # (% of people)" -> "... (%)"), the same units, fewer words.
 KPI_ROW_LABELS: dict[str, str] = {
     "Multidimensional poverty headcount (national)":
-        "Poverty headcount (%) \u00b7 lower is better",
-    "Under-five mortality rate": "Under-5 deaths / 1,000 births \u00b7 lower is better",
-    "Open defecation": "Open defecation (%) \u00b7 lower is better",
-    "Safely managed sanitation": "Safely managed sanitation (%) \u00b7 higher is better",
-    "At least basic drinking water": "Basic drinking water (%) \u00b7 higher is better",
-    "Access to electricity": "Electricity access (%) \u00b7 higher is better",
+        "Poverty headcount (%)",
+    "Under-five mortality rate": "Under-5 deaths / 1,000 births",
+    "Open defecation": "Open defecation (%)",
+    "Safely managed sanitation": "Safely managed sanitation (%)",
+    "At least basic drinking water": "Basic drinking water (%)",
+    "Access to electricity": "Electricity access (%)",
     "Access to clean cooking fuels and technologies":
-        "Clean cooking fuel (%) \u00b7 higher is better",
+        "Clean cooking fuel (%)",
 }
 # The two glyphs, keyed to the benchmarks CSV's `direction` values.
 KPI_DIRECTION_ARROW: dict[str, str] = {
